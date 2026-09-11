@@ -668,14 +668,15 @@ class SoftPeriodBadge extends StatelessWidget {
     final style = TextButton.styleFrom(
       minimumSize: Size.zero,
       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadii.md),
       ),
       textStyle: Theme.of(context).textTheme.labelSmall?.copyWith(
-            fontSize: 12,
+            fontSize: 11,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.1,
+            height: 1.1,
           ),
     );
 

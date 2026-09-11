@@ -387,22 +387,6 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                     child: ListView(
                       padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
                       children: [
-                        Center(
-                          child: Container(
-                            width: 96,
-                            height: 96,
-                            decoration: BoxDecoration(
-                              color: scheme.primary.withValues(alpha: 0.12),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.person_rounded,
-                              size: 48,
-                              color: scheme.primary,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
                         _label('Customer Name'),
                         TextFormField(
                           controller: _name,
@@ -441,44 +425,71 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        _label('Address (Optional)'),
-                        TextFormField(
-                          controller: _address,
-                          maxLines: 3,
-                          decoration: _decoration(
-                            hint: 'Enter customer address',
-                            icon: Icons.location_on_outlined,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        _label(l10n.customersCreditLimit),
-                        TextFormField(
-                          controller: _limit,
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
-                          inputFormatters: [ThousandDecimalFormatter()],
-                          decoration: _decoration(
-                            hint: '0.00',
-                            icon: Icons.currency_rupee_rounded,
-                          ),
-                        ),
-                        if (_existing == null) ...[
-                          const SizedBox(height: 16),
-                          _label(l10n.customersOpeningBalance),
+                        if (_existing == null)
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _label(l10n.customersCreditLimit),
+                                    TextFormField(
+                                      controller: _limit,
+                                      keyboardType:
+                                          const TextInputType.numberWithOptions(
+                                        decimal: true,
+                                      ),
+                                      inputFormatters: [
+                                        ThousandDecimalFormatter(),
+                                      ],
+                                      decoration: _decoration(
+                                        hint: '0.00',
+                                        icon: Icons.currency_rupee_rounded,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _label(l10n.customersOpeningBalance),
+                                    TextFormField(
+                                      controller: _opening,
+                                      keyboardType:
+                                          const TextInputType.numberWithOptions(
+                                        decimal: true,
+                                      ),
+                                      inputFormatters: [
+                                        ThousandDecimalFormatter(),
+                                      ],
+                                      decoration: _decoration(
+                                        hint: '0.00',
+                                        icon: Icons
+                                            .account_balance_wallet_outlined,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          )
+                        else ...[
+                          _label(l10n.customersCreditLimit),
                           TextFormField(
-                            controller: _opening,
-                            keyboardType:
-                                const TextInputType.numberWithOptions(
+                            controller: _limit,
+                            keyboardType: const TextInputType.numberWithOptions(
                               decimal: true,
                             ),
                             inputFormatters: [ThousandDecimalFormatter()],
                             decoration: _decoration(
                               hint: '0.00',
-                              icon: Icons.account_balance_wallet_outlined,
+                              icon: Icons.currency_rupee_rounded,
                             ),
                           ),
-                        ] else ...[
                           const SizedBox(height: 16),
                           Container(
                             padding: const EdgeInsets.symmetric(
@@ -502,6 +513,16 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                             ),
                           ),
                         ],
+                        const SizedBox(height: 16),
+                        _label('Address (Optional)'),
+                        TextFormField(
+                          controller: _address,
+                          maxLines: 3,
+                          decoration: _decoration(
+                            hint: 'Enter customer address',
+                            icon: Icons.location_on_outlined,
+                          ),
+                        ),
                         const SizedBox(height: 16),
                         _label(l10n.commonNotes),
                         TextFormField(

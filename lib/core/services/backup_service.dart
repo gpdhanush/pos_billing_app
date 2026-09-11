@@ -201,6 +201,13 @@ class BackupService {
     return BackupRecord.fromMap(rows.first);
   }
 
+  Future<Directory> localBackupDirectory() => _backupDir();
+
+  Future<String> localBackupDirectoryPath() async {
+    final dir = await _backupDir();
+    return dir.path;
+  }
+
   Future<Directory> _backupDir() async {
     final root = await getApplicationDocumentsDirectory();
     final dir = Directory(p.join(root.path, 'backups'));

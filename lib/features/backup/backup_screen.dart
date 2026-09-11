@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:pos_billing/app/localization/generated/app_localizations.dart';
@@ -22,6 +23,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final settings = ref.watch(appSettingsProvider).valueOrNull;
+    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: GlassPageHeader(title: l10n.backupTitle),
       body: FutureBuilder(
@@ -29,16 +31,64 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
           ref.read(backupServiceProvider).history(),
           ref.read(backupServiceProvider).lastSuccessful(),
           ref.read(driveClientProvider).accountEmail,
+          ref.read(backupServiceProvider).localBackupDirectoryPath(),
         ]),
         builder: (context, snap) {
           final history = snap.data?[0] as List<BackupRecord>? ?? const [];
           final last = snap.data?[1] as BackupRecord?;
           final email = snap.data?[2] as String?;
+          final backupPath = snap.data?[3] as String? ?? '…';
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
             children: [
               SoftCard(
                 child: Text(l10n.backupLocalOnly),
+              ),
+              const SizedBox(height: 12),
+              SoftCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.folder_outlined,
+                          color: scheme.primary,
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Local backup folder',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleSmall
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    SelectableText(
+                      backupPath,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                    ),
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        onPressed: () async {
+                          await Clipboard.setData(
+                            ClipboardData(text: backupPath),
+                          );
+                          if (!context.mounted) return;
+                          showSnack(context, 'Backup path copied');
+                        },
+                        icon: const Icon(Icons.copy_rounded, size: 18),
+                        label: const Text('Copy path'),
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 12),
               SoftCard(
@@ -155,7 +205,15 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
                         if (i > 0) const Divider(),
                         ListTile(
                           title: Text(history[i].fileName),
-                          subtitle: Text(history[i].status),
+                          subtitle: Text(
+                            [
+                              history[i].status,
+                              if ((history[i].localPath ?? '').isNotEmpty)
+                                history[i].localPath!,
+                            ].join('\n'),
+                          ),
+                          isThreeLine:
+                              (history[i].localPath ?? '').isNotEmpty,
                           trailing:
                               history[i].status == 'successful' &&
                                   history[i].localPath != null

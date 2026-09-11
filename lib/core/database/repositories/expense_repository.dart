@@ -73,6 +73,22 @@ class ExpenseRepository {
     return _db.db.delete('expenses', where: 'id = ?', whereArgs: [id]);
   }
 
+  Future<List<Expense>> listInRange(
+    int storeId, {
+    required int startMs,
+    required int endMs,
+    int limit = 200,
+  }) async {
+    final rows = await _db.db.query(
+      'expenses',
+      where: 'store_id = ? AND spent_at >= ? AND spent_at < ?',
+      whereArgs: [storeId, startMs, endMs],
+      orderBy: 'spent_at DESC',
+      limit: limit,
+    );
+    return rows.map(Expense.fromMap).toList();
+  }
+
   Future<int> total(int storeId, {int? startMs, int? endMs}) async {
     final rows = await _db.db.rawQuery(
       '''

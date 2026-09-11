@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +5,7 @@ import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/app/providers.dart';
 import 'package:pos_billing/app/theme/app_theme.dart';
 import 'package:pos_billing/core/money/money.dart';
+import 'package:pos_billing/shared/widgets/app_image.dart';
 import 'package:pos_billing/shared/widgets/ui_kit.dart';
 
 class ProductsScreen extends ConsumerWidget {
@@ -51,32 +50,45 @@ class ProductsScreen extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
-                FilterChip(
-                  label: Text(l10n.productsLowStockFilter),
+                SoftPeriodBadge(
+                  label: 'All',
+                  selected: !query.lowStock &&
+                      !query.outOfStock &&
+                      !query.inactiveOnly,
+                  onTap: () => ref.read(catalogQueryProvider.notifier).state =
+                      query.copyWith(
+                        lowStock: false,
+                        outOfStock: false,
+                        inactiveOnly: false,
+                      ),
+                ),
+                SoftPeriodBadge(
+                  label: l10n.productsLowStockFilter,
                   selected: query.lowStock,
-                  onSelected: (v) =>
-                      ref.read(catalogQueryProvider.notifier).state =
-                          query.copyWith(lowStock: v, inactiveOnly: false),
+                  onTap: () => ref.read(catalogQueryProvider.notifier).state =
+                      query.copyWith(
+                        lowStock: !query.lowStock,
+                        inactiveOnly: false,
+                      ),
                 ),
-                const SizedBox(width: 8),
-                FilterChip(
-                  label: Text(l10n.productsOutOfStockFilter),
+                SoftPeriodBadge(
+                  label: l10n.productsOutOfStockFilter,
                   selected: query.outOfStock,
-                  onSelected: (v) =>
-                      ref.read(catalogQueryProvider.notifier).state =
-                          query.copyWith(outOfStock: v, inactiveOnly: false),
+                  onTap: () => ref.read(catalogQueryProvider.notifier).state =
+                      query.copyWith(
+                        outOfStock: !query.outOfStock,
+                        inactiveOnly: false,
+                      ),
                 ),
-                const SizedBox(width: 8),
-                FilterChip(
-                  label: const Text('Inactive'),
+                SoftPeriodBadge(
+                  label: 'Inactive',
                   selected: query.inactiveOnly,
-                  onSelected: (v) =>
-                      ref.read(catalogQueryProvider.notifier).state =
-                          query.copyWith(
-                            inactiveOnly: v,
-                            lowStock: v ? false : query.lowStock,
-                            outOfStock: v ? false : query.outOfStock,
-                          ),
+                  onTap: () => ref.read(catalogQueryProvider.notifier).state =
+                      query.copyWith(
+                        inactiveOnly: !query.inactiveOnly,
+                        lowStock: false,
+                        outOfStock: false,
+                      ),
                 ),
               ],
             ),
@@ -105,9 +117,7 @@ class ProductsScreen extends ConsumerWidget {
                     final p = items[i];
                     final low = p.isLowStock;
                     final path = p.imagePath;
-                    final hasImage = path != null &&
-                        path.isNotEmpty &&
-                        File(path).existsSync();
+                    final hasImage = path != null && path.isNotEmpty;
                     return SoftCard(
                       radius: AppRadii.compact,
                       padding: const EdgeInsets.symmetric(
@@ -123,9 +133,20 @@ class ProductsScreen extends ConsumerWidget {
                               width: 40,
                               height: 40,
                               child: hasImage
-                                  ? Image.file(
-                                      File(path),
+                                  ? AppImage(
+                                      path: path,
+                                      width: 40,
+                                      height: 40,
                                       fit: BoxFit.cover,
+                                      placeholder: ColoredBox(
+                                        color: scheme.primary
+                                            .withValues(alpha: 0.08),
+                                        child: Icon(
+                                          Icons.inventory_2_outlined,
+                                          color: scheme.primary,
+                                          size: 20,
+                                        ),
+                                      ),
                                     )
                                   : ColoredBox(
                                       color: scheme.primary

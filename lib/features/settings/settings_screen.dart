@@ -4,13 +4,68 @@ import 'package:go_router/go_router.dart';
 import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/app/providers.dart';
 import 'package:pos_billing/core/constants/app_constants.dart';
+import 'package:pos_billing/core/services/app_reset_service.dart';
 import 'package:pos_billing/shared/widgets/ui_kit.dart';
 
-class SettingsScreen extends ConsumerWidget {
+class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  bool _loggingOut = false;
+
+  Future<void> _logoutAndWipe() async {
+    if (_loggingOut) return;
+
+    final deleteOk = await confirmDialog(
+      context,
+      title: 'Delete all data?',
+      body: 'This permanently removes products, sales, customers, expenses, stock, store details, backups on this device, and security keys.\n\nData cannot be restored unless you already saved a backup file elsewhere.',
+      icon: Icons.delete_forever_rounded,
+      confirmLabel: 'Delete everything',
+      destructive: true,
+    );
+    if (!deleteOk || !mounted) return;
+
+    final logoutOk = await confirmDialog(
+      context,
+      title: 'Log out & reset app?',
+      body: 'POS Billing will restart like a new install. You will set up language, theme, and store again.',
+      icon: Icons.logout_rounded,
+      confirmLabel: 'Log out',
+      destructive: true,
+    );
+    if (!logoutOk || !mounted) return;
+
+    setState(() => _loggingOut = true);
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const PopScope(
+        canPop: false,
+        child: Center(child: CircularProgressIndicator()),
+      ),
+    );
+
+    try {
+      await ref.read(appResetServiceProvider).wipeAllLocalData();
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+      context.go('/onboarding');
+    } catch (_) {
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+      showSnack(context, 'Logout failed. Please try again.');
+    } finally {
+      if (mounted) setState(() => _loggingOut = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final settings =
         ref.watch(appSettingsProvider).valueOrNull ?? AppSettings.defaults();
@@ -114,15 +169,15 @@ class SettingsScreen extends ConsumerWidget {
                         },
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(68, 0, 16, 12),
-                      child: Text(
-                        'Unlock with fingerprint or face only. No PIN.',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: scheme.onSurfaceVariant,
-                            ),
-                      ),
-                    ),
+                    // Padding(
+                    //   padding: const EdgeInsets.fromLTRB(68, 0, 16, 12),
+                    //   child: Text(
+                    //     'Unlock with fingerprint or face only. No PIN.',
+                    //     style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    //           color: scheme.onSurfaceVariant,
+                    //         ),
+                    //   ),
+                    // ),
                     const Divider(indent: 68),
                     _settingsRow(
                       context,
@@ -153,9 +208,8 @@ class SettingsScreen extends ConsumerWidget {
               const SizedBox(height: 22),
               Text(
                 'About',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                style: Theme.of(context).textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 10),
               SoftCard(
@@ -198,6 +252,35 @@ class SettingsScreen extends ConsumerWidget {
                   ],
                 ),
               ),
+              const SizedBox(height: 22),
+              Text(
+                'Danger zone',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: scheme.error,
+                ),
+              ),
+              const SizedBox(height: 10),
+              SoftCard(
+                borderColor: scheme.error.withValues(alpha: 0.35),
+                padding: EdgeInsets.zero,
+                child: _settingsRow(
+                  context,
+                  icon: Icons.logout_rounded,
+                  title: _loggingOut ? 'Logging out…' : 'Log out & reset',
+                  hasChevron: true,
+                  destructive: true,
+                  onTap: _loggingOut ? null : _logoutAndWipe,
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(4, 8, 4, 0),
+                child: Text(
+                  'Deletes all local shop data permanently, then returns to setup.',
+                  style: Theme.of(context).textTheme.bodySmall
+                      ?.copyWith(color: scheme.onSurfaceVariant),
+                ),
+              ),
               const SizedBox(height: 18),
               SoftCard(
                 color: scheme.primary.withValues(alpha: 0.06),
@@ -229,36 +312,43 @@ class SettingsScreen extends ConsumerWidget {
     String? trailingText,
     Widget? trailingWidget,
     bool hasChevron = false,
+    bool destructive = false,
     VoidCallback? onTap,
   }) {
     final scheme = Theme.of(context).colorScheme;
+    final accent = destructive ? scheme.error : null;
     final trailing = trailingText != null
         ? Text(
             trailingText,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
+            style: Theme.of(context).textTheme.bodyMedium
+                ?.copyWith(color: scheme.onSurfaceVariant),
           )
         : trailingWidget ??
-            (hasChevron
-                ? Icon(
-                    Icons.chevron_right_rounded,
-                    color: scheme.onSurfaceVariant,
-                  )
-                : null);
+              (hasChevron
+                  ? Icon(
+                      Icons.chevron_right_rounded,
+                      color: accent ?? scheme.onSurfaceVariant,
+                    )
+                  : null);
 
     final content = Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: Row(
         children: [
-          IconBadge(icon: icon, size: 40),
+          IconBadge(
+            icon: icon,
+            size: 40,
+            background: destructive
+                ? scheme.error.withValues(alpha: 0.10)
+                : null,
+            foreground: accent,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               title,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+              style: Theme.of(context).textTheme.titleSmall
+                  ?.copyWith(fontWeight: FontWeight.w600, color: accent),
             ),
           ),
           trailing ?? const SizedBox.shrink(),

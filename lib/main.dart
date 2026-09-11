@@ -17,6 +17,7 @@ Future<void> main() async {
     runApp(
       ProviderScope(
         overrides: [
+          // Seed DB; logout wipe / backup restore may replace via notifier.
           databaseHolderProvider.overrideWith((ref) => db),
         ],
         child: const PosApp(),

@@ -12,13 +12,7 @@ class MoreScreen extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
 
-    final items = <_MoreItem>[
-      _MoreItem(
-        icon: Icons.group_rounded,
-        title: l10n.customersTitle,
-        subtitle: 'Buyers & credit',
-        onTap: () => context.push('/customers'),
-      ),
+    final catalog = <_MoreItem>[
       _MoreItem(
         icon: Icons.inventory_2_rounded,
         title: l10n.productsTitle,
@@ -38,6 +32,15 @@ class MoreScreen extends StatelessWidget {
         onTap: () => context.go('/stock'),
       ),
       _MoreItem(
+        icon: Icons.group_rounded,
+        title: l10n.customersTitle,
+        subtitle: 'Buyers & credit',
+        onTap: () => context.push('/customers'),
+      ),
+    ];
+
+    final business = <_MoreItem>[
+      _MoreItem(
         icon: Icons.payments_rounded,
         title: l10n.expensesTitle,
         subtitle: 'Shop spending',
@@ -49,90 +52,119 @@ class MoreScreen extends StatelessWidget {
         subtitle: 'Sales overview',
         onTap: () => context.push('/reports'),
       ),
-      _MoreItem(
-        icon: Icons.settings_rounded,
-        title: l10n.settingsTitle,
-        subtitle: 'Store & security',
-        onTap: () => context.push('/settings'),
-        wide: true,
-      ),
     ];
 
     return Scaffold(
-      backgroundColor: scheme.surfaceContainerLowest,
-      body: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
-            child: Container(
-              width: double.infinity,
-              padding: EdgeInsets.fromLTRB(
-                20,
-                MediaQuery.paddingOf(context).top + 18,
-                20,
-                28,
-              ),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    scheme.primary,
-                    Color.lerp(scheme.primary, scheme.secondary, 0.35)!,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              scheme.primary.withValues(alpha: 0.10),
+              scheme.surface,
+              scheme.surface,
+            ],
+            stops: const [0, 0.22, 1],
+          ),
+        ),
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  20,
+                  MediaQuery.paddingOf(context).top + 16,
+                  20,
+                  0,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      l10n.navMore,
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.4,
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Shop tools & shortcuts',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                    ),
                   ],
                 ),
-                borderRadius: const BorderRadius.vertical(
-                  bottom: Radius.circular(28),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                child: _SettingsHero(
+                  title: l10n.settingsTitle,
+                  subtitle: 'Store, lock, backup & theme',
+                  onTap: () => context.push('/settings'),
                 ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n.navMore,
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          color: scheme.onPrimary,
-                          fontWeight: FontWeight.w800,
-                        ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Quick access to shop tools',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: scheme.onPrimary.withValues(alpha: 0.9),
-                        ),
-                  ),
-                ],
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 10),
+                child: Text(
+                  'Catalog',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: scheme.onSurfaceVariant,
+                      ),
+                ),
               ),
             ),
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 20, 16, 28),
-            sliver: SliverGrid(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                childAspectRatio: 1.15,
-              ),
-              delegate: SliverChildBuilderDelegate(
-                (context, i) {
-                  final item = items[i];
-                  if (item.wide) {
-                    return const SizedBox.shrink();
-                  }
-                  return _MoreTile(item: item);
-                },
-                childCount: items.length - 1,
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              sliver: SliverGrid(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  childAspectRatio: 1.28,
+                ),
+                delegate: SliverChildBuilderDelegate(
+                  (context, i) => _MoreTile(item: catalog[i]),
+                  childCount: catalog.length,
+                ),
               ),
             ),
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
-            sliver: SliverToBoxAdapter(
-              child: _MoreTile(item: items.last, horizontal: true),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 22, 20, 10),
+                child: Text(
+                  'Business',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: scheme.onSurfaceVariant,
+                      ),
+                ),
+              ),
             ),
-          ),
-        ],
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 36),
+              sliver: SliverGrid(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  childAspectRatio: 1.28,
+                ),
+                delegate: SliverChildBuilderDelegate(
+                  (context, i) => _MoreTile(item: business[i]),
+                  childCount: business.length,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -144,21 +176,109 @@ class _MoreItem {
     required this.title,
     required this.subtitle,
     required this.onTap,
-    this.wide = false,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
-  final bool wide;
+}
+
+class _SettingsHero extends StatelessWidget {
+  const _SettingsHero({
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadii.xl),
+        child: Ink(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                scheme.primary,
+                Color.lerp(scheme.primary, Colors.black, 0.16)!,
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(AppRadii.xl),
+            boxShadow: [
+              BoxShadow(
+                color: scheme.primary.withValues(alpha: 0.24),
+                blurRadius: 22,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 18, 16, 18),
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(AppRadii.md),
+                  ),
+                  child: const Icon(
+                    Icons.settings_rounded,
+                    color: Colors.white,
+                    size: 26,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                            ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Colors.white.withValues(alpha: 0.88),
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: Colors.white.withValues(alpha: 0.9),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _MoreTile extends StatelessWidget {
-  const _MoreTile({required this.item, this.horizontal = false});
+  const _MoreTile({required this.item});
 
   final _MoreItem item;
-  final bool horizontal;
 
   @override
   Widget build(BuildContext context) {
@@ -176,83 +296,49 @@ class _MoreTile extends StatelessWidget {
             border: Border.all(color: scheme.outline.withValues(alpha: 0.7)),
             boxShadow: [
               BoxShadow(
-                color: scheme.onSurface.withValues(alpha: 0.04),
-                blurRadius: 16,
-                offset: const Offset(0, 8),
+                color: scheme.onSurface.withValues(alpha: 0.035),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
           child: Padding(
-            padding: EdgeInsets.all(horizontal ? 18 : 16),
-            child: horizontal
-                ? Row(
-                    children: [
-                      _iconBadge(scheme),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              item.title,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleMedium
-                                  ?.copyWith(fontWeight: FontWeight.w700),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              item.subtitle,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.copyWith(color: scheme.onSurfaceVariant),
-                            ),
-                          ],
-                        ),
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: scheme.primary.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(AppRadii.sm),
+                  ),
+                  child: Icon(item.icon, color: scheme.primary, size: 22),
+                ),
+                const Spacer(),
+                Text(
+                  item.title,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
                       ),
-                      Icon(
-                        Icons.chevron_right_rounded,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  item.subtitle,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: scheme.onSurfaceVariant,
                       ),
-                    ],
-                  )
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _iconBadge(scheme),
-                      const Spacer(),
-                      Text(
-                        item.title,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        item.subtitle,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: scheme.onSurfaceVariant,
-                            ),
-                      ),
-                    ],
-                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
         ),
       ),
-    );
-  }
-
-  Widget _iconBadge(ColorScheme scheme) {
-    return Container(
-      width: 48,
-      height: 48,
-      decoration: BoxDecoration(
-        color: scheme.primary.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(AppRadii.sm),
-      ),
-      child: Icon(item.icon, color: scheme.primary, size: 26),
     );
   }
 }

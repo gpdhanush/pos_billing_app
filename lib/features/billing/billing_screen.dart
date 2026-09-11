@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,6 +6,7 @@ import 'package:pos_billing/app/theme/app_theme.dart';
 import 'package:pos_billing/core/database/repositories/sales_repository.dart';
 import 'package:pos_billing/core/money/money.dart';
 import 'package:pos_billing/shared/models/models.dart';
+import 'package:pos_billing/shared/widgets/app_image.dart';
 import 'package:pos_billing/shared/widgets/ui_kit.dart';
 
 class BillingScreen extends ConsumerStatefulWidget {
@@ -132,9 +131,8 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
                             final quantity =
                                 _quantityFor(product, cart.lines);
                             final path = product.imagePath;
-                            final hasImage = path != null &&
-                                path.isNotEmpty &&
-                                File(path).existsSync();
+                            final hasImage =
+                                path != null && path.isNotEmpty;
                             return Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 10,
@@ -156,9 +154,19 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
                                       width: 52,
                                       height: 52,
                                       child: hasImage
-                                          ? Image.file(
-                                              File(path),
+                                          ? AppImage(
+                                              path: path,
+                                              width: 52,
+                                              height: 52,
                                               fit: BoxFit.cover,
+                                              placeholder: ColoredBox(
+                                                color: scheme.primary
+                                                    .withValues(alpha: 0.10),
+                                                child: Icon(
+                                                  Icons.inventory_2_outlined,
+                                                  color: scheme.primary,
+                                                ),
+                                              ),
                                             )
                                           : ColoredBox(
                                               color: scheme.primary

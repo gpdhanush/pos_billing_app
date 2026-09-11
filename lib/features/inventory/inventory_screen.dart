@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +5,7 @@ import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/app/providers.dart';
 import 'package:pos_billing/app/theme/app_theme.dart';
 import 'package:pos_billing/shared/models/models.dart';
+import 'package:pos_billing/shared/widgets/app_image.dart';
 import 'package:pos_billing/shared/widgets/ui_kit.dart';
 
 class InventoryScreen extends ConsumerWidget {
@@ -85,107 +84,150 @@ class InventoryScreen extends ConsumerWidget {
                 child: ListView.separated(
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                   itemCount: items.length,
-                  separatorBuilder: (_, _) => Divider(
-                    height: 1,
-                    color: scheme.outline.withValues(alpha: 0.45),
-                  ),
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
                   itemBuilder: (context, i) {
                     final p = items[i];
                     final low = p.isLowStock;
                     final path = p.imagePath;
-                    final hasImage = path != null &&
-                        path.isNotEmpty &&
-                        File(path).existsSync();
+                    final hasImage = path != null && path.isNotEmpty;
+                    const radius = 7.0;
+                    final accent = low ? AppColors.warning : AppColors.success;
+                    final cardBg = low
+                        ? AppColors.warning.withValues(alpha: 0.08)
+                        : scheme.primary.withValues(alpha: 0.06);
+                    final borderColor = low
+                        ? AppColors.warning.withValues(alpha: 0.28)
+                        : scheme.primary.withValues(alpha: 0.18);
 
-                    return InkWell(
-                      onTap: () => _adjustProduct(context, ref, p),
-                      onLongPress: () =>
-                          context.push('/products/edit?id=${p.id}'),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: Row(
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(AppRadii.compact),
-                              child: SizedBox(
-                                width: 40,
-                                height: 40,
-                                child: hasImage
-                                    ? Image.file(
-                                        File(path),
-                                        fit: BoxFit.cover,
-                                      )
-                                    : ColoredBox(
-                                        color: scheme.primary
-                                            .withValues(alpha: 0.08),
-                                        child: Icon(
-                                          Icons.inventory_2_outlined,
-                                          color: scheme.primary,
-                                          size: 20,
-                                        ),
-                                      ),
-                              ),
+                    return Material(
+                      color: cardBg,
+                      borderRadius: BorderRadius.circular(radius),
+                      child: InkWell(
+                        onTap: () => _adjustProduct(context, ref, p),
+                        onLongPress: () =>
+                            context.push('/products/edit?id=${p.id}'),
+                        borderRadius: BorderRadius.circular(radius),
+                        child: Ink(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(radius),
+                            border: Border.all(color: borderColor),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 10,
                             ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    p.name.displayTitle,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleSmall
-                                        ?.copyWith(fontWeight: FontWeight.w700),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 1),
-                                  Text(
-                                    '${p.categoryName ?? 'General'} · ${p.unit.toUpperCase()}',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodySmall
-                                        ?.copyWith(
-                                          color: scheme.onSurfaceVariant,
-                                        ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
+                            child: Row(
                               children: [
-                                Text(
-                                  '${p.currentStock}',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleSmall
-                                      ?.copyWith(fontWeight: FontWeight.w700),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(radius),
+                                  child: SizedBox(
+                                    width: 44,
+                                    height: 44,
+                                    child: hasImage
+                                        ? AppImage(
+                                            path: path,
+                                            width: 44,
+                                            height: 44,
+                                            fit: BoxFit.cover,
+                                            placeholder: ColoredBox(
+                                              color: accent.withValues(
+                                                alpha: 0.12,
+                                              ),
+                                              child: Icon(
+                                                Icons.inventory_2_outlined,
+                                                color: accent,
+                                                size: 22,
+                                              ),
+                                            ),
+                                          )
+                                        : ColoredBox(
+                                            color: accent.withValues(
+                                              alpha: 0.12,
+                                            ),
+                                            child: Icon(
+                                              Icons.inventory_2_outlined,
+                                              color: accent,
+                                              size: 22,
+                                            ),
+                                          ),
+                                  ),
                                 ),
-                                const SizedBox(height: 1),
-                                Text(
-                                  low ? 'Low stock' : 'In stock',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .labelSmall
-                                      ?.copyWith(
-                                        color: low
-                                            ? AppColors.warning
-                                            : AppColors.success,
-                                        fontWeight: FontWeight.w700,
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        p.name.displayTitle,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleSmall
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        '${p.categoryName ?? 'General'} · ${p.unit.toUpperCase()}',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                              color: scheme.onSurfaceVariant,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: accent.withValues(alpha: 0.14),
+                                    borderRadius: BorderRadius.circular(radius),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Text(
+                                        '${p.currentStock}',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleSmall
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.w800,
+                                              color: accent,
+                                            ),
+                                      ),
+                                      Text(
+                                        low ? 'Low stock' : 'In stock',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelSmall
+                                            ?.copyWith(
+                                              color: accent,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Icon(
+                                  Icons.edit_outlined,
+                                  size: 18,
+                                  color: scheme.onSurfaceVariant,
                                 ),
                               ],
                             ),
-                            const SizedBox(width: 4),
-                            Icon(
-                              Icons.edit_outlined,
-                              size: 18,
-                              color: scheme.onSurfaceVariant,
-                            ),
-                          ],
+                          ),
                         ),
                       ),
                     );

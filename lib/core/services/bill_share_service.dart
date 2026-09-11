@@ -27,6 +27,19 @@ class BillShareService {
       store.postalCode,
     ].where((e) => (e ?? '').trim().isNotEmpty).join(', ');
 
+    pw.MemoryImage? logoImage;
+    final logoPath = store.logoPath;
+    if (logoPath != null && logoPath.trim().isNotEmpty) {
+      final logoFile = File(logoPath);
+      if (await logoFile.exists()) {
+        try {
+          logoImage = pw.MemoryImage(await logoFile.readAsBytes());
+        } catch (_) {
+          logoImage = null;
+        }
+      }
+    }
+
     doc.addPage(
       pw.Page(
         pageFormat: PdfPageFormat.a4,
@@ -45,6 +58,23 @@ class BillShareService {
                 child: pw.Row(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
+                    if (logoImage != null) ...[
+                      pw.Container(
+                        width: 56,
+                        height: 56,
+                        decoration: pw.BoxDecoration(
+                          color: PdfColors.white,
+                          borderRadius: pw.BorderRadius.circular(10),
+                        ),
+                        padding: const pw.EdgeInsets.all(4),
+                        child: pw.ClipRRect(
+                          horizontalRadius: 8,
+                          verticalRadius: 8,
+                          child: pw.Image(logoImage, fit: pw.BoxFit.cover),
+                        ),
+                      ),
+                      pw.SizedBox(width: 12),
+                    ],
                     pw.Expanded(
                       child: pw.Column(
                         crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -150,7 +180,7 @@ class BillShareService {
                         ),
                         pw.SizedBox(height: 4),
                         pw.Text(
-                          invoice.summary.customerName ?? 'Walk-in',
+                          invoice.summary.customerName ?? 'Customer',
                           style: pw.TextStyle(
                             fontSize: 13,
                             fontWeight: pw.FontWeight.bold,
@@ -329,7 +359,7 @@ class BillShareService {
       '',
       invoice.summary.invoiceNumber,
       fmt.format(date),
-      invoice.summary.customerName ?? 'Walk-in',
+      invoice.summary.customerName ?? 'Customer',
       '------------------------------',
       for (final item in invoice.items) ...[
         item.name,

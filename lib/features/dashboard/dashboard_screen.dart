@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/app/providers.dart';
 import 'package:pos_billing/app/theme/app_theme.dart';
+import 'package:pos_billing/core/constants/app_constants.dart';
 import 'package:pos_billing/core/money/money.dart';
 import 'package:pos_billing/shared/models/models.dart';
 import 'package:pos_billing/shared/widgets/ui_kit.dart';
@@ -89,8 +90,8 @@ class DashboardScreen extends ConsumerWidget {
                           ),
                         ),
                         IconButton.filledTonal(
-                          tooltip: l10n.navMore,
-                          onPressed: () => context.go('/more'),
+                          tooltip: l10n.settingsTitle,
+                          onPressed: () => context.push('/settings'),
                           style: IconButton.styleFrom(
                             backgroundColor: scheme.surface,
                             foregroundColor: scheme.onSurface,
@@ -98,7 +99,7 @@ class DashboardScreen extends ConsumerWidget {
                               color: scheme.outline.withValues(alpha: 0.7),
                             ),
                           ),
-                          icon: const Icon(Icons.apps_rounded),
+                          icon: const Icon(Icons.settings_rounded),
                         ),
                       ],
                     ),
@@ -113,7 +114,6 @@ class DashboardScreen extends ConsumerWidget {
                       symbol: symbol,
                       stats: stats,
                       onRetry: () => ref.invalidate(dashboardStatsProvider),
-                      onNewBill: () => context.go('/billing'),
                     ),
                   ),
                 ),
@@ -303,68 +303,89 @@ class DashboardScreen extends ConsumerWidget {
                                       horizontal: 14,
                                       vertical: 12,
                                     ),
-                                    child: Row(
-                                      children: [
-                                        InitialsAvatar(
-                                          label: recent[i].invoiceNumber,
-                                          icon: Icons.receipt_long_rounded,
-                                          size: 42,
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                recent[i].invoiceNumber,
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .titleSmall
-                                                    ?.copyWith(
-                                                      fontWeight:
-                                                          FontWeight.w700,
-                                                    ),
-                                              ),
-                                              const SizedBox(height: 2),
-                                              Text(
-                                                recent[i].customerName ??
-                                                    l10n.billingWalkIn,
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .bodySmall,
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.end,
+                                    child: Builder(
+                                      builder: (context) {
+                                        final style = _billStatusStyle(
+                                          recent[i].status,
+                                        );
+                                        return Row(
                                           children: [
-                                            Text(
-                                              Money(recent[i].totalPaise)
-                                                  .format(symbol: symbol),
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .titleSmall
-                                                  ?.copyWith(
-                                                    fontWeight: FontWeight.w700,
-                                                  ),
-                                            ),
-                                            Text(
-                                              DateFormat.jm().format(
-                                                DateTime
-                                                    .fromMillisecondsSinceEpoch(
-                                                  recent[i].createdAt,
+                                            Container(
+                                              width: 42,
+                                              height: 42,
+                                              decoration: BoxDecoration(
+                                                color: style.color
+                                                    .withValues(alpha: 0.12),
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                  AppRadii.sm,
                                                 ),
                                               ),
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .labelSmall,
+                                              child: Icon(
+                                                style.icon,
+                                                color: style.color,
+                                                size: 22,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    recent[i].invoiceNumber,
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .titleSmall
+                                                        ?.copyWith(
+                                                          fontWeight:
+                                                              FontWeight.w700,
+                                                        ),
+                                                  ),
+                                                  const SizedBox(height: 2),
+                                                  Text(
+                                                    recent[i].customerName ??
+                                                        l10n.billingWalkIn,
+                                                    style: Theme.of(context)
+                                                        .textTheme
+                                                        .bodySmall,
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.end,
+                                              children: [
+                                                Text(
+                                                  Money(recent[i].totalPaise)
+                                                      .format(symbol: symbol),
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .titleSmall
+                                                      ?.copyWith(
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                        color: style.color,
+                                                      ),
+                                                ),
+                                                Text(
+                                                  DateFormat.jm().format(
+                                                    DateTime
+                                                        .fromMillisecondsSinceEpoch(
+                                                      recent[i].createdAt,
+                                                    ),
+                                                  ),
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .labelSmall,
+                                                ),
+                                              ],
                                             ),
                                           ],
-                                        ),
-                                      ],
+                                        );
+                                      },
                                     ),
                                   ),
                                 ),
@@ -385,6 +406,24 @@ class DashboardScreen extends ConsumerWidget {
   }
 }
 
+({Color color, IconData icon}) _billStatusStyle(String status) {
+  switch (status) {
+    case InvoiceStatus.cancelled:
+      return (color: AppColors.danger, icon: Icons.cancel_outlined);
+    case InvoiceStatus.refunded:
+      return (
+        color: AppColors.warning,
+        icon: Icons.replay_circle_filled_outlined,
+      );
+    case InvoiceStatus.completed:
+    default:
+      return (
+        color: AppColors.success,
+        icon: Icons.check_circle_outline_rounded,
+      );
+  }
+}
+
 class _HeroSalesCard extends StatelessWidget {
   const _HeroSalesCard({
     required this.l10n,
@@ -392,7 +431,6 @@ class _HeroSalesCard extends StatelessWidget {
     required this.symbol,
     required this.stats,
     required this.onRetry,
-    required this.onNewBill,
   });
 
   final AppLocalizations l10n;
@@ -400,7 +438,6 @@ class _HeroSalesCard extends StatelessWidget {
   final String symbol;
   final AsyncValue<DashboardStats?> stats;
   final VoidCallback onRetry;
-  final VoidCallback onNewBill;
 
   @override
   Widget build(BuildContext context) {
@@ -486,23 +523,6 @@ class _HeroSalesCard extends StatelessWidget {
                     ),
               );
             },
-          ),
-          const SizedBox(height: 18),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: onNewBill,
-              style: FilledButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: scheme.primary,
-                minimumSize: const Size(0, 48),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadii.md),
-                ),
-              ),
-              icon: const Icon(Icons.add_rounded),
-              label: Text(l10n.dashboardNewBill),
-            ),
           ),
         ],
       ),

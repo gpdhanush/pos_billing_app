@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -9,6 +7,7 @@ import 'package:pos_billing/core/database/repositories/sales_repository.dart';
 import 'package:pos_billing/core/money/money.dart';
 import 'package:pos_billing/core/utils/invoice_numbering.dart';
 import 'package:pos_billing/shared/models/models.dart';
+import 'package:pos_billing/shared/widgets/app_image.dart';
 import 'package:pos_billing/shared/widgets/ui_kit.dart';
 
 class OrderCheckoutScreen extends ConsumerWidget {
@@ -388,12 +387,19 @@ class OrderCheckoutScreen extends ConsumerWidget {
           );
     final row = Row(
       children: [
-        Expanded(child: Text(label, style: style)),
-        Text(value, style: valueStyle),
-        if (editable) ...[
-          const SizedBox(width: 6),
-          Icon(Icons.edit_outlined, size: 16, color: scheme.primary),
-        ],
+        Flexible(
+          child: Row(
+            children: [
+              Flexible(child: Text(label, style: style)),
+              if (editable) ...[
+                const SizedBox(width: 6),
+                Icon(Icons.edit_outlined, size: 16, color: scheme.primary),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        Text(value, style: valueStyle, textAlign: TextAlign.right),
       ],
     );
     if (onTap == null) return row;
@@ -608,8 +614,7 @@ class _ItemRow extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final product = line.product;
     final imagePath = product.imagePath;
-    final hasImage =
-        imagePath != null && imagePath.isNotEmpty && File(imagePath).existsSync();
+    final hasImage = imagePath != null && imagePath.isNotEmpty;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -621,7 +626,19 @@ class _ItemRow extends StatelessWidget {
               width: 56,
               height: 56,
               child: hasImage
-                  ? Image.file(File(imagePath), fit: BoxFit.cover)
+                  ? AppImage(
+                      path: imagePath,
+                      width: 56,
+                      height: 56,
+                      fit: BoxFit.cover,
+                      placeholder: ColoredBox(
+                        color: scheme.primary.withValues(alpha: 0.08),
+                        child: Icon(
+                          Icons.inventory_2_outlined,
+                          color: scheme.primary,
+                        ),
+                      ),
+                    )
                   : ColoredBox(
                       color: scheme.primary.withValues(alpha: 0.08),
                       child: Icon(

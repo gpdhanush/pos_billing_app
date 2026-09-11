@@ -13,6 +13,7 @@ import 'package:pos_billing/core/database/repositories/product_repository.dart';
 import 'package:pos_billing/core/errors/app_exception.dart';
 import 'package:pos_billing/core/money/money.dart';
 import 'package:pos_billing/shared/models/models.dart';
+import 'package:pos_billing/shared/widgets/app_image.dart';
 import 'package:pos_billing/shared/widgets/ui_kit.dart';
 
 const _fieldRadius = 5.0;
@@ -231,7 +232,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
   bool get _hasImage {
     final path = _imagePath;
-    return path != null && path.isNotEmpty && File(path).existsSync();
+    return path != null && path.isNotEmpty;
   }
 
   @override
@@ -295,10 +296,12 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                           borderRadius: BorderRadius.circular(
                                             _fieldRadius + 6,
                                           ),
-                                          child: Image.file(
-                                            File(_imagePath!),
+                                          child: AppImage(
+                                            path: _imagePath,
                                             fit: BoxFit.cover,
-                                            errorBuilder: (_, _, _) => Icon(
+                                            width: 140,
+                                            height: 140,
+                                            error: Icon(
                                               Icons.broken_image_outlined,
                                               color: scheme.onSurfaceVariant,
                                               size: 36,

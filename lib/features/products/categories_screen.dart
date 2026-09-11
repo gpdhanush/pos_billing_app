@@ -59,8 +59,6 @@ class CategoriesScreen extends ConsumerWidget {
                     title: l10n.categoriesTitle,
                     subtitle: 'Add categories to organize products.',
                     icon: Icons.category_outlined,
-                    actionLabel: l10n.categoriesAdd,
-                    onAction: () => context.push('/categories/edit'),
                   );
                 }
                 return ListView.separated(

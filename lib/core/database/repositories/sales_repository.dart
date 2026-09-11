@@ -559,7 +559,7 @@ FROM invoice_items ii
 JOIN invoices i ON i.id = ii.invoice_id
 WHERE i.store_id = ? AND i.created_at >= ? AND i.created_at < ? AND i.status = ? AND ii.quantity > 0
 GROUP BY ii.product_name_snapshot
-ORDER BY sales DESC
+ORDER BY qty DESC, sales DESC
 LIMIT ?
 ''',
       [storeId, range.startMs, range.endMs, InvoiceStatus.completed, limit],

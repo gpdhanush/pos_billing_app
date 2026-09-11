@@ -9,6 +9,7 @@ import 'package:pos_billing/core/constants/app_constants.dart';
 import 'package:pos_billing/core/database/repositories/sales_repository.dart';
 import 'package:pos_billing/core/money/money.dart';
 import 'package:pos_billing/core/services/reports_pdf_exporter.dart';
+import 'package:pos_billing/shared/models/models.dart';
 import 'package:pos_billing/shared/widgets/ui_kit.dart';
 
 class ReportsScreen extends ConsumerStatefulWidget {
@@ -105,7 +106,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     required List<(String, int, int)> top,
     required int stockValue,
     required dynamic stats,
-    required int expenses,
+    required int expensesTotal,
+    required List<Expense> expenses,
   }) async {
     final l10n = AppLocalizations.of(context);
     final store = ref.read(storeProfileProvider).valueOrNull;
@@ -119,9 +121,10 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
         todaySalesPaise: stats.todaySalesPaise as int,
         billsToday: stats.billsToday as int,
         stockValuePaise: stockValue,
-        expensesPaise: expenses,
+        expensesPaise: expensesTotal,
         payments: payments,
         topProducts: top,
+        expenses: expenses,
       );
     } catch (_) {
       if (mounted) showSnack(context, 'Unable to export report PDF');
@@ -152,20 +155,29 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
         key: ValueKey('${range.startMs}-${range.endMs}'),
         future: () async {
           final sales = ref.read(salesRepositoryProvider);
+          final expenseRepo = ref.read(expenseRepositoryProvider);
           final payments = await sales.paymentTotals(store.id, range);
           final top = await sales.topProducts(store.id, range);
           final value = await sales.stockValuePaise(store.id);
           final stats = await sales.dashboardStats(store.id);
-          final expenses = await ref
-              .read(expenseRepositoryProvider)
-              .total(store.id, startMs: range.startMs, endMs: range.endMs);
-          return (payments, top, value, stats, expenses);
+          final expensesTotal = await expenseRepo.total(
+            store.id,
+            startMs: range.startMs,
+            endMs: range.endMs,
+          );
+          final expenses = await expenseRepo.listInRange(
+            store.id,
+            startMs: range.startMs,
+            endMs: range.endMs,
+          );
+          return (payments, top, value, stats, expensesTotal, expenses);
         }(),
         builder: (context, snap) {
           if (!snap.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
-          final (payments, top, value, stats, expenses) = snap.data!;
+          final (payments, top, value, stats, expensesTotal, expenses) =
+              snap.data!;
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
             children: [
@@ -231,13 +243,15 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                                   top: top,
                                   stockValue: value,
                                   stats: stats,
+                                  expensesTotal: expensesTotal,
                                   expenses: expenses,
                                 ),
                         icon: _exporting
                             ? const SizedBox(
                                 width: 16,
                                 height: 16,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
                               )
                             : const Icon(Icons.picture_as_pdf_outlined),
                         label: Text(
@@ -277,7 +291,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                   ),
                   StatTile(
                     label: l10n.reportsExpenses,
-                    value: Money(expenses).format(symbol: symbol),
+                    value: Money(expensesTotal).format(symbol: symbol),
                     icon: Icons.payments_outlined,
                     accent: AppColors.warning,
                   ),
@@ -342,14 +356,63 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                       for (var i = 0; i < top.length; i++) ...[
                         if (i > 0) const Divider(),
                         ListTile(
-                          leading: InitialsAvatar(label: top[i].$1, size: 42),
+                          leading: CircleAvatar(
+                            backgroundColor: Theme.of(context)
+                                .colorScheme
+                                .primary
+                                .withValues(alpha: 0.12),
+                            child: Text(
+                              '${i + 1}',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.primary,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
                           title: Text(top[i].$1.displayTitle),
                           subtitle: Text(
                             '${l10n.commonQuantity}: ${top[i].$2}',
                           ),
                           trailing: Text(
                             Money(top[i].$3).format(symbol: symbol),
-                            style: Theme.of(context).textTheme.titleSmall
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleSmall
+                                ?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              const SizedBox(height: 18),
+              SectionHeader(title: l10n.reportsExpenses),
+              const SizedBox(height: 10),
+              if (expenses.isEmpty)
+                SoftCard(
+                  child: Text(
+                    'No expenses in this period',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                )
+              else
+                SoftCard(
+                  padding: EdgeInsets.zero,
+                  child: Column(
+                    children: [
+                      for (var i = 0; i < expenses.length; i++) ...[
+                        if (i > 0) const Divider(),
+                        ListTile(
+                          title: Text(expenses[i].category.displayTitle),
+                          subtitle: Text(
+                            '${expenses[i].paymentMethod.toUpperCase()} · ${DateFormat.yMMMd().format(DateTime.fromMillisecondsSinceEpoch(expenses[i].spentAt))}',
+                          ),
+                          trailing: Text(
+                            Money(expenses[i].amountPaise)
+                                .format(symbol: symbol),
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleSmall
                                 ?.copyWith(fontWeight: FontWeight.w700),
                           ),
                         ),

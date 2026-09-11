@@ -28,7 +28,6 @@ import 'package:pos_billing/features/products/product_form_screen.dart';
 import 'package:pos_billing/features/products/products_screen.dart';
 import 'package:pos_billing/features/reports/reports_screen.dart';
 import 'package:pos_billing/features/sales/invoice_detail_screen.dart';
-import 'package:pos_billing/features/sales/sales_screen.dart';
 import 'package:pos_billing/features/settings/settings_screen.dart';
 import 'package:pos_billing/features/setup/store_setup_screen.dart';
 import 'package:pos_billing/features/shell/app_shell.dart';

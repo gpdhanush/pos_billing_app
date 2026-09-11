@@ -161,7 +161,15 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
     if (mounted) setState(() => _requesting = false);
   }
 
-  void _continue() => context.go('/home');
+  void _continue() {
+    // From Settings → Permissions: return to Settings.
+    // From splash/onboarding: go Home.
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go('/home');
+    }
+  }
 
   String _statusLabel(PermissionStatus? status) {
     if (status == null) return 'Checking…';

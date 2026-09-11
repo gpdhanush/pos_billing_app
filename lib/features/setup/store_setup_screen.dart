@@ -12,6 +12,7 @@ import 'package:pos_billing/core/utils/invoice_numbering.dart';
 import 'package:pos_billing/core/utils/time.dart';
 import 'package:pos_billing/core/utils/validators.dart';
 import 'package:pos_billing/shared/models/store_profile.dart';
+import 'package:pos_billing/shared/widgets/app_image.dart';
 import 'package:pos_billing/shared/widgets/ui_kit.dart';
 
 class StoreSetupScreen extends ConsumerStatefulWidget {
@@ -212,12 +213,9 @@ class _StoreSetupScreenState extends ConsumerState<StoreSetupScreen> {
       if (!mounted) return;
 
       if (widget.editing) {
-        // Return to Settings (or whatever opened this screen).
-        if (context.canPop()) {
-          context.pop(true);
-        } else {
-          context.go('/settings');
-        }
+        // Prefer go() so a router refresh after save cannot remount this
+        // screen at step 0 (Store tab) again.
+        context.go('/settings');
       } else {
         // First-time setup → biometric screen, never bounce back here.
         context.go('/setup/security');
@@ -472,8 +470,18 @@ class _StoreSetupScreenState extends ConsumerState<StoreSetupScreen> {
                     shape: BoxShape.circle,
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: _logoPath != null && File(_logoPath!).existsSync()
-                      ? Image.file(File(_logoPath!), fit: BoxFit.cover)
+                  child: _logoPath != null && _logoPath!.isNotEmpty
+                      ? AppImage(
+                          path: _logoPath,
+                          fit: BoxFit.cover,
+                          width: 96,
+                          height: 96,
+                          placeholder: Icon(
+                            Icons.storefront_rounded,
+                            size: 48,
+                            color: scheme.primary,
+                          ),
+                        )
                       : Icon(
                           Icons.storefront_rounded,
                           size: 48,

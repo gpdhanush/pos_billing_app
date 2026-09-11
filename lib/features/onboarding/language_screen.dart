@@ -145,20 +145,27 @@ class ThemePickerScreen extends ConsumerWidget {
           SectionHeader(title: l10n.themeAccent),
           const SizedBox(height: 10),
           SoftCard(
-            child: Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: [
-                for (final accent in AccentOption.values)
-                  _AccentSwatch(
-                    option: accent,
-                    label: accent.label,
-                    selected: settings.accent == accent.name,
-                    onTap: () => ref
-                        .read(appSettingsProvider.notifier)
-                        .setAccent(accent.name),
-                  ),
-              ],
+            child: GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: AccentOption.values.length,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 4,
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+                childAspectRatio: 1,
+              ),
+              itemBuilder: (context, index) {
+                final accent = AccentOption.values[index];
+                return _AccentSwatch(
+                  option: accent,
+                  label: accent.label,
+                  selected: settings.accent == accent.name,
+                  onTap: () => ref
+                      .read(appSettingsProvider.notifier)
+                      .setAccent(accent.name),
+                );
+              },
             ),
           ),
           const SizedBox(height: 24),
@@ -204,8 +211,7 @@ class _AccentSwatch extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadii.md),
       child: Container(
-        width: 86,
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppRadii.md),
           border: Border.all(
@@ -215,25 +221,15 @@ class _AccentSwatch extends StatelessWidget {
             width: selected ? 2 : 1,
           ),
         ),
-        child: Column(
-          children: [
-            Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                color: option.seed,
-                shape: BoxShape.circle,
-              ),
+        child: Center(
+          child: Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: option.seed,
+              shape: BoxShape.circle,
             ),
-            // const SizedBox(height: 8),
-            // Text(
-            //   label,
-            //   style: Theme.of(context).textTheme.labelSmall,
-            //   textAlign: TextAlign.center,
-            //   maxLines: 2,
-            //   overflow: TextOverflow.ellipsis,
-            // ),
-          ],
+          ),
         ),
       ),
     );

@@ -280,15 +280,23 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: scheme.outline,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
+                Row(
+                  children: [
+                    const Spacer(),
+                    IconButton(
+                      tooltip: 'Close',
+                      onPressed: () {
+                        ref.read(cartProvider.notifier).clear();
+                        Navigator.pop(sheetContext);
+                        context.go('/billing');
+                      },
+                      icon: Icon(
+                        Icons.close_rounded,
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 20),
                 Icon(
                   Icons.check_circle_rounded,
                   size: 64,
