@@ -47,6 +47,10 @@ class InventoryScreen extends ConsumerWidget {
       backgroundColor: scheme.surfaceContainerLowest,
       appBar: GlassPageHeader(
         title: l10n.inventoryTitle,
+        leading: IconButton(
+          onPressed: () => context.pop(),
+          icon: const Icon(Icons.arrow_back_rounded),
+        ),
         actions: [
           IconButton(
             tooltip: l10n.inventoryStockIn,
@@ -54,6 +58,17 @@ class InventoryScreen extends ConsumerWidget {
             icon: const Icon(Icons.qr_code_scanner_rounded),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          final saved = await context.push<bool>('/stock/movement');
+          if (saved == true) {
+            ref.invalidate(productsProvider);
+            ref.invalidate(stockHistoryProvider);
+          }
+        },
+        icon: const Icon(Icons.add_rounded),
+        label: Text(l10n.inventoryStockIn),
       ),
       body: products.when(
         loading: () => const Center(child: CircularProgressIndicator()),

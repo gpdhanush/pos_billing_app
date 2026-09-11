@@ -226,6 +226,21 @@ final categoriesProvider = FutureProvider.autoDispose<List<Category>>((ref) asyn
   return ref.watch(productRepositoryProvider).getCategories(store.id);
 });
 
+final stockHistoryFilterProvider =
+    StateProvider<StockHistoryFilter>((ref) => StockHistoryFilter.all);
+
+final stockHistorySearchProvider = StateProvider<String>((ref) => '');
+
+final stockHistoryProvider =
+    FutureProvider.autoDispose<List<StockMovement>>((ref) async {
+  final filter = ref.watch(stockHistoryFilterProvider);
+  final query = ref.watch(stockHistorySearchProvider);
+  return ref.watch(stockRepositoryProvider).history(
+        filter: filter,
+        query: query,
+      );
+});
+
 class CartState {
   const CartState({
     this.lines = const [],

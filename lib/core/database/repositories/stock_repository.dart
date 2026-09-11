@@ -17,7 +17,7 @@ class StockRepository {
     int? unitCost,
     String? note,
   }) async {
-    if (quantity == 0) return;
+    if (quantity <= 0) return;
     await _db.transaction((txn) async {
       await _applyDelta(
         txn,
@@ -27,6 +27,17 @@ class StockRepository {
         note: note,
         unitCost: unitCost,
       );
+      if (unitCost != null) {
+        await txn.update(
+          'products',
+          {
+            'purchase_price': unitCost,
+            'updated_at': nowMillis(),
+          },
+          where: 'id = ?',
+          whereArgs: [productId],
+        );
+      }
     });
   }
 
@@ -59,15 +70,58 @@ class StockRepository {
     });
   }
 
-  Future<List<StockMovement>> history({int? productId, int limit = 100}) async {
-    final where = productId == null ? '' : 'WHERE s.product_id = ?';
-    final args = productId == null
-        ? <Object?>[limit]
-        : <Object?>[productId, limit];
+  Future<List<StockMovement>> history({
+    int? productId,
+    StockHistoryFilter filter = StockHistoryFilter.all,
+    String? query,
+    int limit = 200,
+  }) async {
+    final clauses = <String>[];
+    final args = <Object?>[];
+
+    if (productId != null) {
+      clauses.add('s.product_id = ?');
+      args.add(productId);
+    }
+
+    switch (filter) {
+      case StockHistoryFilter.stockIn:
+        clauses.add('s.quantity > 0');
+      case StockHistoryFilter.stockOut:
+        clauses.add('s.quantity < 0');
+      case StockHistoryFilter.all:
+        break;
+    }
+
+    final q = query?.trim().toLowerCase();
+    if (q != null && q.isNotEmpty) {
+      clauses.add(
+        '(LOWER(p.name) LIKE ? OR LOWER(IFNULL(p.sku, "")) LIKE ?)',
+      );
+      args
+        ..add('%$q%')
+        ..add('%$q%');
+    }
+
+    final where =
+        clauses.isEmpty ? '' : 'WHERE ${clauses.join(' AND ')}';
+    args.add(limit);
+
     final rows = await _db.db.rawQuery('''
-SELECT s.*, p.name AS product_name
+SELECT
+  s.*,
+  p.name AS product_name,
+  p.sku AS product_sku,
+  p.unit AS product_unit,
+  p.selling_price AS selling_price,
+  CASE
+    WHEN s.reference_type = 'invoice' THEN i.invoice_number
+    ELSE NULL
+  END AS reference_label
 FROM stock_transactions s
 JOIN products p ON p.id = s.product_id
+LEFT JOIN invoices i
+  ON s.reference_type = 'invoice' AND s.reference_id = i.id
 $where
 ORDER BY s.created_at DESC
 LIMIT ?

@@ -7,11 +7,14 @@ import 'package:pos_billing/app/app.dart';
 import 'package:pos_billing/app/providers.dart';
 import 'package:pos_billing/core/database/app_database.dart';
 import 'package:pos_billing/core/errors/app_error_handler.dart';
+import 'package:pos_billing/core/services/app_log_service.dart';
 
 Future<void> main() async {
   await runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
     AppErrorHandler.install();
+    await AppLogService.init();
+    await AppLogService.info('App starting');
 
     final db = await AppDatabase.open();
     runApp(
@@ -24,6 +27,7 @@ Future<void> main() async {
       ),
     );
   }, (error, stack) {
+    AppLogService.crash(error, stack, 'runZonedGuarded');
     if (kDebugMode) {
       debugPrint('Zone error: $error\n$stack');
       return;

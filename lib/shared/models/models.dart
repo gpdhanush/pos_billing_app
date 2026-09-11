@@ -263,13 +263,22 @@ class PaymentRecord {
       );
 }
 
+enum StockHistoryFilter { all, stockIn, stockOut }
+
 class StockMovement {
   const StockMovement({
     required this.id,
     required this.productId,
     this.productName,
+    this.productSku,
+    this.productUnit = 'pcs',
+    this.sellingPricePaise = 0,
     required this.type,
     required this.quantity,
+    this.unitCostPaise,
+    this.referenceType,
+    this.referenceId,
+    this.referenceLabel,
     this.note,
     required this.createdAt,
   });
@@ -277,17 +286,34 @@ class StockMovement {
   final int id;
   final int productId;
   final String? productName;
+  final String? productSku;
+  final String productUnit;
+  final int sellingPricePaise;
   final String type;
   final int quantity;
+  final int? unitCostPaise;
+  final String? referenceType;
+  final int? referenceId;
+  final String? referenceLabel;
   final String? note;
   final int createdAt;
+
+  bool get isIn => quantity > 0;
+  bool get isOut => quantity < 0;
 
   factory StockMovement.fromMap(Map<String, Object?> map) => StockMovement(
         id: map['id'] as int,
         productId: map['product_id'] as int,
         productName: map['product_name'] as String?,
+        productSku: map['product_sku'] as String?,
+        productUnit: (map['product_unit'] as String?) ?? 'pcs',
+        sellingPricePaise: (map['selling_price'] as int?) ?? 0,
         type: map['transaction_type'] as String,
         quantity: map['quantity'] as int,
+        unitCostPaise: map['unit_cost'] as int?,
+        referenceType: map['reference_type'] as String?,
+        referenceId: map['reference_id'] as int?,
+        referenceLabel: map['reference_label'] as String?,
         note: map['note'] as String?,
         createdAt: map['created_at'] as int,
       );

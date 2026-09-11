@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:pos_billing/core/constants/app_constants.dart';
+import 'package:pos_billing/core/services/app_log_service.dart';
 
 /// Holds the latest fatal/uncaught app error for a full-screen recovery UI.
 final ValueNotifier<AppCrashInfo?> appCrashNotifier = ValueNotifier(null);
@@ -17,7 +19,7 @@ class AppCrashInfo {
         .replaceFirst(RegExp(r'^Error:\s*'), '');
     return AppCrashInfo(
       message: cleaned.isEmpty ? 'Unexpected error' : cleaned,
-      details: kDebugMode && stack != null ? stack.toString() : null,
+      details: stack?.toString(),
     );
   }
 
@@ -37,20 +39,31 @@ class AppErrorHandler {
       if (kDebugMode) {
         FlutterError.dumpErrorToConsole(details, forceReport: true);
       }
-      // Widget-tree failures are rendered by [ErrorWidget.builder].
-      // Uncaught async/zone failures use [appCrashNotifier].
+      // Log all Flutter framework errors for later email diagnostics.
+      AppLogService.crash(
+        details.exceptionAsString(),
+        details.stack,
+        'FlutterError.onError',
+      );
     };
 
     PlatformDispatcher.instance.onError = (error, stack) {
       if (kDebugMode) {
         debugPrint('Uncaught error: $error\n$stack');
-        return false;
       }
-      appCrashNotifier.value = AppCrashInfo.fromObject(error, stack);
+      AppLogService.crash(error, stack, 'PlatformDispatcher.onError');
+      if (!kDebugMode) {
+        appCrashNotifier.value = AppCrashInfo.fromObject(error, stack);
+      }
       return true;
     };
 
     ErrorWidget.builder = (details) {
+      AppLogService.crash(
+        details.exceptionAsString(),
+        details.stack,
+        'ErrorWidget',
+      );
       if (kDebugMode) {
         return ErrorWidget(details.exception);
       }
@@ -81,7 +94,7 @@ class AppErrorHandler {
 }
 
 /// Modern recovery UI used for production widget/zone failures.
-class AppErrorPage extends StatelessWidget {
+class AppErrorPage extends StatefulWidget {
   const AppErrorPage({
     super.key,
     this.title = 'Something went wrong',
@@ -96,10 +109,39 @@ class AppErrorPage extends StatelessWidget {
   final VoidCallback? onGoHome;
 
   @override
+  State<AppErrorPage> createState() => _AppErrorPageState();
+}
+
+class _AppErrorPageState extends State<AppErrorPage> {
+  bool _sending = false;
+
+  Future<void> _sendLogs() async {
+    if (_sending) return;
+    setState(() => _sending = true);
+    try {
+      final ok = await AppLogService.sendLogsToSupport(
+        userNote: widget.message,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(
+          content: Text(
+            ok
+                ? 'Share or email the log to support'
+                : 'Unable to open log share',
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final friendly = _friendlyMessage(message);
+    final friendly = _friendlyMessage(widget.message);
 
     return ColoredBox(
       color: scheme.surface,
@@ -137,7 +179,7 @@ class AppErrorPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 28),
                   Text(
-                    title,
+                    widget.title,
                     textAlign: TextAlign.center,
                     style: textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w700,
@@ -153,9 +195,9 @@ class AppErrorPage extends StatelessWidget {
                       color: scheme.onSurfaceVariant,
                     ),
                   ),
-                  if (message != null &&
-                      message!.trim().isNotEmpty &&
-                      message!.trim() != friendly) ...[
+                  if (widget.message != null &&
+                      widget.message!.trim().isNotEmpty &&
+                      widget.message!.trim() != friendly) ...[
                     const SizedBox(height: 18),
                     Container(
                       width: double.infinity,
@@ -168,7 +210,7 @@ class AppErrorPage extends StatelessWidget {
                         ),
                       ),
                       child: Text(
-                        message!,
+                        widget.message!,
                         textAlign: TextAlign.center,
                         maxLines: 6,
                         overflow: TextOverflow.ellipsis,
@@ -180,11 +222,11 @@ class AppErrorPage extends StatelessWidget {
                     ),
                   ],
                   const SizedBox(height: 28),
-                  if (onRetry != null)
+                  if (widget.onRetry != null)
                     SizedBox(
                       width: double.infinity,
                       child: FilledButton(
-                        onPressed: onRetry,
+                        onPressed: widget.onRetry,
                         style: FilledButton.styleFrom(
                           minimumSize: const Size.fromHeight(52),
                           shape: RoundedRectangleBorder(
@@ -194,12 +236,12 @@ class AppErrorPage extends StatelessWidget {
                         child: const Text('Try again'),
                       ),
                     ),
-                  if (onGoHome != null) ...[
+                  if (widget.onGoHome != null) ...[
                     const SizedBox(height: 10),
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton(
-                        onPressed: onGoHome,
+                        onPressed: widget.onGoHome,
                         style: OutlinedButton.styleFrom(
                           minimumSize: const Size.fromHeight(52),
                           shape: RoundedRectangleBorder(
@@ -210,6 +252,38 @@ class AppErrorPage extends StatelessWidget {
                       ),
                     ),
                   ],
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: _sending ? null : _sendLogs,
+                      icon: _sending
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.bug_report_outlined),
+                      label: Text(
+                        _sending ? 'Preparing logs…' : 'Send crash log',
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(52),
+                        foregroundColor: scheme.primary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Sends device details + log file to ${AppLinks.supportEmail}',
+                    textAlign: TextAlign.center,
+                    style: textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -221,7 +295,7 @@ class AppErrorPage extends StatelessWidget {
 
   String _friendlyMessage(String? raw) {
     if (raw == null || raw.trim().isEmpty) {
-      return 'The app hit an unexpected problem. You can try again or return home.';
+      return 'The app hit an unexpected problem. You can try again, return home, or send us the crash log.';
     }
     final lower = raw.toLowerCase();
     if (lower.contains('socket') ||
@@ -237,6 +311,6 @@ class AppErrorPage extends StatelessWidget {
     if (lower.contains('permission')) {
       return 'A required permission is missing. Update permissions and retry.';
     }
-    return 'The app hit an unexpected problem. You can try again or return home.';
+    return 'The app hit an unexpected problem. You can try again, return home, or send us the crash log.';
   }
 }

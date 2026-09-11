@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/app/providers.dart';
 import 'package:pos_billing/core/constants/app_constants.dart';
+import 'package:pos_billing/core/services/app_log_service.dart';
 import 'package:pos_billing/core/services/app_reset_service.dart';
 import 'package:pos_billing/shared/widgets/ui_kit.dart';
 
@@ -197,6 +198,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     const Divider(indent: 68),
                     _settingsRow(
                       context,
+                      icon: Icons.file_download_outlined,
+                      title: 'Export data',
+                      hasChevron: true,
+                      onTap: () => context.push('/settings/export'),
+                    ),
+                    const Divider(indent: 68),
+                    _settingsRow(
+                      context,
                       icon: Icons.security_outlined,
                       title: 'Permissions',
                       hasChevron: true,
@@ -241,6 +250,31 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           ],
                         ),
                       ),
+                    ),
+                    const Divider(indent: 68),
+                    _settingsRow(
+                      context,
+                      icon: Icons.support_agent_rounded,
+                      title: 'Contact us',
+                      hasChevron: true,
+                      onTap: () => context.push('/settings/contact'),
+                    ),
+                    const Divider(indent: 68),
+                    _settingsRow(
+                      context,
+                      icon: Icons.bug_report_outlined,
+                      title: 'Send app logs',
+                      hasChevron: true,
+                      onTap: () async {
+                        final ok = await AppLogService.sendLogsToSupport();
+                        if (!context.mounted) return;
+                        showSnack(
+                          context,
+                          ok
+                              ? 'Share or email the log to ${AppLinks.supportEmail}'
+                              : 'Unable to prepare logs',
+                        );
+                      },
                     ),
                     const Divider(indent: 68),
                     _settingsRow(

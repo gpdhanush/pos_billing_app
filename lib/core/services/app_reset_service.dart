@@ -5,6 +5,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:pos_billing/app/providers.dart';
 import 'package:pos_billing/core/database/app_database.dart';
+import 'package:pos_billing/core/services/backup_service.dart';
 
 /// Full local wipe used by Settings → Log out.
 ///
@@ -31,6 +32,8 @@ class AppResetService {
     await _deleteDir('product_images');
     await _deleteDir('store_logos');
     await _deleteDir('backups');
+    await _deleteDir(p.join('POS Billing', 'backup'));
+    await BackupService.wipeLocalBackupFolders();
 
     await storage.deleteAll();
 

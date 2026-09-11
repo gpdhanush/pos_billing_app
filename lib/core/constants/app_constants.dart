@@ -62,4 +62,8 @@ class AppLinks {
       'https://play.google.com/store/apps/details?id=com.gk.pos_billing';
   static const shareTagline =
       'Billed with POS Billing - get the app: $playStore';
+  static const supportEmail = 'agprakash406@gmail.com';
+  static const supportPhone = '7845456609';
+  static const supportPhoneE164 = '+917845456609';
+  static const supportAddress = 'Velachery, Chennai 600042';
 }

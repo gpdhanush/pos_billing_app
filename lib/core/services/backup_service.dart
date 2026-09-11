@@ -8,6 +8,7 @@ import 'package:encrypt/encrypt.dart' as enc;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:pos_billing/core/constants/app_constants.dart';
 import 'package:pos_billing/core/database/app_database.dart';
 import 'package:pos_billing/core/database/repositories/store_repository.dart';
@@ -46,6 +47,8 @@ class BackupService {
   final DriveBackupClient? drive;
 
   static const _keyName = 'pos_backup_aes_key';
+  static const folderAppName = 'POS Billing';
+  static const folderBackupName = 'backup';
 
   Future<BackupRecord> createBackup({bool uploadToDrive = false}) async {
     final store = await StoreRepository(_db).loadStore();
@@ -106,7 +109,10 @@ class BackupService {
     }
   }
 
-  Future<BackupPackage> buildPackage({int? storeId, required String fileName}) async {
+  Future<BackupPackage> buildPackage({
+    int? storeId,
+    required String fileName,
+  }) async {
     try {
       await _db.db.execute('PRAGMA wal_checkpoint(FULL)');
     } catch (_) {}
@@ -125,7 +131,9 @@ class BackupService {
     };
     final manifestBytes = utf8.encode(jsonEncode(manifest));
     final archive = Archive()
-      ..addFile(ArchiveFile('manifest.json', manifestBytes.length, manifestBytes))
+      ..addFile(
+        ArchiveFile('manifest.json', manifestBytes.length, manifestBytes),
+      )
       ..addFile(ArchiveFile('database.enc', encrypted.length, encrypted));
     final zipped = ZipEncoder().encode(archive);
     return BackupPackage(
@@ -136,7 +144,10 @@ class BackupService {
     );
   }
 
-  Future<void> restoreFromFile(String path, {Future<void> Function()? afterClosed}) async {
+  Future<void> restoreFromFile(
+    String path, {
+    Future<void> Function()? afterClosed,
+  }) async {
     final bytes = await File(path).readAsBytes();
     await restoreFromBytes(bytes, afterClosed: afterClosed);
   }
@@ -156,13 +167,16 @@ class BackupService {
     if (manifestFile == null || dbFile == null) {
       throw const RestoreException('Backup is missing required files');
     }
-    final manifest =
-        jsonDecode(utf8.decode(manifestFile.content as List<int>)) as Map<String, dynamic>;
+    final manifest = jsonDecode(utf8.decode(manifestFile.content as List<int>))
+        as Map<String, dynamic>;
     final version = manifest['backup_version'] as int? ?? 0;
     if (version > DbConstants.backupFormatVersion) {
-      throw const RestoreException('This backup was created by a newer app version');
+      throw const RestoreException(
+        'This backup was created by a newer app version',
+      );
     }
-    final decrypted = await _decrypt(Uint8List.fromList(dbFile.content as List<int>));
+    final decrypted =
+        await _decrypt(Uint8List.fromList(dbFile.content as List<int>));
     final checksum = sha256.convert(decrypted).toString();
     if (checksum != manifest['checksum']) {
       throw const RestoreException('Backup integrity check failed');
@@ -179,12 +193,14 @@ class BackupService {
   }
 
   Future<List<BackupRecord>> history() async {
-    final rows = await _db.db.query('backup_history', orderBy: 'created_at DESC');
+    final rows =
+        await _db.db.query('backup_history', orderBy: 'created_at DESC');
     return rows.map(BackupRecord.fromMap).toList();
   }
 
   Future<BackupRecord?> get(int id) async {
-    final rows = await _db.db.query('backup_history', where: 'id = ?', whereArgs: [id]);
+    final rows =
+        await _db.db.query('backup_history', where: 'id = ?', whereArgs: [id]);
     if (rows.isEmpty) return null;
     return BackupRecord.fromMap(rows.first);
   }
@@ -201,6 +217,36 @@ class BackupService {
     return BackupRecord.fromMap(rows.first);
   }
 
+  /// Deletes an older backup file + history row. The newest successful backup
+  /// cannot be deleted.
+  Future<void> deleteBackup(int id) async {
+    final record = await get(id);
+    if (record == null) return;
+
+    final latest = await lastSuccessful();
+    if (latest != null &&
+        latest.id == record.id &&
+        record.status == 'successful') {
+      throw const BackupException(
+        'Latest backup cannot be deleted. Keep at least one restore point.',
+      );
+    }
+
+    final path = record.localPath;
+    if (path != null && path.isNotEmpty) {
+      final file = File(path);
+      if (await file.exists()) {
+        await file.delete();
+      }
+    }
+
+    await _db.db.delete(
+      'backup_history',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
   Future<Directory> localBackupDirectory() => _backupDir();
 
   Future<String> localBackupDirectoryPath() async {
@@ -208,11 +254,93 @@ class BackupService {
     return dir.path;
   }
 
+  /// Public Downloads → `POS Billing/backup` when possible; otherwise app docs.
   Future<Directory> _backupDir() async {
+    await _ensureStoragePermission();
+    final preferred = await _publicDownloadsBackupDir();
+    if (preferred != null) {
+      try {
+        if (!await preferred.exists()) {
+          await preferred.create(recursive: true);
+        }
+        final probe = File(p.join(preferred.path, '.write_probe'));
+        await probe.writeAsString('ok', flush: true);
+        await probe.delete();
+        return preferred;
+      } catch (_) {
+        // Fall through to private docs.
+      }
+    }
+
     final root = await getApplicationDocumentsDirectory();
-    final dir = Directory(p.join(root.path, 'backups'));
+    final dir = Directory(
+      p.join(root.path, folderAppName, folderBackupName),
+    );
     if (!await dir.exists()) await dir.create(recursive: true);
     return dir;
+  }
+
+  Future<Directory?> _publicDownloadsBackupDir() async {
+    if (!Platform.isAndroid) {
+      final downloads = await getDownloadsDirectory();
+      if (downloads == null) return null;
+      return Directory(
+        p.join(downloads.path, folderAppName, folderBackupName),
+      );
+    }
+
+    final candidates = <String>[
+      '/storage/emulated/0/Download',
+      '/storage/emulated/0/Downloads',
+      '/sdcard/Download',
+    ];
+    for (final base in candidates) {
+      final root = Directory(base);
+      if (await root.exists()) {
+        return Directory(
+          p.join(root.path, folderAppName, folderBackupName),
+        );
+      }
+    }
+    return null;
+  }
+
+  Future<void> _ensureStoragePermission() async {
+    if (!Platform.isAndroid) return;
+    final status = await Permission.storage.status;
+    if (status.isGranted || status.isLimited) return;
+    if (status.isDenied || status.isRestricted) {
+      await Permission.storage.request();
+    }
+  }
+
+  /// Best-effort wipe of local backup files (private + public folders).
+  static Future<void> wipeLocalBackupFolders() async {
+    final targets = <Directory>[];
+    try {
+      final docs = await getApplicationDocumentsDirectory();
+      targets
+        ..add(Directory(p.join(docs.path, 'backups')))
+        ..add(
+          Directory(p.join(docs.path, folderAppName, folderBackupName)),
+        );
+    } catch (_) {}
+    for (final base in [
+      '/storage/emulated/0/Download',
+      '/storage/emulated/0/Downloads',
+      '/sdcard/Download',
+    ]) {
+      targets.add(
+        Directory(p.join(base, folderAppName, folderBackupName)),
+      );
+    }
+    for (final dir in targets) {
+      try {
+        if (await dir.exists()) {
+          await dir.delete(recursive: true);
+        }
+      } catch (_) {}
+    }
   }
 
   Future<enc.Key> _key() async {
@@ -237,7 +365,8 @@ class BackupService {
     final key = await _key();
     final iv = enc.IV(data.sublist(0, 16));
     final encrypter = enc.Encrypter(enc.AES(key, mode: enc.AESMode.cbc));
-    final decrypted = encrypter.decryptBytes(enc.Encrypted(data.sublist(16)), iv: iv);
+    final decrypted =
+        encrypter.decryptBytes(enc.Encrypted(data.sublist(16)), iv: iv);
     return Uint8List.fromList(decrypted);
   }
 }

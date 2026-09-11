@@ -19,6 +19,8 @@ class DashboardScreen extends ConsumerWidget {
     final store = ref.watch(storeProfileProvider).valueOrNull;
     final stats = ref.watch(dashboardStatsProvider);
     final sales = ref.watch(salesListProvider);
+    final categories = ref.watch(categoriesProvider);
+    final products = ref.watch(productsProvider);
     final hour = DateTime.now().hour;
     final greet = hour < 12
         ? l10n.dashboardGreetingMorning
@@ -65,9 +67,7 @@ class DashboardScreen extends ConsumerWidget {
                             children: [
                               Text(
                                 greet,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
+                                style: Theme.of(context).textTheme.bodyMedium
                                     ?.copyWith(
                                       color: scheme.onSurfaceVariant,
                                       fontWeight: FontWeight.w500,
@@ -76,9 +76,7 @@ class DashboardScreen extends ConsumerWidget {
                               const SizedBox(height: 2),
                               Text(
                                 storeName,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headlineSmall
+                                style: Theme.of(context).textTheme.headlineSmall
                                     ?.copyWith(
                                       fontWeight: FontWeight.w800,
                                       letterSpacing: -0.4,
@@ -89,17 +87,18 @@ class DashboardScreen extends ConsumerWidget {
                             ],
                           ),
                         ),
-                        IconButton.filledTonal(
+                        IconButton(
                           tooltip: l10n.settingsTitle,
                           onPressed: () => context.push('/settings'),
                           style: IconButton.styleFrom(
-                            backgroundColor: scheme.surface,
+                            backgroundColor: Colors.transparent,
                             foregroundColor: scheme.onSurface,
                             side: BorderSide(
-                              color: scheme.outline.withValues(alpha: 0.7),
+                              color: Colors.transparent,
+                              // color: scheme.outline.withValues(alpha: 0.7),
                             ),
                           ),
-                          icon: const Icon(Icons.settings_rounded),
+                          icon: const Icon(Icons.settings_outlined),
                         ),
                       ],
                     ),
@@ -127,8 +126,9 @@ class DashboardScreen extends ConsumerWidget {
                           children: [
                             IconBadge(
                               icon: Icons.storefront_rounded,
-                              background:
-                                  scheme.primary.withValues(alpha: 0.10),
+                              background: scheme.primary.withValues(
+                                alpha: 0.10,
+                              ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -139,14 +139,16 @@ class DashboardScreen extends ConsumerWidget {
                                     l10n.storeSetupReminderTitle(
                                       store.completionPercent,
                                     ),
-                                    style:
-                                        Theme.of(context).textTheme.titleSmall,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleSmall,
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
                                     l10n.storeSetupReminderBody,
-                                    style:
-                                        Theme.of(context).textTheme.bodySmall,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall,
                                   ),
                                 ],
                               ),
@@ -157,6 +159,18 @@ class DashboardScreen extends ConsumerWidget {
                             ),
                           ],
                         ),
+                      ),
+                    ),
+                  ),
+                if (_needsCatalogSetup(categories, products))
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
+                      child: _GetStartedCard(
+                        onAddCategory: () => context.push('/categories/edit'),
+                        onAddProduct: () => context.push('/products/edit'),
+                        onBulkUpload: () =>
+                            showSnack(context, 'Bulk upload coming soon'),
                       ),
                     ),
                   ),
@@ -233,8 +247,7 @@ class DashboardScreen extends ConsumerWidget {
                         _ActionTile(
                           label: l10n.dashboardScanProduct,
                           icon: Icons.qr_code_scanner_rounded,
-                          onTap: () =>
-                              context.push('/scan?purpose=addToCart'),
+                          onTap: () => context.push('/scan?purpose=addToCart'),
                         ),
                         _ActionTile(
                           label: l10n.dashboardAddProduct,
@@ -276,9 +289,7 @@ class DashboardScreen extends ConsumerWidget {
                           return SoftCard(
                             child: Text(
                               l10n.dashboardNoBills,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
+                              style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(color: scheme.onSurfaceVariant),
                             ),
                           );
@@ -292,8 +303,9 @@ class DashboardScreen extends ConsumerWidget {
                                 if (i > 0)
                                   Divider(
                                     height: 1,
-                                    color: scheme.outline
-                                        .withValues(alpha: 0.45),
+                                    color: scheme.outline.withValues(
+                                      alpha: 0.45,
+                                    ),
                                   ),
                                 InkWell(
                                   onTap: () =>
@@ -314,12 +326,13 @@ class DashboardScreen extends ConsumerWidget {
                                               width: 42,
                                               height: 42,
                                               decoration: BoxDecoration(
-                                                color: style.color
-                                                    .withValues(alpha: 0.12),
+                                                color: style.color.withValues(
+                                                  alpha: 0.12,
+                                                ),
                                                 borderRadius:
                                                     BorderRadius.circular(
-                                                  AppRadii.sm,
-                                                ),
+                                                      AppRadii.sm,
+                                                    ),
                                               ),
                                               child: Icon(
                                                 style.icon,
@@ -372,8 +385,7 @@ class DashboardScreen extends ConsumerWidget {
                                                 ),
                                                 Text(
                                                   DateFormat.jm().format(
-                                                    DateTime
-                                                        .fromMillisecondsSinceEpoch(
+                                                    DateTime.fromMillisecondsSinceEpoch(
                                                       recent[i].createdAt,
                                                     ),
                                                   ),
@@ -492,18 +504,16 @@ class _HeroSalesCard extends StatelessWidget {
           Text(
             l10n.dashboardTodaySales,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.white.withValues(alpha: 0.82),
-                  fontWeight: FontWeight.w500,
-                ),
+              color: Colors.white.withValues(alpha: 0.82),
+              fontWeight: FontWeight.w500,
+            ),
           ),
           const SizedBox(height: 6),
           stats.when(
             loading: () => Text(
               '—',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                  ),
+              style: Theme.of(context).textTheme.headlineMedium
+                  ?.copyWith(color: Colors.white, fontWeight: FontWeight.w800),
             ),
             error: (_, _) => TextButton(
               onPressed: onRetry,
@@ -517,10 +527,10 @@ class _HeroSalesCard extends StatelessWidget {
               return Text(
                 amount,
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.6,
-                    ),
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.6,
+                ),
               );
             },
           ),
@@ -563,10 +573,8 @@ class _MetricCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             value,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.3,
-                ),
+            style: Theme.of(context).textTheme.titleLarge
+                ?.copyWith(fontWeight: FontWeight.w800, letterSpacing: -0.3),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -574,9 +582,9 @@ class _MetricCard extends StatelessWidget {
           Text(
             label,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w600,
-                ),
+              color: scheme.onSurfaceVariant,
+              fontWeight: FontWeight.w600,
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -651,13 +659,135 @@ class _ActionTile extends StatelessWidget {
                 const Spacer(),
                 Text(
                   label,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: fg,
-                        fontWeight: FontWeight.w700,
-                      ),
+                  style: Theme.of(context).textTheme.titleSmall
+                      ?.copyWith(color: fg, fontWeight: FontWeight.w700),
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+bool _needsCatalogSetup(
+  AsyncValue<List<Category>> categories,
+  AsyncValue<List<Product>> products,
+) {
+  final cats = categories.valueOrNull;
+  final prods = products.valueOrNull;
+  if (cats == null || prods == null) return false;
+  return cats.isEmpty || prods.isEmpty;
+}
+
+class _GetStartedCard extends StatelessWidget {
+  const _GetStartedCard({
+    required this.onAddCategory,
+    required this.onAddProduct,
+    required this.onBulkUpload,
+  });
+
+  final VoidCallback onAddCategory;
+  final VoidCallback onAddProduct;
+  final VoidCallback onBulkUpload;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return SoftCard(
+      color: scheme.primary.withValues(alpha: 0.05),
+      borderColor: scheme.outline.withValues(alpha: 0.55),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.rocket_launch_rounded, color: scheme.primary, size: 22),
+              const SizedBox(width: 8),
+              Text(
+                'Get Started',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: scheme.primary,
+                      fontWeight: FontWeight.w800,
+                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Set up your shop by adding products to your inventory',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _GetStartedChip(
+                icon: Icons.category_outlined,
+                label: 'Add Category',
+                onTap: onAddCategory,
+              ),
+              _GetStartedChip(
+                icon: Icons.add_box_outlined,
+                label: 'Add Product',
+                onTap: onAddProduct,
+              ),
+              _GetStartedChip(
+                icon: Icons.upload_file_outlined,
+                label: 'Bulk Upload',
+                onTap: onBulkUpload,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GetStartedChip extends StatelessWidget {
+  const _GetStartedChip({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: scheme.primary.withValues(alpha: 0.55)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 16, color: scheme.primary),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: scheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+            ],
           ),
         ),
       ),

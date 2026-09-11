@@ -14,7 +14,9 @@ import 'package:pos_billing/features/customers/customers_screen.dart';
 import 'package:pos_billing/features/dashboard/dashboard_screen.dart';
 import 'package:pos_billing/features/expenses/expense_form_screen.dart';
 import 'package:pos_billing/features/expenses/expenses_screen.dart';
+import 'package:pos_billing/features/inventory/add_stock_movement_screen.dart';
 import 'package:pos_billing/features/inventory/inventory_screen.dart';
+import 'package:pos_billing/features/inventory/stock_history_screen.dart';
 import 'package:pos_billing/features/more/more_screen.dart';
 import 'package:pos_billing/features/onboarding/language_screen.dart';
 import 'package:pos_billing/features/onboarding/onboarding_screen.dart';
@@ -28,6 +30,8 @@ import 'package:pos_billing/features/products/product_form_screen.dart';
 import 'package:pos_billing/features/products/products_screen.dart';
 import 'package:pos_billing/features/reports/reports_screen.dart';
 import 'package:pos_billing/features/sales/invoice_detail_screen.dart';
+import 'package:pos_billing/features/settings/contact_us_screen.dart';
+import 'package:pos_billing/features/settings/export_data_screen.dart';
 import 'package:pos_billing/features/settings/settings_screen.dart';
 import 'package:pos_billing/features/setup/store_setup_screen.dart';
 import 'package:pos_billing/features/shell/app_shell.dart';
@@ -158,7 +162,23 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(path: '/printer', builder: (c, s) => const PrinterScreen()),
       GoRoute(path: '/backup', builder: (c, s) => const BackupScreen()),
+      GoRoute(
+        path: '/stock/overview',
+        builder: (c, s) => const InventoryScreen(),
+      ),
+      GoRoute(
+        path: '/stock/movement',
+        builder: (c, s) => const AddStockMovementScreen(),
+      ),
       GoRoute(path: '/settings', builder: (c, s) => const SettingsScreen()),
+      GoRoute(
+        path: '/settings/contact',
+        builder: (c, s) => const ContactUsScreen(),
+      ),
+      GoRoute(
+        path: '/settings/export',
+        builder: (c, s) => const ExportDataScreen(),
+      ),
       GoRoute(
         path: '/settings/store',
         builder: (c, s) => const StoreSetupScreen(editing: true),
@@ -191,7 +211,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/stock',
-                builder: (c, s) => const InventoryScreen(),
+                builder: (c, s) => const StockHistoryScreen(),
               ),
             ],
           ),
