@@ -169,8 +169,8 @@ class DashboardScreen extends ConsumerWidget {
                       child: _GetStartedCard(
                         onAddCategory: () => context.push('/categories/edit'),
                         onAddProduct: () => context.push('/products/edit'),
-                        onBulkUpload: () =>
-                            showSnack(context, 'Bulk upload coming soon'),
+                        // onBulkUpload: () =>
+                        //     showSnack(context, 'Bulk upload coming soon'),
                       ),
                     ),
                   ),
@@ -685,12 +685,12 @@ class _GetStartedCard extends StatelessWidget {
   const _GetStartedCard({
     required this.onAddCategory,
     required this.onAddProduct,
-    required this.onBulkUpload,
+    // required this.onBulkUpload,
   });
 
   final VoidCallback onAddCategory;
   final VoidCallback onAddProduct;
-  final VoidCallback onBulkUpload;
+  // final VoidCallback onBulkUpload;
 
   @override
   Widget build(BuildContext context) {
@@ -704,23 +704,26 @@ class _GetStartedCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.rocket_launch_rounded, color: scheme.primary, size: 22),
+              Icon(
+                Icons.rocket_launch_rounded,
+                color: scheme.primary,
+                size: 22,
+              ),
               const SizedBox(width: 8),
               Text(
                 'Get Started',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: scheme.primary,
-                      fontWeight: FontWeight.w800,
-                    ),
+                  color: scheme.primary,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 8),
           Text(
             'Set up your shop by adding products to your inventory',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: scheme.onSurfaceVariant,
-                ),
+            style: Theme.of(context).textTheme.bodyMedium
+                ?.copyWith(color: scheme.onSurfaceVariant),
           ),
           const SizedBox(height: 14),
           Wrap(
@@ -737,11 +740,11 @@ class _GetStartedCard extends StatelessWidget {
                 label: 'Add Product',
                 onTap: onAddProduct,
               ),
-              _GetStartedChip(
-                icon: Icons.upload_file_outlined,
-                label: 'Bulk Upload',
-                onTap: onBulkUpload,
-              ),
+              // _GetStartedChip(
+              //   icon: Icons.upload_file_outlined,
+              //   label: 'Bulk Upload',
+              //   onTap: () => showSnack(context, 'Bulk upload coming soon'),
+              // ),
             ],
           ),
         ],
@@ -783,9 +786,9 @@ class _GetStartedChip extends StatelessWidget {
               Text(
                 label,
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: scheme.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  color: scheme.primary,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),

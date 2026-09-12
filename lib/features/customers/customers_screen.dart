@@ -58,7 +58,8 @@ class CustomersScreen extends ConsumerWidget {
               data: (items) {
                 if (items.isEmpty) {
                   return EmptyState(
-                    title: l10n.customersEmpty,
+                    title: 'No customers found',
+                    subtitle: 'Add customers to track credit and billing history.',
                     icon: Icons.people_outline_rounded,
                   );
                 }

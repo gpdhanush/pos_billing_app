@@ -5,6 +5,8 @@ import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/app/providers.dart';
 import 'package:pos_billing/core/constants/app_constants.dart';
 import 'package:pos_billing/core/money/money.dart';
+import 'package:pos_billing/core/services/premium_access.dart';
+import 'package:pos_billing/features/premium/premium_sheets.dart';
 import 'package:pos_billing/shared/models/models.dart';
 import 'package:pos_billing/shared/widgets/ui_kit.dart';
 
@@ -140,6 +142,13 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
           note: _note.text.trim().isEmpty ? null : _note.text.trim(),
         );
       } else {
+        final allowed = await ensurePremiumQuota(
+          context: context,
+          ref: ref,
+          kind: PremiumQuotaKind.expenses,
+        );
+        if (!allowed) return;
+        if (!mounted) return;
         await repo.create(
           storeId: store.id,
           category: category,

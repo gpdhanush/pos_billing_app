@@ -76,11 +76,10 @@ class InventoryScreen extends ConsumerWidget {
             ErrorState(onRetry: () => ref.invalidate(productsProvider)),
         data: (items) {
           if (items.isEmpty) {
-            return EmptyState(
-              title: l10n.productsEmptyTitle,
-              actionLabel: l10n.productsAddProduct,
-              onAction: () => context.push('/products/edit'),
-              icon: Icons.warehouse_outlined,
+            return const EmptyState(
+              title: 'No stock found',
+              subtitle: 'Add products first, then manage stock from here.',
+              showIcon: false,
             );
           }
 

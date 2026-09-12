@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pos_billing/app/localization/generated/app_localizations.dart';
@@ -481,7 +479,7 @@ class GlassPageHeader extends StatelessWidget implements PreferredSizeWidget {
     this.subtitle,
     this.leading,
     this.actions,
-    this.height = 72,
+    this.height = 56,
   });
 
   final String title;
@@ -496,75 +494,64 @@ class GlassPageHeader extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final top = MediaQuery.paddingOf(context).top;
 
-    return PreferredSize(
-      preferredSize: preferredSize,
-      child: ClipRRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: scheme.surfaceContainerLowest.withValues(alpha: 0.88),
-              border: Border(
-                bottom: BorderSide(
-                  color: scheme.outline.withValues(alpha: 0.55),
-                ),
-              ),
-            ),
-            child: SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: SizedBox(
-                  height: height,
-                  child: Row(
+    // Include status-bar inset in laid-out height so Scaffold body isn't
+    // covered (avoids gray/blank overlap under a short preferredSize).
+    return Material(
+      color: scheme.surfaceContainerLowest.withValues(alpha: 0.92),
+      elevation: 0,
+      child: SizedBox(
+        height: height + top,
+        child: Padding(
+          padding: EdgeInsets.only(top: top, left: 12, right: 12),
+          child: SizedBox(
+            height: height,
+            child: Row(
+              children: [
+                if (leading != null) ...[
+                  leading!,
+                  const SizedBox(width: 4),
+                ],
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (leading != null) ...[
-                        leading!,
-                        const SizedBox(width: 4),
-                      ],
-                      Expanded(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.titleLarge
-                                  ?.copyWith(fontWeight: FontWeight.w700),
-                            ),
-                            if (subtitle != null && subtitle!.isNotEmpty) ...[
-                              const SizedBox(height: 2),
-                              Text(
-                                subtitle!,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.labelMedium,
-                              ),
-                            ],
-                          ],
-                        ),
+                      Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleLarge
+                            ?.copyWith(fontWeight: FontWeight.w700),
                       ),
-                      if (actions != null && actions!.isNotEmpty)
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: actions!.map((action) {
-                            if (action is IconButton) {
-                              return IconButton(
-                                onPressed: action.onPressed,
-                                tooltip: action.tooltip,
-                                icon: Icon((action.icon as Icon).icon),
-                              );
-                            }
-                            return action;
-                          }).toList(),
+                      if (subtitle != null && subtitle!.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.labelMedium,
                         ),
+                      ],
                     ],
                   ),
                 ),
-              ),
+                if (actions != null && actions!.isNotEmpty)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: actions!.map((action) {
+                      if (action is IconButton) {
+                        return IconButton(
+                          onPressed: action.onPressed,
+                          tooltip: action.tooltip,
+                          icon: Icon((action.icon as Icon).icon),
+                        );
+                      }
+                      return action;
+                    }).toList(),
+                  ),
+              ],
             ),
           ),
         ),
@@ -581,6 +568,7 @@ class EmptyState extends StatelessWidget {
     this.actionLabel,
     this.onAction,
     this.icon = Icons.inbox_outlined,
+    this.showIcon = true,
   });
 
   final String title;
@@ -588,43 +576,75 @@ class EmptyState extends StatelessWidget {
   final String? actionLabel;
   final VoidCallback? onAction;
   final IconData icon;
+  final bool showIcon;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(28),
-        child: SoftCard(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconBadge(icon: icon, size: 56),
-              const SizedBox(height: 16),
-              Text(
-                title,
-                style: Theme.of(context).textTheme.titleMedium,
-                textAlign: TextAlign.center,
-              ),
-              if (subtitle != null) ...[
-                const SizedBox(height: 8),
-                Text(
-                  subtitle!,
-                  textAlign: TextAlign.center,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: scheme.onSurfaceVariant,
+        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 28),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (showIcon) ...[
+              Container(
+                width: 88,
+                height: 88,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      scheme.primary.withValues(alpha: 0.16),
+                      scheme.primary.withValues(alpha: 0.05),
+                    ],
+                  ),
+                  border: Border.all(
+                    color: scheme.primary.withValues(alpha: 0.18),
                   ),
                 ),
-              ],
-              if (actionLabel != null && onAction != null) ...[
-                const SizedBox(height: 18),
-                FilledButton(onPressed: onAction, child: Text(actionLabel!)),
-              ],
+                child: Icon(icon, size: 36, color: scheme.primary),
+              ),
+              const SizedBox(height: 20),
             ],
-          ),
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.3,
+                  ),
+              textAlign: TextAlign.center,
+            ),
+            if (subtitle != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                subtitle!,
+                textAlign: TextAlign.center,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                      height: 1.45,
+                    ),
+              ),
+            ],
+            if (actionLabel != null && onAction != null) ...[
+              const SizedBox(height: 22),
+              FilledButton(
+                onPressed: onAction,
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(160, 44),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(actionLabel!),
+              ),
+            ],
+          ],
         ),
       ),
     );

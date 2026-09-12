@@ -5,6 +5,8 @@ import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/app/providers.dart';
 import 'package:pos_billing/app/theme/app_theme.dart';
 import 'package:pos_billing/core/money/money.dart';
+import 'package:pos_billing/core/services/premium_access.dart';
+import 'package:pos_billing/features/premium/premium_sheets.dart';
 import 'package:pos_billing/shared/widgets/app_image.dart';
 import 'package:pos_billing/shared/widgets/ui_kit.dart';
 
@@ -31,7 +33,15 @@ class ProductsScreen extends ConsumerWidget {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push('/products/edit'),
+        onPressed: () async {
+          final allowed = await ensurePremiumQuota(
+            context: context,
+            ref: ref,
+            kind: PremiumQuotaKind.products,
+          );
+          if (!allowed || !context.mounted) return;
+          context.push('/products/edit');
+        },
         icon: const Icon(Icons.add_rounded),
         label: Text(l10n.productsAddProduct),
       ),
@@ -101,12 +111,10 @@ class ProductsScreen extends ConsumerWidget {
                   ErrorState(onRetry: () => ref.invalidate(productsProvider)),
               data: (items) {
                 if (items.isEmpty) {
-                  return EmptyState(
-                    title: l10n.productsEmptyTitle,
-                    subtitle: l10n.productsEmptyBody,
-                    actionLabel: l10n.productsAddProduct,
-                    onAction: () => context.push('/products/edit'),
-                    icon: Icons.inventory_2_outlined,
+                  return const EmptyState(
+                    title: 'No products found',
+                    subtitle: 'Add products to start selling and tracking stock.',
+                    showIcon: false,
                   );
                 }
                 return ListView.separated(

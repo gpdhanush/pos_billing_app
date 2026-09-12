@@ -292,14 +292,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
                                     ),
                                 ],
                               ),
-                              subtitle: Text(
-                                [
-                                  item.status,
-                                  if ((item.localPath ?? '').isNotEmpty)
-                                    item.localPath!,
-                                ].join('\n'),
-                              ),
-                              isThreeLine: (item.localPath ?? '').isNotEmpty,
+                              subtitle: Text(item.status),
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [

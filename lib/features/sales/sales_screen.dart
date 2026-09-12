@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/app/providers.dart';
 import 'package:pos_billing/app/theme/app_theme.dart';
@@ -42,6 +43,7 @@ class SalesScreen extends ConsumerWidget {
     final sales = ref.watch(salesListProvider);
     final range = ref.watch(salesRangeProvider);
     final store = ref.watch(storeProfileProvider).valueOrNull;
+    final dateFmt = DateFormat('dd-MMM-yyyy hh:mm:ss a');
 
     return Scaffold(
       appBar: GlassPageHeader(title: l10n.salesTitle),
@@ -100,19 +102,22 @@ class SalesScreen extends ConsumerWidget {
                   );
                 }
                 return ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
                   itemCount: items.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 6),
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
                   itemBuilder: (context, i) {
                     final bill = items[i];
                     final style = _statusStyle(bill.status);
-                    final customer =
-                        (bill.customerName ?? l10n.billingWalkIn).displayTitle;
+                    final when = dateFmt.format(
+                      DateTime.fromMillisecondsSinceEpoch(bill.createdAt),
+                    );
+                    final subtitle = '$when · ${style.label}';
+
                     return SoftCard(
                       radius: 10,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
-                        vertical: 8,
+                        vertical: 10,
                       ),
                       onTap: () => context.push('/sales/${bill.id}'),
                       child: Row(
@@ -140,41 +145,38 @@ class SalesScreen extends ConsumerWidget {
                                   style: Theme.of(context)
                                       .textTheme
                                       .titleSmall
-                                      ?.copyWith(fontWeight: FontWeight.w700),
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 13.5,
+                                      ),
                                 ),
-                                const SizedBox(height: 1),
+                                const SizedBox(height: 3),
                                 Text(
-                                  [
-                                    customer,
-                                    if (bill.paymentMethods.isNotEmpty)
-                                      bill.paymentMethods
-                                          .map((e) => e.toUpperCase())
-                                          .join(', '),
-                                  ].join(' · '),
-                                  style: Theme.of(context).textTheme.bodySmall,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                Text(
-                                  style.label,
+                                  subtitle,
                                   style: Theme.of(context)
                                       .textTheme
                                       .labelSmall
                                       ?.copyWith(
                                         color: style.color,
-                                        fontWeight: FontWeight.w700,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 11,
+                                        height: 1.25,
                                       ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ],
                             ),
                           ),
+                          const SizedBox(width: 8),
                           Text(
                             Money(bill.totalPaise).format(
                               symbol: store?.currencySymbol ?? '₹',
                             ),
-                            style: Theme.of(context).textTheme.titleSmall
+                            style: Theme.of(context).textTheme.labelLarge
                                 ?.copyWith(
                                   fontWeight: FontWeight.w700,
+                                  fontSize: 13,
                                   color: style.color,
                                 ),
                           ),

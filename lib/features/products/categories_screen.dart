@@ -56,8 +56,12 @@ class CategoriesScreen extends ConsumerWidget {
                         .toList();
                 if (filtered.isEmpty) {
                   return EmptyState(
-                    title: l10n.categoriesTitle,
-                    subtitle: 'Add categories to organize products.',
+                    title: query.isEmpty
+                        ? 'No categories found'
+                        : 'No matching categories',
+                    subtitle: query.isEmpty
+                        ? 'Add categories to organize your products.'
+                        : 'Try a different search name.',
                     icon: Icons.category_outlined,
                   );
                 }
