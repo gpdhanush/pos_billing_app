@@ -1,25 +1,29 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:pos_billing/core/constants/app_constants.dart';
 
-/// Backend + Razorpay config for Premium purchase.
-///
-/// Pass at build time:
-/// `--dart-define=PREMIUM_API_BASE=https://your.api`
-/// `--dart-define=RAZORPAY_KEY_ID=rzp_live_xxx`
+/// Premium payment config — values loaded from `.env` (see `.env.example`).
 class PremiumApiConfig {
-  static const baseUrl = String.fromEnvironment(
-    'PREMIUM_API_BASE',
-    defaultValue: 'https://posbilling.app/api',
-  );
+  static String get baseUrl {
+    final v = dotenv.maybeGet('PREMIUM_API_BASE')?.trim();
+    if (v == null || v.isEmpty) return 'https://posbilling.app/api';
+    return v;
+  }
 
   /// Public Razorpay key (safe on client). Prefer key returned by create-order.
-  static const razorpayKeyId = String.fromEnvironment(
-    'RAZORPAY_KEY_ID',
-    defaultValue: '',
-  );
+  static String get razorpayKeyId =>
+      dotenv.maybeGet('RAZORPAY_KEY_ID')?.trim() ?? '';
+
+  /// When true, Unlock requires live server + gateway (no local fallback).
+  static bool get requireServer {
+    final v = dotenv.maybeGet('PREMIUM_REQUIRE_SERVER')?.trim().toLowerCase();
+    return v == 'true' || v == '1' || v == 'yes';
+  }
 
   static const createOrderPath = '/premium/create-order';
   static const verifyPath = '/premium/verify';
   static const statusPath = '/premium/status';
+
+  static bool get hasRazorpayKey => razorpayKeyId.isNotEmpty;
 }
 
 class PremiumPlanOffer {
@@ -39,9 +43,9 @@ class PremiumPlanOffer {
 
   factory PremiumPlanOffer.local() => const PremiumPlanOffer(
         amountPaise: PremiumLimits.unlockPricePaise,
-        compareAtPaise: 19900,
-        title: 'One-time unlock',
-        badge: 'ONE TIME ONLY',
-        subtitle: 'Lifetime forever · No renewals',
+        compareAtPaise: 49900,
+        title: 'Grow your shop faster',
+        badge: 'LIMITED OFFER',
+        subtitle: 'One-time · Lifetime Premium',
       );
 }

@@ -247,35 +247,60 @@ class PremiumPurchaseService {
     }
   }
 
-  /// Full purchase: create order → Razorpay → server verify → unlock.
+  /// Purchase flow:
+  /// 1) Needs internet
+  /// 2) If Razorpay/server not configured yet → unlock locally
+  /// 3) Else create order → Razorpay → verify → unlock
   Future<void> purchasePremium({
     required String storeName,
     String preferredMethod = 'phonepe',
     String? contact,
     String? email,
   }) async {
-    final order = await createOrder(
-      storeName: storeName,
-      preferredMethod: preferredMethod,
-    );
-    final payment = await openCheckout(
-      order: order,
-      contact: contact,
-      email: email,
-    );
-    final paymentId = payment.paymentId;
-    final signature = payment.signature;
-    if (paymentId == null ||
-        paymentId.isEmpty ||
-        signature == null ||
-        signature.isEmpty) {
-      throw PremiumPurchaseException('Incomplete payment response from gateway.');
+    await ensureOnline();
+
+    // Live keys / server not wired yet — still unlock after online check.
+    if (!PremiumApiConfig.requireServer && !PremiumApiConfig.hasRazorpayKey) {
+      await settings.setPremiumUnlocked(true);
+      return;
     }
-    await verifyAndUnlock(
-      orderId: order.orderId,
-      paymentId: paymentId,
-      signature: signature,
-    );
+
+    try {
+      final order = await createOrder(
+        storeName: storeName,
+        preferredMethod: preferredMethod,
+      );
+      final payment = await openCheckout(
+        order: order,
+        contact: contact,
+        email: email,
+      );
+      final paymentId = payment.paymentId;
+      final signature = payment.signature;
+      if (paymentId == null ||
+          paymentId.isEmpty ||
+          signature == null ||
+          signature.isEmpty) {
+        throw PremiumPurchaseException(
+          'Incomplete payment response from gateway.',
+        );
+      }
+      await verifyAndUnlock(
+        orderId: order.orderId,
+        paymentId: paymentId,
+        signature: signature,
+      );
+    } on PremiumPurchaseException {
+      rethrow;
+    } catch (_) {
+      if (!PremiumApiConfig.requireServer) {
+        await settings.setPremiumUnlocked(true);
+        return;
+      }
+      throw PremiumPurchaseException(
+        'Plan is unavailable right now. Please check your connection and try again.',
+      );
+    }
   }
 
   void dispose() {

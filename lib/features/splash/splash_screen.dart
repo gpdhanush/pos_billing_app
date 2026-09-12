@@ -6,6 +6,7 @@ import 'package:pos_billing/app/providers.dart';
 import 'package:pos_billing/core/constants/app_constants.dart';
 import 'package:pos_billing/core/database/sample_data.dart';
 import 'package:pos_billing/core/services/app_permission_service.dart';
+import 'package:pos_billing/shared/widgets/app_logo.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -79,20 +80,17 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                 child: Column(
                   children: [
                     Container(
-                      width: 108,
-                      height: 108,
+                      width: 118,
+                      height: 118,
+                      padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.16),
-                        borderRadius: BorderRadius.circular(28),
+                        borderRadius: BorderRadius.circular(30),
                         border: Border.all(
                           color: Colors.white.withValues(alpha: 0.22),
                         ),
                       ),
-                      child: Icon(
-                        Icons.point_of_sale_rounded,
-                        size: 54,
-                        color: scheme.onPrimary,
-                      ),
+                      child: const AppLogo(size: 106, radius: 24),
                     ),
                     const SizedBox(height: 22),
                     Text(

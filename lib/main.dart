@@ -8,12 +8,14 @@ import 'package:pos_billing/app/providers.dart';
 import 'package:pos_billing/core/database/app_database.dart';
 import 'package:pos_billing/core/errors/app_error_handler.dart';
 import 'package:pos_billing/core/services/app_log_service.dart';
+import 'package:pos_billing/core/services/env_loader.dart';
 
 Future<void> main() async {
   await runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
     AppErrorHandler.install();
     await AppLogService.init();
+    await loadAppEnv();
     await AppLogService.info('App starting');
 
     final db = await AppDatabase.open();

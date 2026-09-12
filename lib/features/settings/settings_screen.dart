@@ -7,6 +7,7 @@ import 'package:pos_billing/core/constants/app_constants.dart';
 import 'package:pos_billing/core/services/app_log_service.dart';
 import 'package:pos_billing/core/services/app_reset_service.dart';
 import 'package:pos_billing/features/premium/premium_sheets.dart';
+import 'package:pos_billing/shared/widgets/app_logo.dart';
 import 'package:pos_billing/shared/widgets/ui_kit.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -378,7 +379,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 borderColor: scheme.primary.withValues(alpha: 0.12),
                 child: Row(
                   children: [
-                    const IconBadge(icon: Icons.verified_outlined),
+                    const AppLogo(size: 42, radius: 10),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(

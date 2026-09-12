@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/app/providers.dart';
 import 'package:pos_billing/app/theme/app_theme.dart';
+import 'package:pos_billing/shared/widgets/app_logo.dart';
 import 'package:pos_billing/shared/widgets/ui_kit.dart';
 
 /// Onboarding / settings: enable biometric app lock only (no PIN).
@@ -237,6 +238,11 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen> {
                           background: Colors.white.withValues(alpha: 0.18),
                           foreground: Colors.white,
                         ),
+                      ),
+                      const SizedBox(height: 18),
+                      const Align(
+                        alignment: Alignment.centerLeft,
+                        child: AppLogo(size: 48, radius: 12),
                       ),
                       const Spacer(),
                       Container(

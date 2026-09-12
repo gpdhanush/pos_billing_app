@@ -5,6 +5,7 @@ import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/app/providers.dart';
 import 'package:pos_billing/app/theme/app_theme.dart';
 import 'package:pos_billing/features/premium/premium_sheets.dart';
+import 'package:pos_billing/shared/widgets/app_logo.dart';
 
 /// Bottom-nav hub: feature shortcuts. App preferences live under Settings.
 class MoreScreen extends ConsumerWidget {
@@ -246,16 +247,7 @@ class _PremiumPromoCard extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 14, 8, 14),
             child: Row(
               children: [
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: scheme.primary.withValues(alpha: 0.14),
-                    borderRadius: BorderRadius.circular(AppRadii.sm),
-                  ),
-                  child: Icon(Icons.workspace_premium_rounded,
-                      color: scheme.primary),
-                ),
+                const AppLogo(size: 42, radius: 10),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(

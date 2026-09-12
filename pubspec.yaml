@@ -43,6 +43,8 @@ dependencies:
   device_info_plus: ^12.4.0
   package_info_plus: ^9.0.1
   razorpay_flutter: ^1.4.6
+  flutter_dotenv: ^6.0.1
+  confetti: ^0.8.0
 
 dev_dependencies:
   flutter_test:
@@ -53,6 +55,10 @@ dev_dependencies:
 flutter:
   generate: true
   uses-material-design: true
+  assets:
+    - .env
+    - .env.example
+    - assets/img/
   fonts:
     - family: Arimo
       fonts:
