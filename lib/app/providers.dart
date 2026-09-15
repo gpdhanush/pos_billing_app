@@ -15,7 +15,6 @@ import 'package:pos_billing/core/services/backup_service.dart';
 import 'package:pos_billing/core/services/bluetooth_printer_service.dart';
 import 'package:pos_billing/core/services/connectivity_service.dart';
 import 'package:pos_billing/core/services/google_drive_client.dart';
-import 'package:pos_billing/core/services/premium_purchase_service.dart';
 import 'package:pos_billing/core/services/printer_service.dart';
 import 'package:pos_billing/core/services/receipt_builder.dart';
 import 'package:pos_billing/shared/models/models.dart';
@@ -62,15 +61,6 @@ final receiptBuilderProvider = Provider((ref) => ReceiptBuilder());
 final connectivityServiceProvider = Provider((ref) => ConnectivityService());
 final isOnlineProvider = StreamProvider<bool>((ref) => ref.watch(connectivityServiceProvider).onlineStream);
 
-final premiumPurchaseServiceProvider = Provider<PremiumPurchaseService>((ref) {
-  final service = PremiumPurchaseService(
-    connectivity: ref.watch(connectivityServiceProvider),
-    settings: ref.watch(appSettingsProvider.notifier),
-  );
-  ref.onDispose(service.dispose);
-  return service;
-});
-
 class AppSettings {
   const AppSettings({
     required this.localeCode,
@@ -82,7 +72,6 @@ class AppSettings {
     required this.allowNegativeStock,
     required this.autoBackup,
     required this.paperSize,
-    required this.premiumUnlocked,
   });
 
   final String localeCode;
@@ -94,7 +83,6 @@ class AppSettings {
   final bool allowNegativeStock;
   final String autoBackup;
   final String paperSize;
-  final bool premiumUnlocked;
 
   factory AppSettings.defaults() => const AppSettings(
         localeCode: 'en',
@@ -106,7 +94,6 @@ class AppSettings {
         allowNegativeStock: false,
         autoBackup: 'off',
         paperSize: '58mm',
-        premiumUnlocked: false,
       );
 }
 
@@ -130,7 +117,6 @@ class AppSettingsController extends AsyncNotifier<AppSettings> {
       allowNegativeStock: await repo.getBool(SettingKeys.allowNegativeStock),
       autoBackup: await repo.get(SettingKeys.autoBackup) ?? 'off',
       paperSize: await repo.get(SettingKeys.paperSize) ?? '58mm',
-      premiumUnlocked: await repo.getBool(SettingKeys.premiumUnlocked),
     );
   }
 
@@ -149,8 +135,6 @@ class AppSettingsController extends AsyncNotifier<AppSettings> {
       _patch((r) => r.setBool(SettingKeys.allowNegativeStock, value));
   Future<void> setAutoBackup(String value) => _patch((r) => r.set(SettingKeys.autoBackup, value));
   Future<void> setPaperSize(String value) => _patch((r) => r.set(SettingKeys.paperSize, value));
-  Future<void> setPremiumUnlocked(bool value) =>
-      _patch((r) => r.setBool(SettingKeys.premiumUnlocked, value));
 
   Future<String?> readRaw(String key) =>
       ref.read(settingsRepositoryProvider).get(key);

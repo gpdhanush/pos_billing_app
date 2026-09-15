@@ -24,7 +24,6 @@ import 'package:pos_billing/features/onboarding/permissions_screen.dart';
 import 'package:pos_billing/features/onboarding/security_setup_screen.dart';
 import 'package:pos_billing/features/onboarding/theme_screen.dart';
 import 'package:pos_billing/features/printer/printer_screen.dart';
-import 'package:pos_billing/features/premium/premium_purchase_screen.dart';
 import 'package:pos_billing/features/products/categories_screen.dart';
 import 'package:pos_billing/features/products/category_form_screen.dart';
 import 'package:pos_billing/features/products/product_form_screen.dart';
@@ -111,10 +110,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (c, s) => const OrderCheckoutScreen(),
       ),
       GoRoute(path: '/payment', builder: (c, s) => const CheckoutScreen()),
-      GoRoute(
-        path: '/premium',
-        builder: (c, s) => const PremiumPurchaseScreen(),
-      ),
       GoRoute(
         path: '/scan',
         builder: (c, s) {

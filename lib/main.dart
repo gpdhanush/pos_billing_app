@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:pos_billing/app/app.dart';
 import 'package:pos_billing/app/providers.dart';
 import 'package:pos_billing/core/database/app_database.dart';
@@ -16,6 +17,7 @@ Future<void> main() async {
     AppErrorHandler.install();
     await AppLogService.init();
     await loadAppEnv();
+    await MobileAds.instance.initialize();
     await AppLogService.info('App starting');
 
     final db = await AppDatabase.open();

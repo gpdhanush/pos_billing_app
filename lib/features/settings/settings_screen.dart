@@ -6,7 +6,6 @@ import 'package:pos_billing/app/providers.dart';
 import 'package:pos_billing/core/constants/app_constants.dart';
 import 'package:pos_billing/core/services/app_log_service.dart';
 import 'package:pos_billing/core/services/app_reset_service.dart';
-import 'package:pos_billing/features/premium/premium_sheets.dart';
 import 'package:pos_billing/shared/widgets/app_logo.dart';
 import 'package:pos_billing/shared/widgets/ui_kit.dart';
 
@@ -93,45 +92,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 padding: EdgeInsets.zero,
                 child: Column(
                   children: [
-                    _settingsRow(
-                      context,
-                      icon: Icons.workspace_premium_rounded,
-                      title: 'Premium',
-                      trailingWidget: Switch(
-                        value: settings.premiumUnlocked,
-                        onChanged: (v) => ref
-                            .read(appSettingsProvider.notifier)
-                            .setPremiumUnlocked(v),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(68, 0, 16, 12),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              settings.premiumUnlocked
-                                  ? 'Unlimited access is on (toggle for testing).'
-                                  : 'Free: 10 products, stocks & expenses each. Unlock ₹99 once.',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: scheme.onSurfaceVariant,
-                                  ),
-                            ),
-                          ),
-                          IconButton(
-                            tooltip: 'FAQ',
-                            visualDensity: VisualDensity.compact,
-                            onPressed: () => showPremiumFaqSheet(context),
-                            icon: const Icon(Icons.info_outline_rounded),
-                          ),
-                          TextButton(
-                            onPressed: () => context.push('/premium'),
-                            child: const Text('Unlock'),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Divider(indent: 68),
                     _settingsRow(
                       context,
                       icon: Icons.storefront_outlined,
@@ -242,24 +202,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       icon: Icons.file_download_outlined,
                       title: 'Export data',
                       hasChevron: true,
-                      trailingWidget: settings.premiumUnlocked
-                          ? null
-                          : Icon(
-                              Icons.lock_rounded,
-                              size: 18,
-                              color: scheme.onSurfaceVariant,
-                            ),
-                      onTap: () {
-                        if (!settings.premiumUnlocked) {
-                          showPremiumLockedAlert(
-                            context: context,
-                            ref: ref,
-                            feature: 'Export data',
-                          );
-                          return;
-                        }
-                        context.push('/settings/export');
-                      },
+                      onTap: () => context.push('/settings/export'),
                     ),
                     const Divider(indent: 68),
                     _settingsRow(

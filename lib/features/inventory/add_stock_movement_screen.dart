@@ -7,8 +7,6 @@ import 'package:pos_billing/app/providers.dart';
 import 'package:pos_billing/app/theme/app_theme.dart';
 import 'package:pos_billing/core/database/repositories/product_repository.dart';
 import 'package:pos_billing/core/money/money.dart';
-import 'package:pos_billing/core/services/premium_access.dart';
-import 'package:pos_billing/features/premium/premium_sheets.dart';
 import 'package:pos_billing/shared/models/models.dart';
 import 'package:pos_billing/shared/widgets/ui_kit.dart';
 
@@ -151,13 +149,6 @@ class _AddStockMovementScreenState
     final notes = _notes.text.trim();
     setState(() => _saving = true);
     try {
-      final allowed = await ensurePremiumQuota(
-        context: context,
-        ref: ref,
-        kind: PremiumQuotaKind.stocks,
-      );
-      if (!allowed) return;
-      if (!mounted) return;
       final stock = ref.read(stockRepositoryProvider);
       if (_isIn) {
         await stock.addStock(

@@ -12,15 +12,7 @@ class SettingKeys {
   static const paperSize = 'paper_size';
   static const sampleDataLoaded = 'sample_data_loaded';
   static const lastInvoiceId = 'last_invoice_id';
-  static const premiumUnlocked = 'premium_unlocked';
   static const installId = 'install_id';
-  static const premiumLicenseToken = 'premium_license_token';
-}
-
-/// Free tier caps and one-time unlock price (paise).
-class PremiumLimits {
-  static const freeItemLimit = 10;
-  static const unlockPricePaise = 9900; // ₹99 one-time
 }
 
 class DbConstants {

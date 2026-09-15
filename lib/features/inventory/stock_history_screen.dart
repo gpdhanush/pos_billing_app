@@ -6,8 +6,6 @@ import 'package:pos_billing/app/providers.dart';
 import 'package:pos_billing/app/theme/app_theme.dart';
 import 'package:pos_billing/core/constants/app_constants.dart';
 import 'package:pos_billing/core/money/money.dart';
-import 'package:pos_billing/core/services/premium_access.dart';
-import 'package:pos_billing/features/premium/premium_sheets.dart';
 import 'package:pos_billing/shared/models/models.dart';
 import 'package:pos_billing/shared/widgets/ui_kit.dart';
 
@@ -57,12 +55,6 @@ class StockHistoryScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          final allowed = await ensurePremiumQuota(
-            context: context,
-            ref: ref,
-            kind: PremiumQuotaKind.stocks,
-          );
-          if (!allowed || !context.mounted) return;
           final saved = await context.push<bool>('/stock/movement');
           if (saved == true) {
             ref.invalidate(stockHistoryProvider);

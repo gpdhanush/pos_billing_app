@@ -6,8 +6,6 @@ import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/app/providers.dart';
 import 'package:pos_billing/app/theme/app_theme.dart';
 import 'package:pos_billing/core/money/money.dart';
-import 'package:pos_billing/core/services/premium_access.dart';
-import 'package:pos_billing/features/premium/premium_sheets.dart';
 import 'package:pos_billing/shared/models/models.dart';
 import 'package:pos_billing/shared/widgets/ui_kit.dart';
 
@@ -51,12 +49,6 @@ class ExpensesScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
-          final allowed = await ensurePremiumQuota(
-            context: context,
-            ref: ref,
-            kind: PremiumQuotaKind.expenses,
-          );
-          if (!allowed || !context.mounted) return;
           final saved = await context.push<bool>('/expenses/edit');
           if (saved == true) ref.invalidate(expensesListProvider);
         },
