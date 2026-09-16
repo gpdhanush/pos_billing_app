@@ -1018,4 +1018,864 @@ class AppLocalizationsTa extends AppLocalizations {
   @override
   String get sampleDataLoaded =>
       'மேம்பாட்டுக்கான மாதிரி பொருட்கள் ஏற்றப்பட்டன.';
+
+  @override
+  String get commonUpdate => 'புதுப்பி';
+
+  @override
+  String get commonChange => 'மாற்று';
+
+  @override
+  String get commonScan => 'ஸ்கேன்';
+
+  @override
+  String get commonAllow => 'அனுமதி';
+
+  @override
+  String get commonLater => 'பிறகு';
+
+  @override
+  String get commonGotIt => 'புரிந்தது';
+
+  @override
+  String get commonRestore => 'மீட்டெடு';
+
+  @override
+  String get commonMore => 'மேலும்';
+
+  @override
+  String get commonHelp => 'உதவி';
+
+  @override
+  String get commonSaving => 'சேமிக்கிறது…';
+
+  @override
+  String get commonExporting => 'ஏற்றுமதி செய்கிறது…';
+
+  @override
+  String get commonCamera => 'கேமரா';
+
+  @override
+  String get commonGallery => 'கேலரி';
+
+  @override
+  String get commonRefresh => 'புதுப்பி';
+
+  @override
+  String get commonOpenInBrowser => 'உலாவியில் திற';
+
+  @override
+  String get commonOpenSettings => 'அமைப்புகளை திற';
+
+  @override
+  String get commonSelectDate => 'தேதியை தேர்ந்தெடு';
+
+  @override
+  String get commonExitApp => 'ஆப்பிலிருந்து வெளியேறவா?';
+
+  @override
+  String get commonGoHome => 'முகப்புக்கு செல்';
+
+  @override
+  String get commonTryAgain => 'மீண்டும் முயற்சி';
+
+  @override
+  String get commonSharePdf => 'PDF பகிர்';
+
+  @override
+  String get commonNoCategory => 'வகை இல்லை';
+
+  @override
+  String get commonPermissionNeeded => 'அனுமதி தேவை';
+
+  @override
+  String get themeLightHint => 'தெளிவாகவும் பிரகாசமாகவும்';
+
+  @override
+  String get themeDarkHint => 'கண்களுக்கு இலகுவானது';
+
+  @override
+  String get themeSystemHint => 'சாதன அமைப்பை பின்பற்று';
+
+  @override
+  String get themeAccentHint => 'விருப்பமான நிறத்தை தேர்ந்தெடுங்கள்';
+
+  @override
+  String get languageEnglishNative => 'English';
+
+  @override
+  String get languageTamilNative => 'தமிழ்';
+
+  @override
+  String get salesSubtitle => 'விலைப்பட்டியல் & கட்டண வரலாறு';
+
+  @override
+  String get salesSearchHint => 'விலைப்பட்டியல் அல்லது வாடிக்கையாளரை தேடு';
+
+  @override
+  String get salesStatusCompleted => 'முடிந்தது';
+
+  @override
+  String get salesStatusCancelled => 'ரத்து';
+
+  @override
+  String get salesStatusRefunded => 'பணத்திருப்பம்';
+
+  @override
+  String get invoiceDetailSubtitle => 'விலைப்பட்டியல் & கட்டண விவரம்';
+
+  @override
+  String get invoiceNumberLabel => 'விலைப்பட்டியல் எண்';
+
+  @override
+  String get invoiceItemsTitle => 'பொருட்கள்';
+
+  @override
+  String get invoiceItemColumn => 'பொருள்';
+
+  @override
+  String get invoiceQtyPriceColumn => 'அளவு × விலை';
+
+  @override
+  String get invoiceBillingDetails => 'பில் விவரம்';
+
+  @override
+  String invoiceItemCount(int count) {
+    return '$count பொருட்கள்';
+  }
+
+  @override
+  String get billingRoundOff => 'சிறு திருத்தம்';
+
+  @override
+  String get checkoutUnpaid => 'செலுத்தப்படவில்லை';
+
+  @override
+  String get checkoutSubtitle => 'முறை தேர்ந்தெடுத்து தொகை வசூலிக்கவும்';
+
+  @override
+  String get billingCheckoutSubtitle =>
+      'கூடையை பார்த்து கட்டணத்திற்கு தொடரவும்';
+
+  @override
+  String get billingProceedCheckout => 'செக்அவுட்டுக்கு தொடரவும்';
+
+  @override
+  String get billingNoProductsAdded => 'பொருட்கள் சேர்க்கப்படவில்லை';
+
+  @override
+  String get billingNoProductsHint =>
+      'பொருட்களை தேர்ந்தெடுக்க Add Product ஐ தட்டவும்';
+
+  @override
+  String get billingNoCustomersHint =>
+      'வாடிக்கையாளர்கள் இல்லை. புதியவரை சேர்க்கவும்.';
+
+  @override
+  String get billingEmptyCartContinueHint =>
+      'தொடர பில்லிங்கிலிருந்து பொருட்களை சேர்க்கவும்.';
+
+  @override
+  String get billingTaxPercent => 'வரி %';
+
+  @override
+  String billingSelectedCount(int count) {
+    return '$count தேர்ந்தெடுக்கப்பட்டது';
+  }
+
+  @override
+  String get billingLeaveConfirm => 'பில்லிங்கிலிருந்து வெளியேறவா?';
+
+  @override
+  String get billingAddProduct => 'பொருள் சேர்';
+
+  @override
+  String get billingScanBarcode => 'பார்கோடு ஸ்கேன்';
+
+  @override
+  String get dashboardTagline => 'உங்கள் வணிகத்தை எளிதாக நிர்வகிக்கவும்';
+
+  @override
+  String get dashboardTodayOverview => 'இன்றைய சுருக்கம்';
+
+  @override
+  String get dashboardWeekRange => 'ஞாயிறு – சனி';
+
+  @override
+  String get dashboardToday => 'இன்று';
+
+  @override
+  String get dashboardGetStartedBody =>
+      'பொருட்கள் மற்றும் வகைகளை சேர்த்து கடையை அமைக்கவும்.';
+
+  @override
+  String get productsSubtitle => 'பட்டியல், விலை & ஸ்டாக்';
+
+  @override
+  String get productsEmptySearchTitle => 'பொருட்கள் கிடைக்கவில்லை';
+
+  @override
+  String get productsEmptySearchBody =>
+      'பில்லிங் தொடங்கவும் ஸ்டாக் கண்காணிக்கவும் பொருட்களை சேர்க்கவும்.';
+
+  @override
+  String get productsViewDetails => 'விவரங்களை காண்';
+
+  @override
+  String get productsViewDetailsSubtitle => 'விலை, ஸ்டாக் & நகர்வுகள்';
+
+  @override
+  String get productsEditDetails => 'பொருள் விவரங்களை திருத்து';
+
+  @override
+  String get productsActivate => 'பொருளை செயல்படுத்து';
+
+  @override
+  String get productsDeactivateTitle => 'பொருளை முடக்கு';
+
+  @override
+  String get productsDetailsTitle => 'பொருள் விவரம்';
+
+  @override
+  String get productsDetailsSubtitle => 'பொருள் தகவலை காணவும் நிர்வகிக்கவும்';
+
+  @override
+  String get productsNotFound => 'பொருள் கிடைக்கவில்லை';
+
+  @override
+  String get productsNotFoundHint => 'அது நீக்கப்பட்டிருக்கலாம்.';
+
+  @override
+  String get productsPricingSection => 'விலை';
+
+  @override
+  String get productsPricingSectionHint => 'செலவு மற்றும் விற்பனை விலை விவரம்.';
+
+  @override
+  String get productsStockSection => 'ஸ்டாக் தகவல்';
+
+  @override
+  String get productsStockSectionHint =>
+      'தற்போதைய ஸ்டாக் மற்றும் எச்சரிக்கை அமைப்புகள்.';
+
+  @override
+  String get productsMinStockAlert => 'குறைந்த ஸ்டாக் எச்சரிக்கை';
+
+  @override
+  String get productsStockHealth => 'ஸ்டாக் நிலை';
+
+  @override
+  String get productsRecentMovements => 'சமீபத்திய ஸ்டாக் நகர்வுகள்';
+
+  @override
+  String get productsRecentMovementsHint =>
+      'சமீபத்திய உள்ளே/வெளியே பரிவர்த்தனைகள்.';
+
+  @override
+  String get productsMovementsLoadFailed => 'நகர்வுகளை ஏற்ற முடியவில்லை';
+
+  @override
+  String get productsRemovePhoto => 'புகைப்படத்தை நீக்கவா?';
+
+  @override
+  String get productsPhotoTitle => 'பொருள் புகைப்படம்';
+
+  @override
+  String get productsPhotoHint =>
+      'புதிய புகைப்படம் எடுக்கவும் அல்லது கேலரியிலிருந்து தேர்ந்தெடுக்கவும்';
+
+  @override
+  String get productsGenerateSku => 'SKU உருவாக்கு';
+
+  @override
+  String get productsRemove => 'நீக்கு';
+
+  @override
+  String get categoriesSubtitle => 'உங்கள் பொருள் பட்டியலை ஒழுங்குபடுத்துங்கள்';
+
+  @override
+  String get categoriesSearchHint => 'வகைகளை தேடு';
+
+  @override
+  String get categoriesRename => 'இந்த வகையை மறுபெயரிடு';
+
+  @override
+  String get categoriesDeleteConfirm => 'வகையை நீக்கு';
+
+  @override
+  String get categoriesRemoveFromForms => 'பொருள் படிவங்களிலிருந்து நீக்கு';
+
+  @override
+  String get categoriesExampleHint => 'எ.கா. எலக்ட்ரானிக்ஸ், மளிகை';
+
+  @override
+  String get customersSubtitle => 'தொடர்பு, கடன் & நிலுவை';
+
+  @override
+  String get customersEmptySearchTitle => 'வாடிக்கையாளர்கள் கிடைக்கவில்லை';
+
+  @override
+  String get customersEmptySearchBody =>
+      'கடன் மற்றும் பில்லிங் வரலாற்றை கண்காணிக்க வாடிக்கையாளர்களை சேர்க்கவும்.';
+
+  @override
+  String get customersViewDetails => 'விவரங்களை காண்';
+
+  @override
+  String get customersViewDetailsSubtitle => 'ஆர்டர்கள், தொடர்பு & வரலாறு';
+
+  @override
+  String get customersEditDetails => 'வாடிக்கையாளர் விவரங்களை திருத்து';
+
+  @override
+  String get customersDeleteTitle => 'வாடிக்கையாளரை நீக்கு';
+
+  @override
+  String get customersRemoveFromList => 'வாடிக்கையாளர் பட்டியலிலிருந்து நீக்கு';
+
+  @override
+  String get customersDetailsTitle => 'வாடிக்கையாளர் விவரம்';
+
+  @override
+  String get customersDetailsSubtitle => 'வாடிக்கையாளர் தகவலை காண்';
+
+  @override
+  String get customersNotFound => 'வாடிக்கையாளர் கிடைக்கவில்லை';
+
+  @override
+  String get customersNotFoundHint => 'அது நீக்கப்பட்டிருக்கலாம்.';
+
+  @override
+  String get customersCreateOrder => 'ஆர்டர் உருவாக்கு';
+
+  @override
+  String get customersTotalOrders => 'மொத்த ஆர்டர்கள்';
+
+  @override
+  String get customersTotalSpent => 'மொத்த செலவு';
+
+  @override
+  String get customersOrderHistory => 'ஆர்டர் வரலாறு';
+
+  @override
+  String get customersNoOrders =>
+      'இந்த வாடிக்கையாளர் இதுவரை ஆர்டர் செய்யவில்லை.\nவரலாற்றை இங்கே காண பில்லிங் தொடங்குங்கள்.';
+
+  @override
+  String get customersDue => 'நிலுவை';
+
+  @override
+  String get customersSettled => 'தீர்ந்தது';
+
+  @override
+  String get customersStatusPaid => 'செலுத்தப்பட்டது';
+
+  @override
+  String get customersStatusPending => 'நிலுவையில்';
+
+  @override
+  String get inventorySubtitle => 'பொருட்கள், கிடைக்கும் தன்மை & ஸ்டாக்';
+
+  @override
+  String get inventorySearchHint => 'பெயர், SKU அல்லது பார்கோடு மூலம் தேடு';
+
+  @override
+  String get inventoryAllCategories => 'அனைத்து வகைகள்';
+
+  @override
+  String get inventoryEmptyTitle => 'இன்வென்டரி பொருட்கள் இல்லை';
+
+  @override
+  String get inventoryEmptyBody =>
+      'ஸ்டாக் அளவை கண்காணிக்க பொருட்களை சேர்க்கவும்.';
+
+  @override
+  String get inventoryHistorySubtitle => 'ஸ்டாக் உள்ளே, வெளியே & சரிசெய்தல்கள்';
+
+  @override
+  String get inventoryAddMovement => 'நகர்வு சேர்';
+
+  @override
+  String get inventoryAddMovementTitle => 'ஸ்டாக் நகர்வு சேர்';
+
+  @override
+  String get inventoryStockOut => 'ஸ்டாக் வெளியே';
+
+  @override
+  String get inventoryMovementsEmpty => 'ஸ்டாக் நகர்வுகள் இல்லை';
+
+  @override
+  String get inventorySaveMovement => 'நகர்வை சேமி';
+
+  @override
+  String get inventoryCostPrice => 'செலவு விலை';
+
+  @override
+  String get inventoryNotesRequired => 'குறிப்புகள் (தேவை)';
+
+  @override
+  String get inventorySearchProductHint => 'பெயர், SKU அல்லது பார்கோடு தேடு';
+
+  @override
+  String get expensesSubtitle => 'கடை செலவுகள் & செலவுகள்';
+
+  @override
+  String get expensesSearchHint => 'செலவுகளை தேடு';
+
+  @override
+  String get expensesEmptySearch => 'செலவுகள் கிடைக்கவில்லை';
+
+  @override
+  String get expensesEmptyHint =>
+      'உங்கள் செலவுகளை கண்காணிக்க கடை செலவுகளை பதிவு செய்யுங்கள்.';
+
+  @override
+  String get expensesEditDetails => 'செலவு விவரங்களை திருத்து';
+
+  @override
+  String get expensesDeleteTitle => 'செலவை நீக்கு';
+
+  @override
+  String get expensesRemoveHint => 'இந்த செலவை நீக்கு';
+
+  @override
+  String get reportsSubtitle => 'உங்கள் வணிக நுண்ணறிவுகளை காணுங்கள்';
+
+  @override
+  String get reportsFrom => 'இருந்து';
+
+  @override
+  String get reportsTo => 'வரை';
+
+  @override
+  String get reportsCollections => 'வசூல்';
+
+  @override
+  String get reportsTopProductsEmpty => 'முன்னணி பொருட்கள் இன்னும் இல்லை';
+
+  @override
+  String get reportsExpensesEmptyHint => 'இந்த காலத்தில் செலவுகள் இல்லை';
+
+  @override
+  String reportsExportPdf(String range) {
+    return 'PDF ஏற்றுமதி ($range)';
+  }
+
+  @override
+  String get reportsDateRange => 'தேதி வரம்பு';
+
+  @override
+  String get moreSubtitle => 'கடை கருவிகள் & விருப்பங்கள்';
+
+  @override
+  String get moreSectionShop => 'கடை நிர்வாகம்';
+
+  @override
+  String get moreSectionBusiness => 'வணிகம்';
+
+  @override
+  String get moreSectionData => 'தரவு & கருவிகள்';
+
+  @override
+  String get moreSectionSupport => 'ஆதரவு';
+
+  @override
+  String get morePreferences => 'விருப்பங்கள்';
+
+  @override
+  String get moreAppearance => 'தோற்றம்';
+
+  @override
+  String get moreAbout => 'பற்றி';
+
+  @override
+  String get moreDangerZone => 'ஆபத்து மண்டலம்';
+
+  @override
+  String get moreProductsSubtitle => 'பட்டியல் & விலைகள்';
+
+  @override
+  String get moreCategoriesSubtitle => 'உங்கள் பொருட்களை ஒழுங்குபடுத்துங்கள்';
+
+  @override
+  String get moreCustomersSubtitle => 'வாங்குநர்கள் & கடன்';
+
+  @override
+  String get moreExpensesSubtitle => 'கடை செலவு';
+
+  @override
+  String get moreReportsSubtitle => 'விற்பனை & வணிக கண்ணோட்டம்';
+
+  @override
+  String get moreBackupTitle => 'காப்பு & மீட்டெடுப்பு';
+
+  @override
+  String get moreBackupSubtitle => 'Google Drive, உள்ளூர் காப்பு';
+
+  @override
+  String get moreExportTitle => 'தரவு ஏற்றுமதி';
+
+  @override
+  String get moreExportSubtitle => 'அறிக்கைகள் & கோப்புகளை பகிர்';
+
+  @override
+  String get morePrinterSubtitle => 'ரசீது பிரிண்டர் அமைப்புகள்';
+
+  @override
+  String get moreHelpTitle => 'உதவி & கருத்து';
+
+  @override
+  String get moreHelpSubtitle => 'வழிகாட்டிகள், FAQ மற்றும் ஆதரவு';
+
+  @override
+  String get moreStoreSettings => 'கடை அமைப்புகள்';
+
+  @override
+  String get moreStoreSettingsSubtitle =>
+      'வணிக சுயவிவரம் மற்றும் விலைப்பட்டியல் அமைப்பு';
+
+  @override
+  String get moreAppLockSubtitle => 'கைரேகை அல்லது முகம் திறப்பு';
+
+  @override
+  String get moreThemeValueHint => 'வெளிர், இருள் அல்லது சாதன இயல்பு';
+
+  @override
+  String get morePrivacySubtitle => 'உங்கள் தரவை எவ்வாறு கையாளுகிறோம்';
+
+  @override
+  String get moreSendLogs => 'ஆப் பதிவுகளை அனுப்பு';
+
+  @override
+  String get moreSendLogsSubtitle => 'ஆதரவுக்கு கண்டறிதல் தகவலை பகிர்';
+
+  @override
+  String get moreFooterTagline => 'தினசரி கடைகளுக்கான ஆஃப்லைன் பில்லிங்.';
+
+  @override
+  String get moreDeleteAllTitle => 'அனைத்து தரவையும் நீக்கவா?';
+
+  @override
+  String get moreDeleteAllBody =>
+      'இது இந்த சாதனத்தில் உள்ள பொருட்கள், விற்பனை, வாடிக்கையாளர்கள் மற்றும் அமைப்புகளை நிரந்தரமாக நீக்கும்.';
+
+  @override
+  String get moreLogoutTitle => 'வெளியேறி ஆப்பை மீட்டமைக்கவா?';
+
+  @override
+  String get moreLogoutBody =>
+      'நீங்கள் அமைப்புக்கு திரும்புவீர்கள். மீட்டமைப்பின் போது உள்ளூர் தரவு நீக்கப்படலாம்.';
+
+  @override
+  String get moreDeleteEverything => 'அனைத்தையும் நீக்கு';
+
+  @override
+  String get moreLogout => 'வெளியேறு';
+
+  @override
+  String get moreLoggingOut => 'வெளியேறுகிறது…';
+
+  @override
+  String get backupSubtitle =>
+      'உங்கள் தரவை பாதுகாப்பாகவும் அணுகக்கூடியதாகவும் வைத்திருங்கள்';
+
+  @override
+  String get backupDeleteTitle => 'காப்பை நீக்கவா?';
+
+  @override
+  String get backupDeleteDriveTitle => 'Drive காப்பை நீக்கவா?';
+
+  @override
+  String get backupDeleted => 'காப்பு நீக்கப்பட்டது';
+
+  @override
+  String get backupDriveDeleted => 'Drive காப்பு நீக்கப்பட்டது';
+
+  @override
+  String get backupDeleteFailed => 'காப்பை நீக்க முடியவில்லை';
+
+  @override
+  String get backupDriveDeleteFailed => 'Drive காப்பை நீக்க முடியவில்லை';
+
+  @override
+  String get backupWifiOnly => 'Wi‑Fi மட்டும்';
+
+  @override
+  String get backupWifiOnlyHint =>
+      'Wi‑Fi இணைக்கப்பட்டிருக்கும்போது மட்டும் தானியங்கி காப்பு';
+
+  @override
+  String get backupAutomaticSubtitle => 'உங்கள் தரவை தானாக காப்பு எடுக்கவும்';
+
+  @override
+  String get backupDriveSection => 'Drive காப்புகள்';
+
+  @override
+  String get backupLocalSection => 'உள்ளூர் காப்புகள்';
+
+  @override
+  String get backupDifferentStore => 'வேறு கடையா?';
+
+  @override
+  String get backupRefreshDrive => 'Drive காப்புகளை புதுப்பி';
+
+  @override
+  String get backupComplete => 'காப்பு முடிந்தது';
+
+  @override
+  String get exportTitle => 'தரவு ஏற்றுமதி';
+
+  @override
+  String get exportSubtitle => 'அறிக்கைகள் & CSV கோப்புகளை பகிர்';
+
+  @override
+  String get exportAll => 'அனைத்தையும் ஏற்றுமதி';
+
+  @override
+  String get exportAllSubtitle =>
+      'பொருட்கள், ஆர்டர்கள், வாடிக்கையாளர்கள் & ஸ்டாக் ZIP';
+
+  @override
+  String get exportProductsSubtitle => 'பட்டியல், விலைகள் மற்றும் ஸ்டாக் அளவு';
+
+  @override
+  String get exportOrders => 'ஆர்டர்கள்';
+
+  @override
+  String get exportOrdersSubtitle => 'விலைப்பட்டியல்கள் மற்றும் கட்டணங்கள்';
+
+  @override
+  String get exportCustomersSubtitle => 'தொடர்புகள் மற்றும் இருப்புகள்';
+
+  @override
+  String get exportStocks => 'ஸ்டாக்குகள்';
+
+  @override
+  String get exportStocksSubtitle => 'ஸ்டாக் நகர்வு பதிவேடு';
+
+  @override
+  String get printerSubtitle => 'ரசீது பிரிண்டர் அமைப்புகள்';
+
+  @override
+  String get printerDisconnectConfirm => 'பிரிண்டரை துண்டிக்கவா?';
+
+  @override
+  String get printerTestSent => 'சோதனை அச்சு அனுப்பப்பட்டது';
+
+  @override
+  String get printerNoBillToReprint => 'மீண்டும் அச்சிட முடிந்த பில் இல்லை';
+
+  @override
+  String get printerTestHint => 'மாதிரி ரசீதை அச்சிடு';
+
+  @override
+  String get printerLastBillHint => 'கடைசி முடிந்த பிலை மீண்டும் அச்சிடு';
+
+  @override
+  String get printerDisconnectHint => 'இந்த பிரிண்டரை பயன்படுத்துவதை நிறுத்து';
+
+  @override
+  String get permissionsCameraHint =>
+      'பில்லிங்கின் போது பொருள் பார்கோடுகளை ஸ்கேன் செய்ய.';
+
+  @override
+  String get permissionsBluetoothScan => 'Bluetooth ஸ்கேன்';
+
+  @override
+  String get permissionsBluetoothScanHint =>
+      'அருகிலுள்ள Bluetooth ரசீது பிரிண்டர்களை கண்டுபிடி.';
+
+  @override
+  String get permissionsBluetoothConnect => 'Bluetooth இணைப்பு';
+
+  @override
+  String get permissionsBluetoothConnectHint =>
+      'இணைக்கப்பட்ட பிரிண்டர்களுடன் இணைத்து அச்சிடு.';
+
+  @override
+  String get permissionsAllowAll => 'அனைத்தையும் அனுமதி';
+
+  @override
+  String get permissionsContinueAnyway => 'எப்படியும் தொடர்';
+
+  @override
+  String get permissionsAllowTitle => 'அனுமதிகளை அனுமதி';
+
+  @override
+  String get contactUsTitle => 'எங்களை தொடர்புகொள்';
+
+  @override
+  String get contactUsSubtitle => 'வழிகாட்டிகள், FAQ மற்றும் ஆதரவு';
+
+  @override
+  String get contactMobile => 'மொபைல்';
+
+  @override
+  String get contactWhatsApp => 'WhatsApp';
+
+  @override
+  String get contactWhatsAppHint => 'எங்களுடன் அரட்டையடிக்கவும்';
+
+  @override
+  String get notificationsTitle => 'அறிவிப்புகள்';
+
+  @override
+  String get notificationsSubtitle => 'எச்சரிக்கைகள் & புதுப்பிப்புகள்';
+
+  @override
+  String get securityEnableBiometric => 'பயோமெட்ரிக் பூட்டை இயக்கு';
+
+  @override
+  String get securityBiometricHint =>
+      'கடை பாதுகாப்புக்கு பரிந்துரைக்கப்படுகிறது';
+
+  @override
+  String get storeLogoTitle => 'கடை லோகோ';
+
+  @override
+  String get storeLogoHint =>
+      'புகைப்படம் எடுக்கவும் அல்லது கேலரியிலிருந்து தேர்ந்தெடுக்கவும்';
+
+  @override
+  String get storeRemoveLogo => 'லோகோவை நீக்கு';
+
+  @override
+  String get googleDisconnect => 'துண்டி';
+
+  @override
+  String get googleSkipForNow => 'இப்போதைக்கு தவிர்';
+
+  @override
+  String get passphraseMinHint => 'குறைந்தது 8 எழுத்துகள்';
+
+  @override
+  String get passphraseReenter => 'கடவுச்சொல்லை மீண்டும் உள்ளிடு';
+
+  @override
+  String get passphraseSetTitle => 'மீட்பு கடவுச்சொல்லை அமை';
+
+  @override
+  String get passphraseEnterTitle => 'மீட்பு கடவுச்சொல்லை உள்ளிடு';
+
+  @override
+  String get passphraseDisconnectDrive => 'Google Drive ஐ துண்டிக்கவா?';
+
+  @override
+  String get manualBarcodeHint => 'எ.கா. 8901234567890';
+
+  @override
+  String get connectivityBackOnline => 'மீண்டும் ஆன்லைன்';
+
+  @override
+  String get connectivityBackOnlineBody =>
+      'நீங்கள் மீண்டும் இணைக்கப்பட்டுள்ளீர்கள்.';
+
+  @override
+  String get connectivityOfflineTitle => 'இணைய இணைப்பு இல்லை';
+
+  @override
+  String get connectivityOfflineBody =>
+      'இந்த சாதனத்தில் பில்லிங் ஆஃப்லைனில் தொடரும்.';
+
+  @override
+  String get errorsSharePdf => 'PDF பகிர முடியவில்லை';
+
+  @override
+  String get errorsStoreNotReady => 'முதலில் கடை அமைப்பை நிறைவு செய்யவும்';
+
+  @override
+  String get errorsBiometricUnavailable =>
+      'இந்த சாதனத்தில் பயோமெட்ரிக் திறப்பு கிடைக்கவில்லை.';
+
+  @override
+  String get errorsBiometricNotConfirmed =>
+      'பயோமெட்ரிக் திறப்பு உறுதிப்படுத்தப்படவில்லை.';
+
+  @override
+  String get errorsExportFailed => 'ஏற்றுமதி தோல்வி';
+
+  @override
+  String get navHistory => 'வரலாறு';
+
+  @override
+  String get reportsPdfTitle => 'வணிக அறிக்கை';
+
+  @override
+  String reportsPdfPeriod(String range) {
+    return 'காலம்: $range';
+  }
+
+  @override
+  String reportsPdfGenerated(String when) {
+    return 'உருவாக்கப்பட்டது: $when';
+  }
+
+  @override
+  String get reportsPdfSummary => 'சுருக்கம்';
+
+  @override
+  String get reportsPdfTodaySales => 'இன்றைய விற்பனை';
+
+  @override
+  String get reportsPdfBillsToday => 'இன்றைய பில்கள்';
+
+  @override
+  String get reportsPdfStockValue => 'ஸ்டாக் மதிப்பு';
+
+  @override
+  String get reportsPdfExpensesTotal => 'மொத்த செலவுகள்';
+
+  @override
+  String get reportsPdfTopProducts => 'முன்னணி பொருட்கள் (அளவு அடிப்படையில்)';
+
+  @override
+  String get reportsPdfNoSales => 'இந்த காலத்தில் விற்பனை இல்லை';
+
+  @override
+  String get reportsPdfExpensesSection => 'செலவுகள்';
+
+  @override
+  String get backupCompleteBody =>
+      'உங்கள் POS தரவு Google Drive-க்கு காப்பு எடுக்கப்பட்டது.';
+
+  @override
+  String get commonInStock => 'ஸ்டாக்கில் உள்ளது';
+
+  @override
+  String get commonNoPhone => 'தொலைபேசி இல்லை';
+
+  @override
+  String get commonNoEmail => 'மின்னஞ்சல் இல்லை';
+
+  @override
+  String get billingLeaveBody => 'தற்போதைய கூடை நிராகரிக்கப்படும்.';
+
+  @override
+  String get commonExit => 'வெளியேறு';
+
+  @override
+  String get commonStay => 'இரு';
+
+  @override
+  String get invoiceBillTo => 'பில் பெறுநர்';
+
+  @override
+  String get invoiceStatusLabel => 'நிலை';
+
+  @override
+  String get invoiceThankYou => 'எங்களிடம் வாங்கியதற்கு நன்றி!';
+
+  @override
+  String get invoiceThankYouShort => 'நன்றி!';
+
+  @override
+  String invoiceSubject(String number) {
+    return 'விலைப்பட்டியல் $number';
+  }
+
+  @override
+  String get commonPrice => 'விலை';
+
+  @override
+  String get commonCustomer => 'வாடிக்கையாளர்';
 }

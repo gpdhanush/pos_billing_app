@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/app/theme/app_theme.dart';
 import 'package:pos_billing/shared/widgets/ui_kit.dart';
 
@@ -82,6 +83,7 @@ class _ImageSourceSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
 
     return Padding(
@@ -131,8 +133,8 @@ class _ImageSourceSheet extends StatelessWidget {
                   children: [
                     Expanded(
                       child: _SourceTile(
-                        label: 'Camera',
-                        caption: 'Take a photo',
+                        label: l10n.commonCamera,
+                        caption: l10n.storeLogoHint,
                         icon: HugeIcons.strokeRoundedCamera01,
                         accent: scheme.primary,
                         onTap: () => Navigator.pop(
@@ -144,8 +146,8 @@ class _ImageSourceSheet extends StatelessWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: _SourceTile(
-                        label: 'Gallery',
-                        caption: 'Choose existing',
+                        label: l10n.commonGallery,
+                        caption: l10n.productsPhotoHint,
                         icon: HugeIcons.strokeRoundedImage01,
                         accent: const Color(0xFF2563EB),
                         onTap: () => Navigator.pop(
@@ -198,7 +200,7 @@ class _ImageSourceSheet extends StatelessWidget {
                 TextButton(
                   onPressed: () => Navigator.pop(context),
                   child: Text(
-                    'Cancel',
+                    l10n.commonCancel,
                     style: TextStyle(
                       color: scheme.onSurfaceVariant,
                       fontWeight: FontWeight.w600,

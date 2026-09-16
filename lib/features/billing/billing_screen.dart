@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/app/providers.dart';
 import 'package:pos_billing/app/theme/app_theme.dart';
 import 'package:pos_billing/core/database/repositories/sales_repository.dart';
@@ -31,6 +32,7 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final cart = ref.watch(cartProvider);
     final totals = ref.watch(cartTotalsProvider);
     final store = ref.watch(storeProfileProvider).valueOrNull;
@@ -58,12 +60,12 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Customer',
+                            l10n.billingCustomer,
                             style: Theme.of(context).textTheme.labelMedium,
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            cart.customer?.name ?? 'Walk-in customer',
+                            cart.customer?.name ?? l10n.billingWalkIn,
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                         ],
@@ -75,7 +77,11 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
                         minimumSize: const Size(88, 40),
                         padding: const EdgeInsets.symmetric(horizontal: 14),
                       ),
-                      child: Text(cart.customer == null ? 'Add' : 'Change'),
+                      child: Text(
+                        cart.customer == null
+                            ? l10n.commonAdd
+                            : l10n.commonChange,
+                      ),
                     ),
                   ],
                 ),
@@ -87,7 +93,7 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
                     child: FilledButton.icon(
                       onPressed: _openProductPicker,
                       icon: const Icon(Icons.add_rounded),
-                      label: const Text('Add Product'),
+                      label: Text(l10n.billingAddProduct),
                       style: FilledButton.styleFrom(
                         minimumSize: const Size.fromHeight(48),
                       ),
@@ -96,7 +102,7 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
                   const SizedBox(width: 10),
                   IconButton.filledTonal(
                     onPressed: () => context.push('/scan?purpose=addToCart'),
-                    tooltip: 'Scan barcode',
+                    tooltip: l10n.billingScanBarcode,
                     icon: const Icon(Icons.qr_code_scanner_rounded),
                     style: IconButton.styleFrom(
                       minimumSize: const Size(48, 48),
@@ -120,7 +126,7 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
                               ),
                               const SizedBox(height: 10),
                               Text(
-                                'No products added',
+                                l10n.billingNoProductsAdded,
                                 style: Theme.of(context)
                                     .textTheme
                                     .titleMedium
@@ -128,7 +134,7 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Tap Add Product to select items',
+                                l10n.billingNoProductsHint,
                                 style: Theme.of(context)
                                     .textTheme
                                     .bodyMedium
@@ -242,9 +248,18 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
                                           );
                                     },
                                     onIncrement: () {
-                                      ref
+                                      final added = ref
                                           .read(cartProvider.notifier)
                                           .addProduct(product);
+                                      if (!added && context.mounted) {
+                                        showSnack(
+                                          context,
+                                          AppLocalizations.of(context)
+                                              .errorsInsufficientStock(
+                                            product.name,
+                                          ),
+                                        );
+                                      }
                                     },
                                   ),
                                 ],
@@ -258,7 +273,7 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
               PrimaryCtaBar(
                 enabled: cart.lines.isNotEmpty,
                 onTap: () => context.push('/checkout'),
-                label: 'Proceed to checkout',
+                label: l10n.billingProceedCheckout,
                 trailing: Text(
                   '${cart.lines.length} · ${Money(totals.grandTotalPaise).format(symbol: symbol)}',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -275,10 +290,11 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
   }
 
   Future<void> _pickCustomer() async {
+    final l10n = AppLocalizations.of(context);
     final store = ref.read(storeProfileProvider).valueOrNull;
     if (store == null) {
       if (!mounted) return;
-      showSnack(context, 'Complete store setup first');
+      showSnack(context, l10n.errorsStoreNotReady);
       return;
     }
 
@@ -294,6 +310,7 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (sheetContext) {
+        final sheetL10n = AppLocalizations.of(sheetContext);
         final scheme = Theme.of(sheetContext).colorScheme;
         return SizedBox(
           height: MediaQuery.of(sheetContext).size.height * 0.62,
@@ -314,13 +331,13 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
                   children: [
                     Expanded(
                       child: Text(
-                        'Select customer',
+                        sheetL10n.billingSelectCustomer,
                         style: Theme.of(sheetContext).textTheme.titleLarge,
                       ),
                     ),
                     TextButton(
                       onPressed: () => Navigator.pop(sheetContext, 'walkin'),
-                      child: const Text('Walk-in'),
+                      child: Text(sheetL10n.billingWalkIn),
                     ),
                   ],
                 ),
@@ -332,15 +349,15 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
                   child: OutlinedButton.icon(
                     onPressed: () => Navigator.pop(sheetContext, 'add'),
                     icon: const Icon(Icons.person_add_alt_1_rounded),
-                    label: const Text('Add new customer'),
+                    label: Text(sheetL10n.customersAdd),
                   ),
                 ),
               ),
               const Divider(height: 1),
               Expanded(
                 child: customers.isEmpty
-                    ? const Center(
-                        child: Text('No customers yet. Add a new one.'),
+                    ? Center(
+                        child: Text(sheetL10n.billingNoCustomersHint),
                       )
                     : ListView.separated(
                         itemCount: customers.length,
@@ -351,7 +368,7 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
                             leading: InitialsAvatar(label: c.name, size: 42),
                             title: Text(c.name.displayTitle),
                             subtitle: Text(
-                              (c.phone ?? '').isEmpty ? 'No phone' : c.phone!,
+                              (c.phone ?? '').isEmpty ? l10n.commonNoPhone : c.phone!,
                             ),
                             onTap: () => Navigator.pop(sheetContext, c),
                           );
@@ -417,6 +434,7 @@ class _ProductPickerSheetState extends ConsumerState<_ProductPickerSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     final cart = ref.watch(cartProvider);
     final store = ref.watch(storeProfileProvider).valueOrNull;
@@ -458,7 +476,7 @@ class _ProductPickerSheetState extends ConsumerState<_ProductPickerSheet> {
               children: [
                 Expanded(
                   child: Text(
-                    'Add products',
+                    l10n.productsTitle,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w800,
                         ),
@@ -466,7 +484,7 @@ class _ProductPickerSheetState extends ConsumerState<_ProductPickerSheet> {
                 ),
                 if (selectedCount > 0)
                   SoftInfoBadge(
-                    label: '$selectedCount selected',
+                    label: l10n.billingSelectedCount(selectedCount),
                     background: scheme.primary.withValues(alpha: 0.12),
                     foreground: scheme.primary,
                   ),
@@ -477,7 +495,7 @@ class _ProductPickerSheetState extends ConsumerState<_ProductPickerSheet> {
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
             child: SoftSearchField(
               controller: _search,
-              hintText: 'Search products',
+              hintText: l10n.billingSearchProduct,
               onChanged: (_) => setState(() {}),
             ),
           ),
@@ -486,7 +504,7 @@ class _ProductPickerSheetState extends ConsumerState<_ProductPickerSheet> {
             child: visible.isEmpty
                 ? Center(
                     child: Text(
-                      'No products found',
+                      l10n.productsEmptySearchTitle,
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                             color: scheme.onSurfaceVariant,
                           ),
@@ -505,12 +523,12 @@ class _ProductPickerSheetState extends ConsumerState<_ProductPickerSheet> {
                       final out = product.isOutOfStock;
                       final low = !out && product.isLowStock;
                       final statusLabel = !product.isActive
-                          ? 'Inactive'
+                          ? l10n.productsInactive
                           : out
-                              ? 'Out of stock'
+                              ? l10n.productsOutOfStockFilter
                               : low
-                                  ? 'Low stock'
-                                  : 'In stock';
+                                  ? l10n.productsLowStockFilter
+                                  : l10n.commonInStock;
                       final statusColor = !product.isActive
                           ? scheme.onSurfaceVariant
                           : out
@@ -647,9 +665,16 @@ class _ProductPickerSheetState extends ConsumerState<_ProductPickerSheet> {
                                     );
                               },
                               onIncrement: () {
-                                ref
+                                final added = ref
                                     .read(cartProvider.notifier)
                                     .addProduct(product);
+                                if (!added && context.mounted) {
+                                  showSnack(
+                                    context,
+                                    AppLocalizations.of(context)
+                                        .errorsInsufficientStock(product.name),
+                                  );
+                                }
                               },
                             ),
                           ],
@@ -669,8 +694,8 @@ class _ProductPickerSheetState extends ConsumerState<_ProductPickerSheet> {
                   onPressed: () => Navigator.pop(context),
                   child: Text(
                     selectedCount > 0
-                        ? 'Done ($selectedCount)'
-                        : 'Done',
+                        ? '${l10n.commonDone} ($selectedCount)'
+                        : l10n.commonDone,
                     style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
                 ),

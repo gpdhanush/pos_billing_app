@@ -63,7 +63,7 @@ class LanguageScreen extends ConsumerWidget {
               const SizedBox(height: 28),
               OnboardOptionCard(
                 title: l10n.languageEnglish,
-                subtitle: 'English',
+                subtitle: l10n.languageEnglishNative,
                 icon: HugeIcons.strokeRoundedLanguageSquare,
                 selected: current == 'en',
                 onTap: () =>
@@ -72,7 +72,7 @@ class LanguageScreen extends ConsumerWidget {
               const SizedBox(height: 12),
               OnboardOptionCard(
                 title: l10n.languageTamil,
-                subtitle: 'தமிழ்',
+                subtitle: l10n.languageTamilNative,
                 icon: HugeIcons.strokeRoundedTranslate,
                 selected: current == 'ta',
                 onTap: () =>
@@ -159,7 +159,7 @@ class ThemePickerScreen extends ConsumerWidget {
               const SizedBox(height: 28),
               OnboardOptionCard(
                 title: l10n.themeLight,
-                subtitle: 'Bright & clear',
+                subtitle: l10n.themeLightHint,
                 icon: HugeIcons.strokeRoundedSun03,
                 selected: settings.themeModeName == 'light',
                 onTap: () => ref
@@ -169,7 +169,7 @@ class ThemePickerScreen extends ConsumerWidget {
               const SizedBox(height: 12),
               OnboardOptionCard(
                 title: l10n.themeDark,
-                subtitle: 'Easy on the eyes',
+                subtitle: l10n.themeDarkHint,
                 icon: HugeIcons.strokeRoundedMoon02,
                 selected: settings.themeModeName == 'dark',
                 onTap: () =>
@@ -178,7 +178,7 @@ class ThemePickerScreen extends ConsumerWidget {
               const SizedBox(height: 12),
               OnboardOptionCard(
                 title: l10n.themeSystem,
-                subtitle: 'Match device setting',
+                subtitle: l10n.themeSystemHint,
                 icon: HugeIcons.strokeRoundedComputerSettings,
                 selected: settings.themeModeName == 'system',
                 onTap: () => ref

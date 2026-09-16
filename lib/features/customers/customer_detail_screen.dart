@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:intl/intl.dart';
+import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/app/providers.dart';
 import 'package:pos_billing/app/theme/app_theme.dart';
 import 'package:pos_billing/core/constants/app_constants.dart';
@@ -38,6 +39,7 @@ class CustomerDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final async = ref.watch(customerDetailProvider(customerId));
     final scheme = Theme.of(context).colorScheme;
     final store = ref.watch(storeProfileProvider).valueOrNull;
@@ -51,8 +53,8 @@ class CustomerDetailScreen extends ConsumerWidget {
       error: (_, _) => Scaffold(
         backgroundColor: scheme.surfaceContainerLowest,
         appBar: GlassPageHeader(
-          title: 'Customer Details',
-          subtitle: 'View customer information',
+          title: l10n.customersDetailsTitle,
+          subtitle: l10n.customersDetailsSubtitle,
           height: 64,
           leading: IconButton(
             onPressed: () => context.pop(),
@@ -68,17 +70,17 @@ class CustomerDetailScreen extends ConsumerWidget {
           return Scaffold(
             backgroundColor: scheme.surfaceContainerLowest,
             appBar: GlassPageHeader(
-              title: 'Customer Details',
-              subtitle: 'View customer information',
+              title: l10n.customersDetailsTitle,
+              subtitle: l10n.customersDetailsSubtitle,
               height: 64,
               leading: IconButton(
                 onPressed: () => context.pop(),
                 icon: const Icon(Icons.arrow_back_rounded),
               ),
             ),
-            body: const EmptyState(
-              title: 'Customer not found',
-              subtitle: 'It may have been removed.',
+            body: EmptyState(
+              title: l10n.customersNotFound,
+              subtitle: l10n.customersNotFoundHint,
               showIcon: false,
             ),
           );
@@ -105,21 +107,25 @@ class _CustomerDetailBody extends ConsumerWidget {
     context.go('/billing');
   }
 
-  ({Color color, String label}) _statusStyle(String status) {
+  ({Color color, String label}) _statusStyle(
+    AppLocalizations l10n,
+    String status,
+  ) {
     switch (status) {
       case InvoiceStatus.cancelled:
-        return (color: AppColors.danger, label: 'Cancelled');
+        return (color: AppColors.danger, label: l10n.salesStatusCancelled);
       case InvoiceStatus.refunded:
-        return (color: AppColors.warning, label: 'Refunded');
+        return (color: AppColors.warning, label: l10n.salesStatusRefunded);
       case InvoiceStatus.completed:
-        return (color: AppColors.success, label: 'Paid');
+        return (color: AppColors.success, label: l10n.customersStatusPaid);
       default:
-        return (color: AppColors.warning, label: 'Pending');
+        return (color: AppColors.warning, label: l10n.customersStatusPending);
     }
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     final orders = ref.watch(customerOrdersProvider(customer.id));
     final memberSince = _date.format(
@@ -131,8 +137,8 @@ class _CustomerDetailBody extends ConsumerWidget {
     return Scaffold(
       backgroundColor: scheme.surfaceContainerLowest,
       appBar: GlassPageHeader(
-        title: 'Customer Details',
-        subtitle: 'View customer information',
+        title: l10n.customersDetailsTitle,
+        subtitle: l10n.customersDetailsSubtitle,
         height: 64,
         leading: IconButton(
           onPressed: () => context.pop(),
@@ -140,7 +146,7 @@ class _CustomerDetailBody extends ConsumerWidget {
         ),
         actions: [
           IconButton(
-            tooltip: 'Edit',
+            tooltip: l10n.commonEdit,
             onPressed: () async {
               final saved = await context.push<Object?>(
                 '/customers/edit?id=${customer.id}',
@@ -163,7 +169,7 @@ class _CustomerDetailBody extends ConsumerWidget {
             child: FilledButton.icon(
               onPressed: () => _createOrder(context, ref),
               icon: const Icon(Icons.shopping_cart_outlined),
-              label: const Text('Create Order'),
+              label: Text(l10n.customersCreateOrder),
               style: FilledButton.styleFrom(
                 minimumSize: const Size.fromHeight(52),
                 shape: RoundedRectangleBorder(
@@ -278,8 +284,8 @@ class _CustomerDetailBody extends ConsumerWidget {
                                     const SizedBox(width: 6),
                                     Text(
                                       customer.isActive
-                                          ? 'Active Customer'
-                                          : 'Inactive',
+                                          ? l10n.billingCustomer
+                                          : l10n.productsInactive,
                                       style: Theme.of(context)
                                           .textTheme
                                           .labelMedium
@@ -301,13 +307,13 @@ class _CustomerDetailBody extends ConsumerWidget {
                     const SizedBox(height: 18),
                     _InfoRow(
                       icon: Icons.phone_outlined,
-                      value: phone.isEmpty ? 'No phone' : phone,
+                      value: phone.isEmpty ? l10n.commonNoPhone : phone,
                       muted: phone.isEmpty,
                     ),
                     const SizedBox(height: 10),
                     _InfoRow(
                       icon: Icons.mail_outline_rounded,
-                      value: email.isEmpty ? 'No email' : email,
+                      value: email.isEmpty ? l10n.commonNoEmail : email,
                       muted: email.isEmpty,
                     ),
                     const SizedBox(height: 10),
@@ -320,7 +326,7 @@ class _CustomerDetailBody extends ConsumerWidget {
                       _InfoRow(
                         icon: Icons.account_balance_wallet_outlined,
                         value:
-                            'Due ${Money(customer.outstandingBalancePaise).format(symbol: symbol)}',
+                            '${l10n.customersDue} ${Money(customer.outstandingBalancePaise).format(symbol: symbol)}',
                         accent: scheme.error,
                       ),
                     ],
@@ -346,7 +352,7 @@ class _CustomerDetailBody extends ConsumerWidget {
                     child: _StatCard(
                       icon: HugeIcons.strokeRoundedShoppingCart01,
                       value: '${data.orderCount}',
-                      label: 'Total Orders',
+                      label: l10n.customersTotalOrders,
                       accent: scheme.primary,
                       background: scheme.primary.withValues(alpha: 0.08),
                     ),
@@ -356,7 +362,7 @@ class _CustomerDetailBody extends ConsumerWidget {
                     child: _StatCard(
                       icon: HugeIcons.strokeRoundedMoney01,
                       value: Money(data.spentPaise).format(symbol: symbol),
-                      label: 'Total Spent',
+                      label: l10n.customersTotalSpent,
                       accent: AppColors.success,
                       background: AppColors.success.withValues(alpha: 0.10),
                     ),
@@ -389,13 +395,13 @@ class _CustomerDetailBody extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Order History',
+                      l10n.customersOrderHistory,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w800,
                           ),
                     ),
                     Text(
-                      'Latest orders from this customer',
+                      l10n.customersHistory,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: scheme.onSurfaceVariant,
                           ),
@@ -416,9 +422,9 @@ class _CustomerDetailBody extends ConsumerWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
-                      'View All',
-                      style: TextStyle(fontWeight: FontWeight.w700),
+                    Text(
+                      l10n.commonViewAll,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(width: 2),
                     HugeIcon(
@@ -471,7 +477,7 @@ class _CustomerDetailBody extends ConsumerWidget {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'No orders found',
+                        l10n.salesEmpty,
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w800,
                               letterSpacing: -0.2,
@@ -480,7 +486,7 @@ class _CustomerDetailBody extends ConsumerWidget {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'This customer has not placed any orders yet.\nStart billing to see history here.',
+                        l10n.customersNoOrders,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: scheme.onSurfaceVariant,
                               height: 1.45,
@@ -516,7 +522,7 @@ class _CustomerDetailBody extends ConsumerWidget {
                           data.recent[i].createdAt,
                         ),
                       ),
-                      status: _statusStyle(data.recent[i].status),
+                      status: _statusStyle(l10n, data.recent[i].status),
                       onTap: () =>
                           context.push('/invoice/${data.recent[i].id}'),
                     ),

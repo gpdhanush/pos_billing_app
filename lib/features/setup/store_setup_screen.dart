@@ -146,12 +146,13 @@ class _StoreSetupScreenState extends ConsumerState<StoreSetupScreen> {
   }
 
   Future<void> _pickLogo() async {
+    final l10n = AppLocalizations.of(context);
     final file = await showImagePickerFlow(
       context,
-      title: 'Store logo',
-      subtitle: 'Take a photo or choose from gallery',
+      title: l10n.storeLogoTitle,
+      subtitle: l10n.storeLogoHint,
       showRemove: _logoPath != null && _logoPath!.isNotEmpty,
-      removeLabel: 'Remove logo',
+      removeLabel: l10n.storeRemoveLogo,
       onRemove: () async {
         setState(() => _logoPath = null);
       },
@@ -162,7 +163,7 @@ class _StoreSetupScreenState extends ConsumerState<StoreSetupScreen> {
       setState(() => _logoPath = saved);
     } catch (_) {
       if (!mounted) return;
-      showSnack(context, 'Unable to save business logo');
+      showSnack(context, AppLocalizations.of(context).errorsDatabase);
     }
   }
 
@@ -522,7 +523,7 @@ class _StoreSetupScreenState extends ConsumerState<StoreSetupScreen> {
           Center(
             child: TextButton(
               onPressed: () => setState(() => _logoPath = null),
-              child: const Text('Remove logo'),
+              child: Text(AppLocalizations.of(context).storeRemoveLogo),
             ),
           ),
         ],

@@ -20,26 +20,27 @@ class SalesScreen extends ConsumerWidget {
   ({Color color, List<List<dynamic>> icon, String label}) _statusStyle(
     String status,
     ColorScheme scheme,
+    AppLocalizations l10n,
   ) {
     switch (status) {
       case InvoiceStatus.cancelled:
         return (
           color: AppColors.danger,
           icon: HugeIcons.strokeRoundedCancel01,
-          label: 'Cancelled',
+          label: l10n.salesStatusCancelled,
         );
       case InvoiceStatus.refunded:
         return (
           color: AppColors.warning,
           icon: HugeIcons.strokeRoundedReload,
-          label: 'Refunded',
+          label: l10n.salesStatusRefunded,
         );
       case InvoiceStatus.completed:
       default:
         return (
           color: scheme.primary,
           icon: HugeIcons.strokeRoundedInvoice01,
-          label: 'Completed',
+          label: l10n.salesStatusCompleted,
         );
     }
   }
@@ -76,7 +77,7 @@ class SalesScreen extends ConsumerWidget {
       backgroundColor: scheme.surfaceContainerLowest,
       appBar: GlassPageHeader(
         title: l10n.salesTitle,
-        subtitle: 'Invoices & payment history',
+        subtitle: l10n.salesSubtitle,
         height: 64,
         leading: canPop
             ? IconButton(
@@ -90,7 +91,7 @@ class SalesScreen extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: SoftSearchField(
-              hintText: 'Search invoice or customer',
+              hintText: l10n.salesSearchHint,
               onChanged: (v) => ref.read(salesSearchProvider.notifier).state = v,
             ),
           ),
@@ -147,7 +148,7 @@ class SalesScreen extends ConsumerWidget {
                   separatorBuilder: (_, _) => const SizedBox(height: 10),
                   itemBuilder: (context, i) {
                     final bill = visible[i];
-                    final style = _statusStyle(bill.status, scheme);
+                    final style = _statusStyle(bill.status, scheme, l10n);
                     final when = dateFmt.format(
                       DateTime.fromMillisecondsSinceEpoch(bill.createdAt),
                     );

@@ -126,12 +126,13 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   }
 
   Future<bool> _confirmRemovePhoto() {
+    final l10n = AppLocalizations.of(context);
     return confirmDialog(
       context,
-      title: 'Remove photo?',
+      title: l10n.productsRemovePhoto,
       body: 'This product photo will be removed. You can upload a new one anytime.',
       icon: Icons.hide_image_outlined,
-      confirmLabel: 'Remove',
+      confirmLabel: l10n.productsRemove,
       destructive: true,
     );
   }
@@ -143,12 +144,13 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   }
 
   Future<void> _pickImage() async {
+    final l10n = AppLocalizations.of(context);
     final file = await showImagePickerFlow(
       context,
-      title: 'Product photo',
-      subtitle: 'Take a new photo or choose from gallery',
+      title: l10n.productsPhotoTitle,
+      subtitle: l10n.productsPhotoHint,
       showRemove: _hasImage,
-      removeLabel: 'Remove photo',
+      removeLabel: l10n.productsRemovePhoto,
       onRemove: _removePhoto,
     );
     if (file == null || !mounted) return;
@@ -259,9 +261,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       backgroundColor: scheme.surfaceContainerLowest,
       appBar: GlassPageHeader(
         title: isEdit ? l10n.productsEditProduct : l10n.productsAddProduct,
-        subtitle: isEdit
-            ? 'Update catalog details & pricing'
-            : 'Add to catalog with price & stock',
+        subtitle: l10n.productsSubtitle,
         height: 64,
         leading: IconButton(
           onPressed: () => context.pop(),
@@ -320,8 +320,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                 children: [
                                   Text(
                                     _hasImage
-                                        ? 'Product photo'
-                                        : 'Add product photo',
+                                        ? l10n.productsPhotoTitle
+                                        : l10n.productsImage,
                                     style: Theme.of(context)
                                         .textTheme
                                         .titleSmall
@@ -332,8 +332,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                   const SizedBox(height: 4),
                                   Text(
                                     _hasImage
-                                        ? 'Tap to change or remove'
-                                        : 'Camera or gallery • optional',
+                                        ? l10n.commonChange
+                                        : l10n.storeLogoHint,
                                     style: Theme.of(context)
                                         .textTheme
                                         .bodySmall
@@ -356,7 +356,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                               BorderRadius.circular(999),
                                         ),
                                         child: Text(
-                                          _hasImage ? 'Change' : 'Upload',
+                                          _hasImage
+                                              ? l10n.commonChange
+                                              : l10n.commonAdd,
                                           style: Theme.of(context)
                                               .textTheme
                                               .labelMedium
@@ -378,7 +380,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                               horizontal: 8,
                                             ),
                                           ),
-                                          child: const Text('Remove'),
+                                          child: Text(l10n.productsRemove),
                                         ),
                                       ],
                                     ],
@@ -395,19 +397,19 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                         controller: _name,
                         textCapitalization: TextCapitalization.words,
                         decoration: _decoration(
-                          hint: 'Enter product name',
+                          hint: l10n.productsProductName,
                           icon: Icons.shopping_bag_outlined,
                         ),
                       ),
                       const SizedBox(height: 14),
-                      _label('SKU (Optional)'),
+                      _label('${l10n.productsSku} (${l10n.commonOptional})'),
                       TextField(
                         controller: _sku,
                         decoration: _decoration(
-                          hint: 'SKU',
+                          hint: l10n.productsSku,
                           icon: Icons.tag_rounded,
                           suffix: IconButton(
-                            tooltip: 'Generate SKU',
+                            tooltip: l10n.productsGenerateSku,
                             onPressed: _generateSku,
                             icon: Icon(
                               Icons.auto_awesome_rounded,
@@ -417,14 +419,14 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                         ),
                       ),
                       const SizedBox(height: 14),
-                      _label('Barcode (Optional)'),
+                      _label('${l10n.productsBarcode} (${l10n.commonOptional})'),
                       TextField(
                         controller: _barcode,
                         decoration: _decoration(
-                          hint: 'Barcode',
+                          hint: l10n.productsBarcode,
                           icon: Icons.qr_code_2_rounded,
                           suffix: IconButton(
-                            tooltip: 'Scan barcode',
+                            tooltip: l10n.billingScanBarcode,
                             onPressed: _scanBarcode,
                             icon: Icon(
                               Icons.qr_code_scanner_rounded,
@@ -436,7 +438,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                       const SizedBox(height: 14),
                       Row(
                         children: [
-                          Expanded(child: _label('Category (Optional)')),
+                          Expanded(
+                            child: _label(
+                              '${l10n.productsCategory} (${l10n.commonOptional})',
+                            ),
+                          ),
                           TextButton.icon(
                             onPressed: () async {
                               final id = await showCreateCategoryDialog(context);
@@ -450,7 +456,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                               color: scheme.primary,
                             ),
                             label: Text(
-                              'Add',
+                              l10n.commonAdd,
                               style: TextStyle(
                                 color: scheme.primary,
                                 fontWeight: FontWeight.w700,
@@ -468,7 +474,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                         borderRadius: BorderRadius.circular(_fieldRadius),
                         child: InputDecorator(
                           decoration: _decoration(
-                            hint: 'Select Category',
+                            hint: l10n.productsCategory,
                             icon: Icons.category_outlined,
                             suffix: Icon(
                               Icons.keyboard_arrow_down_rounded,
@@ -477,12 +483,12 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                           ),
                           child: Text(
                             _categoryId == null
-                                ? 'Select Category'
+                                ? l10n.productsCategory
                                 : (cats
                                         .where((c) => c.id == _categoryId)
                                         .map((c) => c.name.displayTitle)
                                         .firstOrNull ??
-                                    'Select Category'),
+                                    l10n.productsCategory),
                             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                                   color: _categoryId == null
                                       ? scheme.onSurfaceVariant
@@ -498,7 +504,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                           Expanded(
                             child: Column(
                               children: [
-                                _label('Cost Price'),
+                                _label(l10n.productsPurchasePrice),
                                 TextField(
                                   controller: _purchase,
                                   keyboardType:
@@ -509,7 +515,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                     ThousandDecimalFormatter(),
                                   ],
                                   decoration: _decoration(
-                                    hint: 'Enter cost price',
+                                    hint: l10n.productsPurchasePrice,
                                     icon: Icons.currency_rupee_rounded,
                                   ),
                                 ),
@@ -534,7 +540,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                     ThousandDecimalFormatter(),
                                   ],
                                   decoration: _decoration(
-                                    hint: 'Enter selling price',
+                                    hint: l10n.productsSellingPrice,
                                     icon: Icons.sell_outlined,
                                   ),
                                 ),
@@ -553,7 +559,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                 _label(
                                   isEdit
                                       ? l10n.inventoryCurrentStock
-                                      : 'Stock Quantity',
+                                      : l10n.productsOpeningStock,
                                   required: isEdit,
                                 ),
                                 TextField(
@@ -603,7 +609,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                           Expanded(
                             child: Column(
                               children: [
-                                _label('Min. stock alert'),
+                                _label(l10n.productsMinimumStock),
                                 TextField(
                                   controller: _min,
                                   keyboardType: TextInputType.number,
@@ -619,7 +625,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                           Expanded(
                             child: Column(
                               children: [
-                                _label('GST (%)'),
+                                _label(l10n.productsTaxGst),
                                 TextField(
                                   controller: _tax,
                                   keyboardType:
@@ -644,16 +650,17 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                             final ok = await confirmDialog(
                               context,
                               title: inactive
-                                  ? 'Activate product'
-                                  : 'Deactivate product',
+                                  ? l10n.productsActivate
+                                  : l10n.productsDeactivateTitle,
                               body: inactive
                                   ? 'Show this product in billing and catalogs again?'
                                   : 'Hide this product from billing and catalogs? Not a permanent delete — reactivate later from Products → Inactive.',
                               icon: inactive
                                   ? Icons.restart_alt_rounded
                                   : Icons.visibility_off_outlined,
-                              confirmLabel:
-                                  inactive ? 'Activate' : 'Deactivate',
+                              confirmLabel: inactive
+                                  ? l10n.productsActivate
+                                  : l10n.productsDeactivate,
                               destructive: !inactive,
                             );
                             if (!ok || !context.mounted) return;
@@ -682,8 +689,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                           ),
                           label: Text(
                             _existing!.isActive
-                                ? 'Deactivate product'
-                                : 'Activate product',
+                                ? l10n.productsDeactivate
+                                : l10n.productsActivate,
                           ),
                         ),
                       ],

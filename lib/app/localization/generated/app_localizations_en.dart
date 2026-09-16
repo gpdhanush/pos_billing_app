@@ -1012,4 +1012,849 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sampleDataLoaded => 'Sample products loaded for development.';
+
+  @override
+  String get commonUpdate => 'Update';
+
+  @override
+  String get commonChange => 'Change';
+
+  @override
+  String get commonScan => 'Scan';
+
+  @override
+  String get commonAllow => 'Allow';
+
+  @override
+  String get commonLater => 'Later';
+
+  @override
+  String get commonGotIt => 'Got it';
+
+  @override
+  String get commonRestore => 'Restore';
+
+  @override
+  String get commonMore => 'More';
+
+  @override
+  String get commonHelp => 'Help';
+
+  @override
+  String get commonSaving => 'Saving…';
+
+  @override
+  String get commonExporting => 'Exporting…';
+
+  @override
+  String get commonCamera => 'Camera';
+
+  @override
+  String get commonGallery => 'Gallery';
+
+  @override
+  String get commonRefresh => 'Refresh';
+
+  @override
+  String get commonOpenInBrowser => 'Open in browser';
+
+  @override
+  String get commonOpenSettings => 'Open settings';
+
+  @override
+  String get commonSelectDate => 'Select date';
+
+  @override
+  String get commonExitApp => 'Exit app?';
+
+  @override
+  String get commonGoHome => 'Go to home';
+
+  @override
+  String get commonTryAgain => 'Try again';
+
+  @override
+  String get commonSharePdf => 'Share PDF';
+
+  @override
+  String get commonNoCategory => 'No category';
+
+  @override
+  String get commonPermissionNeeded => 'Permission needed';
+
+  @override
+  String get themeLightHint => 'Bright & clear';
+
+  @override
+  String get themeDarkHint => 'Easy on the eyes';
+
+  @override
+  String get themeSystemHint => 'Match device setting';
+
+  @override
+  String get themeAccentHint => 'Choose your preferred color';
+
+  @override
+  String get languageEnglishNative => 'English';
+
+  @override
+  String get languageTamilNative => 'தமிழ்';
+
+  @override
+  String get salesSubtitle => 'Invoices & payment history';
+
+  @override
+  String get salesSearchHint => 'Search invoice or customer';
+
+  @override
+  String get salesStatusCompleted => 'Completed';
+
+  @override
+  String get salesStatusCancelled => 'Cancelled';
+
+  @override
+  String get salesStatusRefunded => 'Refunded';
+
+  @override
+  String get invoiceDetailSubtitle => 'Invoice & payment details';
+
+  @override
+  String get invoiceNumberLabel => 'Invoice No.';
+
+  @override
+  String get invoiceItemsTitle => 'Items';
+
+  @override
+  String get invoiceItemColumn => 'Item';
+
+  @override
+  String get invoiceQtyPriceColumn => 'Qty × Price';
+
+  @override
+  String get invoiceBillingDetails => 'Billing details';
+
+  @override
+  String invoiceItemCount(int count) {
+    return '$count items';
+  }
+
+  @override
+  String get billingRoundOff => 'Round off';
+
+  @override
+  String get checkoutUnpaid => 'Unpaid';
+
+  @override
+  String get checkoutSubtitle => 'Choose method & collect amount';
+
+  @override
+  String get billingCheckoutSubtitle => 'Review cart & continue to payment';
+
+  @override
+  String get billingProceedCheckout => 'Proceed to checkout';
+
+  @override
+  String get billingNoProductsAdded => 'No products added';
+
+  @override
+  String get billingNoProductsHint => 'Tap Add Product to select items';
+
+  @override
+  String get billingNoCustomersHint => 'No customers yet. Add a new one.';
+
+  @override
+  String get billingEmptyCartContinueHint =>
+      'Add products from billing to continue.';
+
+  @override
+  String get billingTaxPercent => 'Tax %';
+
+  @override
+  String billingSelectedCount(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String get billingLeaveConfirm => 'Leave billing?';
+
+  @override
+  String get billingAddProduct => 'Add Product';
+
+  @override
+  String get billingScanBarcode => 'Scan barcode';
+
+  @override
+  String get dashboardTagline => 'Manage your business with ease';
+
+  @override
+  String get dashboardTodayOverview => 'Today\'s overview';
+
+  @override
+  String get dashboardWeekRange => 'Sunday – Saturday';
+
+  @override
+  String get dashboardToday => 'Today';
+
+  @override
+  String get dashboardGetStartedBody =>
+      'Set up your shop by adding products and categories.';
+
+  @override
+  String get productsSubtitle => 'Catalog, prices & stock';
+
+  @override
+  String get productsEmptySearchTitle => 'No products found';
+
+  @override
+  String get productsEmptySearchBody =>
+      'Add products to start billing and track stock.';
+
+  @override
+  String get productsViewDetails => 'View details';
+
+  @override
+  String get productsViewDetailsSubtitle => 'Pricing, stock & movements';
+
+  @override
+  String get productsEditDetails => 'Edit product details';
+
+  @override
+  String get productsActivate => 'Activate product';
+
+  @override
+  String get productsDeactivateTitle => 'Deactivate product';
+
+  @override
+  String get productsDetailsTitle => 'Product Details';
+
+  @override
+  String get productsDetailsSubtitle => 'View and manage product information';
+
+  @override
+  String get productsNotFound => 'Product not found';
+
+  @override
+  String get productsNotFoundHint => 'It may have been removed.';
+
+  @override
+  String get productsPricingSection => 'Pricing';
+
+  @override
+  String get productsPricingSectionHint => 'Cost and selling price details.';
+
+  @override
+  String get productsStockSection => 'Stock Information';
+
+  @override
+  String get productsStockSectionHint => 'Current stock and alert settings.';
+
+  @override
+  String get productsMinStockAlert => 'Min Stock Alert';
+
+  @override
+  String get productsStockHealth => 'Stock Health';
+
+  @override
+  String get productsRecentMovements => 'Recent Stock Movements';
+
+  @override
+  String get productsRecentMovementsHint => 'Latest in and out transactions.';
+
+  @override
+  String get productsMovementsLoadFailed => 'Unable to load movements';
+
+  @override
+  String get productsRemovePhoto => 'Remove photo?';
+
+  @override
+  String get productsPhotoTitle => 'Product photo';
+
+  @override
+  String get productsPhotoHint => 'Take a new photo or choose from gallery';
+
+  @override
+  String get productsGenerateSku => 'Generate SKU';
+
+  @override
+  String get productsRemove => 'Remove';
+
+  @override
+  String get categoriesSubtitle => 'Organize your product catalog';
+
+  @override
+  String get categoriesSearchHint => 'Search categories';
+
+  @override
+  String get categoriesRename => 'Rename this category';
+
+  @override
+  String get categoriesDeleteConfirm => 'Delete category';
+
+  @override
+  String get categoriesRemoveFromForms => 'Remove from product forms';
+
+  @override
+  String get categoriesExampleHint => 'e.g. Electronics, Groceries';
+
+  @override
+  String get customersSubtitle => 'Contacts, credit & dues';
+
+  @override
+  String get customersEmptySearchTitle => 'No customers found';
+
+  @override
+  String get customersEmptySearchBody =>
+      'Add customers to track credit and billing history.';
+
+  @override
+  String get customersViewDetails => 'View details';
+
+  @override
+  String get customersViewDetailsSubtitle => 'Orders, contact & history';
+
+  @override
+  String get customersEditDetails => 'Edit customer details';
+
+  @override
+  String get customersDeleteTitle => 'Delete customer';
+
+  @override
+  String get customersRemoveFromList => 'Remove from customer list';
+
+  @override
+  String get customersDetailsTitle => 'Customer Details';
+
+  @override
+  String get customersDetailsSubtitle => 'View customer information';
+
+  @override
+  String get customersNotFound => 'Customer not found';
+
+  @override
+  String get customersNotFoundHint => 'It may have been removed.';
+
+  @override
+  String get customersCreateOrder => 'Create Order';
+
+  @override
+  String get customersTotalOrders => 'Total Orders';
+
+  @override
+  String get customersTotalSpent => 'Total Spent';
+
+  @override
+  String get customersOrderHistory => 'Order History';
+
+  @override
+  String get customersNoOrders =>
+      'This customer has not placed any orders yet.\nStart billing to see history here.';
+
+  @override
+  String get customersDue => 'Due';
+
+  @override
+  String get customersSettled => 'Settled';
+
+  @override
+  String get customersStatusPaid => 'Paid';
+
+  @override
+  String get customersStatusPending => 'Pending';
+
+  @override
+  String get inventorySubtitle => 'Products, availability & stock';
+
+  @override
+  String get inventorySearchHint => 'Search products by name, SKU, or barcode';
+
+  @override
+  String get inventoryAllCategories => 'All Categories';
+
+  @override
+  String get inventoryEmptyTitle => 'No inventory items';
+
+  @override
+  String get inventoryEmptyBody => 'Add products to track stock levels.';
+
+  @override
+  String get inventoryHistorySubtitle => 'Stock in, stock out & adjustments';
+
+  @override
+  String get inventoryAddMovement => 'Add movement';
+
+  @override
+  String get inventoryAddMovementTitle => 'Add Stock Movement';
+
+  @override
+  String get inventoryStockOut => 'Stock OUT';
+
+  @override
+  String get inventoryMovementsEmpty => 'No stock movements';
+
+  @override
+  String get inventorySaveMovement => 'Save Movement';
+
+  @override
+  String get inventoryCostPrice => 'Cost Price';
+
+  @override
+  String get inventoryNotesRequired => 'Notes (Required)';
+
+  @override
+  String get inventorySearchProductHint => 'Search name, SKU, or barcode';
+
+  @override
+  String get expensesSubtitle => 'Shop spending & costs';
+
+  @override
+  String get expensesSearchHint => 'Search expenses';
+
+  @override
+  String get expensesEmptySearch => 'No expenses found';
+
+  @override
+  String get expensesEmptyHint => 'Record shop spending to track your costs.';
+
+  @override
+  String get expensesEditDetails => 'Edit expense details';
+
+  @override
+  String get expensesDeleteTitle => 'Delete expense';
+
+  @override
+  String get expensesRemoveHint => 'Remove this expense';
+
+  @override
+  String get reportsSubtitle => 'View your business insights';
+
+  @override
+  String get reportsFrom => 'From';
+
+  @override
+  String get reportsTo => 'To';
+
+  @override
+  String get reportsCollections => 'Collections';
+
+  @override
+  String get reportsTopProductsEmpty => 'No top products yet';
+
+  @override
+  String get reportsExpensesEmptyHint => 'No expenses in this period';
+
+  @override
+  String reportsExportPdf(String range) {
+    return 'Export PDF ($range)';
+  }
+
+  @override
+  String get reportsDateRange => 'Date range';
+
+  @override
+  String get moreSubtitle => 'Shop tools & preferences';
+
+  @override
+  String get moreSectionShop => 'Shop Management';
+
+  @override
+  String get moreSectionBusiness => 'Business';
+
+  @override
+  String get moreSectionData => 'Data & Tools';
+
+  @override
+  String get moreSectionSupport => 'Support';
+
+  @override
+  String get morePreferences => 'Preferences';
+
+  @override
+  String get moreAppearance => 'Appearance';
+
+  @override
+  String get moreAbout => 'About';
+
+  @override
+  String get moreDangerZone => 'Danger zone';
+
+  @override
+  String get moreProductsSubtitle => 'Catalog & prices';
+
+  @override
+  String get moreCategoriesSubtitle => 'Organize your products';
+
+  @override
+  String get moreCustomersSubtitle => 'Buyers & credit';
+
+  @override
+  String get moreExpensesSubtitle => 'Shop spending';
+
+  @override
+  String get moreReportsSubtitle => 'Sales & business overview';
+
+  @override
+  String get moreBackupTitle => 'Backup & Restore';
+
+  @override
+  String get moreBackupSubtitle => 'Google Drive, local backup';
+
+  @override
+  String get moreExportTitle => 'Export data';
+
+  @override
+  String get moreExportSubtitle => 'Share reports & files';
+
+  @override
+  String get morePrinterSubtitle => 'Receipt printer settings';
+
+  @override
+  String get moreHelpTitle => 'Help & Feedback';
+
+  @override
+  String get moreHelpSubtitle => 'Guides, FAQs and support';
+
+  @override
+  String get moreStoreSettings => 'Store Settings';
+
+  @override
+  String get moreStoreSettingsSubtitle => 'Business profile and invoice setup';
+
+  @override
+  String get moreAppLockSubtitle => 'Fingerprint or face unlock';
+
+  @override
+  String get moreThemeValueHint => 'Light, Dark or System default';
+
+  @override
+  String get morePrivacySubtitle => 'How we handle your data';
+
+  @override
+  String get moreSendLogs => 'Send app logs';
+
+  @override
+  String get moreSendLogsSubtitle => 'Share diagnostics for support';
+
+  @override
+  String get moreFooterTagline => 'Offline-first billing for everyday shops.';
+
+  @override
+  String get moreDeleteAllTitle => 'Delete all data?';
+
+  @override
+  String get moreDeleteAllBody =>
+      'This permanently removes products, sales, customers and settings on this device.';
+
+  @override
+  String get moreLogoutTitle => 'Log out & reset app?';
+
+  @override
+  String get moreLogoutBody =>
+      'You will return to setup. Local data can be deleted as part of reset.';
+
+  @override
+  String get moreDeleteEverything => 'Delete everything';
+
+  @override
+  String get moreLogout => 'Log out';
+
+  @override
+  String get moreLoggingOut => 'Logging out…';
+
+  @override
+  String get backupSubtitle => 'Keep your data safe and accessible';
+
+  @override
+  String get backupDeleteTitle => 'Delete backup?';
+
+  @override
+  String get backupDeleteDriveTitle => 'Delete Drive backup?';
+
+  @override
+  String get backupDeleted => 'Backup deleted';
+
+  @override
+  String get backupDriveDeleted => 'Drive backup deleted';
+
+  @override
+  String get backupDeleteFailed => 'Unable to delete backup';
+
+  @override
+  String get backupDriveDeleteFailed => 'Unable to delete Drive backup';
+
+  @override
+  String get backupWifiOnly => 'Wi‑Fi only';
+
+  @override
+  String get backupWifiOnlyHint => 'Auto-backup only when connected to Wi‑Fi';
+
+  @override
+  String get backupAutomaticSubtitle => 'Automatically backup your data';
+
+  @override
+  String get backupDriveSection => 'Drive backups';
+
+  @override
+  String get backupLocalSection => 'Local backups';
+
+  @override
+  String get backupDifferentStore => 'Different store?';
+
+  @override
+  String get backupRefreshDrive => 'Refresh Drive backups';
+
+  @override
+  String get backupComplete => 'Backup complete';
+
+  @override
+  String get exportTitle => 'Export data';
+
+  @override
+  String get exportSubtitle => 'Share reports & CSV files';
+
+  @override
+  String get exportAll => 'Export all';
+
+  @override
+  String get exportAllSubtitle =>
+      'ZIP with products, orders, customers & stocks';
+
+  @override
+  String get exportProductsSubtitle => 'Catalog, prices, and stock qty';
+
+  @override
+  String get exportOrders => 'Orders';
+
+  @override
+  String get exportOrdersSubtitle => 'Invoices and payments';
+
+  @override
+  String get exportCustomersSubtitle => 'Contacts and balances';
+
+  @override
+  String get exportStocks => 'Stocks';
+
+  @override
+  String get exportStocksSubtitle => 'Stock movement ledger';
+
+  @override
+  String get printerSubtitle => 'Receipt printer settings';
+
+  @override
+  String get printerDisconnectConfirm => 'Disconnect printer?';
+
+  @override
+  String get printerTestSent => 'Test print sent';
+
+  @override
+  String get printerNoBillToReprint => 'No completed bill to reprint';
+
+  @override
+  String get printerTestHint => 'Print a sample receipt';
+
+  @override
+  String get printerLastBillHint => 'Reprint your last completed bill';
+
+  @override
+  String get printerDisconnectHint => 'Stop using this printer';
+
+  @override
+  String get permissionsCameraHint => 'Scan product barcodes during billing.';
+
+  @override
+  String get permissionsBluetoothScan => 'Bluetooth scan';
+
+  @override
+  String get permissionsBluetoothScanHint =>
+      'Find nearby Bluetooth receipt printers.';
+
+  @override
+  String get permissionsBluetoothConnect => 'Bluetooth connect';
+
+  @override
+  String get permissionsBluetoothConnectHint =>
+      'Connect and print to paired printers.';
+
+  @override
+  String get permissionsAllowAll => 'Allow all';
+
+  @override
+  String get permissionsContinueAnyway => 'Continue anyway';
+
+  @override
+  String get permissionsAllowTitle => 'Allow permissions';
+
+  @override
+  String get contactUsTitle => 'Contact us';
+
+  @override
+  String get contactUsSubtitle => 'Guides, FAQs and support';
+
+  @override
+  String get contactMobile => 'Mobile';
+
+  @override
+  String get contactWhatsApp => 'WhatsApp';
+
+  @override
+  String get contactWhatsAppHint => 'Chat with us';
+
+  @override
+  String get notificationsTitle => 'Notifications';
+
+  @override
+  String get notificationsSubtitle => 'Alerts & updates';
+
+  @override
+  String get securityEnableBiometric => 'Enable biometric lock';
+
+  @override
+  String get securityBiometricHint => 'Recommended for shop security';
+
+  @override
+  String get storeLogoTitle => 'Store logo';
+
+  @override
+  String get storeLogoHint => 'Take a photo or choose from gallery';
+
+  @override
+  String get storeRemoveLogo => 'Remove logo';
+
+  @override
+  String get googleDisconnect => 'Disconnect';
+
+  @override
+  String get googleSkipForNow => 'Skip for now';
+
+  @override
+  String get passphraseMinHint => 'Min. 8 characters';
+
+  @override
+  String get passphraseReenter => 'Re-enter passphrase';
+
+  @override
+  String get passphraseSetTitle => 'Set recovery passphrase';
+
+  @override
+  String get passphraseEnterTitle => 'Enter recovery passphrase';
+
+  @override
+  String get passphraseDisconnectDrive => 'Disconnect Google Drive?';
+
+  @override
+  String get manualBarcodeHint => 'e.g. 8901234567890';
+
+  @override
+  String get connectivityBackOnline => 'Back online';
+
+  @override
+  String get connectivityBackOnlineBody => 'You are connected again.';
+
+  @override
+  String get connectivityOfflineTitle => 'No internet connection';
+
+  @override
+  String get connectivityOfflineBody =>
+      'Billing continues offline on this device.';
+
+  @override
+  String get errorsSharePdf => 'Unable to share PDF';
+
+  @override
+  String get errorsStoreNotReady => 'Complete store setup first';
+
+  @override
+  String get errorsBiometricUnavailable =>
+      'Biometric unlock is not available on this device.';
+
+  @override
+  String get errorsBiometricNotConfirmed =>
+      'Biometric unlock was not confirmed.';
+
+  @override
+  String get errorsExportFailed => 'Export failed';
+
+  @override
+  String get navHistory => 'History';
+
+  @override
+  String get reportsPdfTitle => 'Business Report';
+
+  @override
+  String reportsPdfPeriod(String range) {
+    return 'Period: $range';
+  }
+
+  @override
+  String reportsPdfGenerated(String when) {
+    return 'Generated: $when';
+  }
+
+  @override
+  String get reportsPdfSummary => 'Summary';
+
+  @override
+  String get reportsPdfTodaySales => 'Today sales';
+
+  @override
+  String get reportsPdfBillsToday => 'Bills today';
+
+  @override
+  String get reportsPdfStockValue => 'Stock value';
+
+  @override
+  String get reportsPdfExpensesTotal => 'Expenses total';
+
+  @override
+  String get reportsPdfTopProducts => 'Top products (by quantity)';
+
+  @override
+  String get reportsPdfNoSales => 'No sales in this period';
+
+  @override
+  String get reportsPdfExpensesSection => 'Expenses';
+
+  @override
+  String get backupCompleteBody =>
+      'Your POS data was backed up to Google Drive.';
+
+  @override
+  String get commonInStock => 'In stock';
+
+  @override
+  String get commonNoPhone => 'No phone';
+
+  @override
+  String get commonNoEmail => 'No email';
+
+  @override
+  String get billingLeaveBody => 'Your current cart will be discarded.';
+
+  @override
+  String get commonExit => 'Exit';
+
+  @override
+  String get commonStay => 'Stay';
+
+  @override
+  String get invoiceBillTo => 'BILL TO';
+
+  @override
+  String get invoiceStatusLabel => 'STATUS';
+
+  @override
+  String get invoiceThankYou => 'Thank you for shopping with us!';
+
+  @override
+  String get invoiceThankYouShort => 'Thank you!';
+
+  @override
+  String invoiceSubject(String number) {
+    return 'Invoice $number';
+  }
+
+  @override
+  String get commonPrice => 'Price';
+
+  @override
+  String get commonCustomer => 'Customer';
 }

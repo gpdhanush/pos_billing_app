@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/app/theme/app_theme.dart';
 import 'package:pos_billing/shared/widgets/ui_kit.dart';
 
@@ -9,14 +10,15 @@ class NotificationsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     final canPop = context.canPop();
 
     return Scaffold(
       backgroundColor: scheme.surfaceContainerLowest,
       appBar: GlassPageHeader(
-        title: 'Notifications',
-        subtitle: 'Alerts & updates',
+        title: l10n.notificationsTitle,
+        subtitle: l10n.notificationsSubtitle,
         height: 64,
         leading: canPop
             ? IconButton(

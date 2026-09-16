@@ -321,7 +321,7 @@ List<NavigationDestination> navDestinations(AppLocalizations l10n) => [
   NavigationDestination(
     icon: const Icon(LineIcons.history),
     selectedIcon: const Icon(LineIcons.history),
-    label: 'History',
+    label: l10n.navHistory,
   ),
   NavigationDestination(
     icon: const Icon(LineIcons.cashRegister),

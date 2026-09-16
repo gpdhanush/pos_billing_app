@@ -149,7 +149,7 @@ class _ManualBarcodeScreenState extends State<ManualBarcodeScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Barcode number',
+                    l10n.productsBarcode,
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
@@ -179,7 +179,7 @@ class _ManualBarcodeScreenState extends State<ManualBarcodeScreen> {
                     },
                     onSubmitted: (_) => _submit(),
                     decoration: InputDecoration(
-                      hintText: 'e.g. 8901234567890',
+                      hintText: l10n.manualBarcodeHint,
                       prefixIcon: Padding(
                         padding: const EdgeInsets.only(left: 12, right: 8),
                         child: HugeIcon(

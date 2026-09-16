@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/app/providers.dart';
 import 'package:pos_billing/core/auth/google_auth_service.dart';
 import 'package:pos_billing/core/constants/app_constants.dart';
@@ -106,13 +107,13 @@ class _GoogleConnectScreenState extends ConsumerState<GoogleConnectScreen> {
         }
       }
       if (!mounted) return;
-      showSnack(context, 'Google Drive connected');
+      showSnack(context, AppLocalizations.of(context).commonSuccess);
       await _finish(connected: true);
     } on DriveAuthException {
       await analytics.logEvent('google_sign_in_failed');
       await analytics.recordError('google_sign_in_failed', reason: 'auth');
       if (!mounted) return;
-      showSnack(context, 'Google sign-in failed');
+      showSnack(context, AppLocalizations.of(context).errorsDriveAuth);
     } on RestoreException catch (e) {
       if (!mounted) return;
       showSnack(context, e.message);
@@ -122,7 +123,7 @@ class _GoogleConnectScreenState extends ConsumerState<GoogleConnectScreen> {
     } catch (_) {
       await analytics.logEvent('google_sign_in_failed');
       if (!mounted) return;
-      showSnack(context, 'Google sign-in failed');
+      showSnack(context, AppLocalizations.of(context).errorsDriveAuth);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -137,7 +138,7 @@ class _GoogleConnectScreenState extends ConsumerState<GoogleConnectScreen> {
       ref.invalidate(googleSessionProvider);
       if (!mounted) return;
       setState(() => _session = null);
-      showSnack(context, 'Google Drive disconnected');
+      showSnack(context, AppLocalizations.of(context).commonSuccess);
       if (widget.fromSettings) {
         context.pop();
       }
@@ -148,6 +149,7 @@ class _GoogleConnectScreenState extends ConsumerState<GoogleConnectScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     final connected = _session != null;
 
@@ -193,9 +195,7 @@ class _GoogleConnectScreenState extends ConsumerState<GoogleConnectScreen> {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  connected
-                      ? 'Google Drive connected'
-                      : 'Back up to Google Drive',
+                  connected ? l10n.backupGoogle : l10n.onboardingBackupTitle,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.w800,
@@ -205,7 +205,7 @@ class _GoogleConnectScreenState extends ConsumerState<GoogleConnectScreen> {
                 Text(
                   connected
                       ? (_session!.email)
-                      : 'Optionally connect Google so encrypted backups sync to your private Drive app data. You can skip and set this up later in Settings.',
+                      : l10n.onboardingBackupBody,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: scheme.onSurfaceVariant,
@@ -241,7 +241,7 @@ class _GoogleConnectScreenState extends ConsumerState<GoogleConnectScreen> {
                 const Spacer(),
                 if (connected) ...[
                   OnboardPrimaryButton(
-                    label: widget.fromSettings ? 'Done' : 'Continue',
+                    label: widget.fromSettings ? l10n.commonDone : l10n.commonContinue,
                     icon: HugeIcons.strokeRoundedArrowRight01,
                     loading: _busy,
                     onPressed: () => _finish(connected: true),
@@ -250,12 +250,12 @@ class _GoogleConnectScreenState extends ConsumerState<GoogleConnectScreen> {
                     const SizedBox(height: 8),
                     TextButton(
                       onPressed: _busy ? null : _disconnect,
-                      child: const Text('Disconnect'),
+                      child: Text(l10n.googleDisconnect),
                     ),
                   ],
                 ] else ...[
                   OnboardPrimaryButton(
-                    label: _busy ? 'Connecting…' : 'Connect Google Drive',
+                    label: _busy ? l10n.commonLoading : l10n.backupConnectGoogle,
                     icon: HugeIcons.strokeRoundedCloudUpload,
                     loading: _busy,
                     onPressed: _connect,
@@ -264,7 +264,7 @@ class _GoogleConnectScreenState extends ConsumerState<GoogleConnectScreen> {
                   TextButton(
                     onPressed:
                         _busy ? null : () => _finish(connected: false),
-                    child: const Text('Skip for now'),
+                    child: Text(l10n.googleSkipForNow),
                   ),
                 ],
               ],

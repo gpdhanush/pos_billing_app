@@ -31,6 +31,7 @@ class CustomersScreen extends ConsumerWidget {
     WidgetRef ref, {
     required Customer customer,
   }) async {
+    final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     final action = await showModalBottomSheet<String>(
       context: context,
@@ -48,21 +49,21 @@ class CustomersScreen extends ConsumerWidget {
               children: [
                 ListTile(
                   leading: Icon(Icons.visibility_rounded, color: scheme.primary),
-                  title: const Text('View details'),
-                  subtitle: const Text('Orders, contact & history'),
+                  title: Text(l10n.customersViewDetails),
+                  subtitle: Text(l10n.customersViewDetailsSubtitle),
                   onTap: () => Navigator.pop(ctx, 'view'),
                 ),
                 ListTile(
                   leading: Icon(Icons.edit_rounded, color: scheme.primary),
-                  title: const Text('Update'),
-                  subtitle: const Text('Edit customer details'),
+                  title: Text(l10n.commonUpdate),
+                  subtitle: Text(l10n.customersEditDetails),
                   onTap: () => Navigator.pop(ctx, 'update'),
                 ),
                 ListTile(
                   leading:
                       Icon(Icons.delete_outline_rounded, color: scheme.error),
-                  title: const Text('Delete'),
-                  subtitle: const Text('Remove from customer list'),
+                  title: Text(l10n.commonDelete),
+                  subtitle: Text(l10n.customersRemoveFromList),
                   onTap: () => Navigator.pop(ctx, 'delete'),
                 ),
               ],
@@ -88,10 +89,10 @@ class CustomersScreen extends ConsumerWidget {
 
     final ok = await confirmDialog(
       context,
-      title: 'Delete customer',
-      body: 'Remove "${customer.name}" from your customer list?',
+      title: l10n.customersDeleteTitle,
+      body: '${l10n.customersRemoveFromList} "${customer.name}"?',
       icon: Icons.delete_outline_rounded,
-      confirmLabel: 'Delete',
+      confirmLabel: l10n.commonDelete,
       destructive: true,
     );
     if (!ok) return;
@@ -112,7 +113,7 @@ class CustomersScreen extends ConsumerWidget {
       backgroundColor: scheme.surfaceContainerLowest,
       appBar: GlassPageHeader(
         title: l10n.customersTitle,
-        subtitle: 'Contacts, credit & dues',
+        subtitle: l10n.customersSubtitle,
         height: 64,
         leading: canPop
             ? IconButton(
@@ -147,10 +148,9 @@ class CustomersScreen extends ConsumerWidget {
               ),
               data: (items) {
                 if (items.isEmpty) {
-                  return const EmptyState(
-                    title: 'No customers found',
-                    subtitle:
-                        'Add customers to track credit and billing history.',
+                  return EmptyState(
+                    title: l10n.customersEmptySearchTitle,
+                    subtitle: l10n.customersEmptySearchBody,
                     showIcon: false,
                   );
                 }
@@ -164,7 +164,7 @@ class CustomersScreen extends ConsumerWidget {
                     final meta = [
                       if ((c.phone ?? '').isNotEmpty) c.phone!,
                       if ((c.email ?? '').isNotEmpty) c.email!,
-                      due ? 'Due' : 'Settled',
+                      due ? l10n.customersDue : l10n.customersSettled,
                     ].join(' • ');
 
                     return SoftCard(
@@ -213,7 +213,7 @@ class CustomersScreen extends ConsumerWidget {
                                 ),
                                 const SizedBox(height: 3),
                                 Text(
-                                  meta.isEmpty ? 'Customer' : meta,
+                                  meta.isEmpty ? l10n.billingCustomer : meta,
                                   style: Theme.of(context)
                                       .textTheme
                                       .bodySmall
@@ -314,28 +314,31 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
   }
 
   String? _validateName(String? value) {
+    final l10n = AppLocalizations.of(context);
     final text = value?.trim() ?? '';
-    if (text.isEmpty) return 'Please enter customer name';
-    if (text.length < 2) return 'Name must be at least 2 characters';
+    if (text.isEmpty) return l10n.errorsValidation;
+    if (text.length < 2) return l10n.errorsValidation;
     if (!RegExp(r"^[a-zA-Z0-9 .'-]+$").hasMatch(text)) {
-      return 'Enter a valid name';
+      return l10n.errorsValidation;
     }
     return null;
   }
 
   String? _validatePhone(String? value) {
+    final l10n = AppLocalizations.of(context);
     final text = value?.trim() ?? '';
     if (text.isEmpty) return null;
     if (text.length != 10 || !RegExp(r'^[6-9]\d{9}$').hasMatch(text)) {
-      return 'Enter a valid 10-digit mobile number';
+      return l10n.errorsInvalidPhone;
     }
     return null;
   }
 
   String? _validateEmail(String? value) {
+    final l10n = AppLocalizations.of(context);
     final text = value?.trim() ?? '';
     if (text.isEmpty) return null;
-    if (!AppValidators.isEmail(text)) return 'Enter a valid email address';
+    if (!AppValidators.isEmail(text)) return l10n.errorsInvalidEmail;
     return null;
   }
 
@@ -453,8 +456,8 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
       appBar: GlassPageHeader(
         title: isEdit ? l10n.customersEdit : l10n.customersAdd,
         subtitle: isEdit
-            ? 'Update contact & credit details'
-            : 'Save buyer for billing & dues',
+            ? l10n.customersEditDetails
+            : l10n.customersEmptySearchBody,
         height: 64,
         leading: IconButton(
           onPressed: () => context.pop(),
@@ -474,18 +477,18 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                     child: ListView(
                       padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
                       children: [
-                        _label('Customer Name'),
+                        _label(l10n.commonName),
                         TextFormField(
                           controller: _name,
                           textCapitalization: TextCapitalization.words,
                           validator: _validateName,
                           decoration: _decoration(
-                            hint: 'Enter customer name',
+                            hint: l10n.commonName,
                             icon: Icons.person_outline_rounded,
                           ),
                         ),
                         const SizedBox(height: 16),
-                        _label('Phone Number (Optional)'),
+                        _label('${l10n.commonPhone} (${l10n.commonOptional})'),
                         TextFormField(
                           controller: _phone,
                           keyboardType: TextInputType.phone,
@@ -496,18 +499,18 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                           ],
                           validator: _validatePhone,
                           decoration: _decoration(
-                            hint: 'Enter 10-digit mobile number',
+                            hint: l10n.commonPhone,
                             icon: Icons.phone_outlined,
                           ).copyWith(counterText: ''),
                         ),
                         const SizedBox(height: 16),
-                        _label('Email Address (Optional)'),
+                        _label('${l10n.commonEmail} (${l10n.commonOptional})'),
                         TextFormField(
                           controller: _email,
                           keyboardType: TextInputType.emailAddress,
                           validator: _validateEmail,
                           decoration: _decoration(
-                            hint: 'Enter email address',
+                            hint: l10n.commonEmail,
                             icon: Icons.mail_outline_rounded,
                           ),
                         ),
@@ -601,12 +604,12 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                           ),
                         ],
                         const SizedBox(height: 16),
-                        _label('Address (Optional)'),
+                        _label('${l10n.commonAddress} (${l10n.commonOptional})'),
                         TextFormField(
                           controller: _address,
                           maxLines: 3,
                           decoration: _decoration(
-                            hint: 'Enter customer address',
+                            hint: l10n.commonAddress,
                             icon: Icons.location_on_outlined,
                           ),
                         ),
@@ -616,7 +619,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                           controller: _notes,
                           maxLines: 3,
                           decoration: _decoration(
-                            hint: 'Enter notes',
+                            hint: l10n.commonNotes,
                             icon: Icons.sticky_note_2_outlined,
                           ),
                         ),
@@ -626,11 +629,11 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                             onPressed: () async {
                               final ok = await confirmDialog(
                                 context,
-                                title: 'Delete customer',
+                                title: l10n.customersDeleteTitle,
                                 body:
-                                    'Remove "${_existing!.name}" from your customer list?',
+                                    '${l10n.customersRemoveFromList} "${_existing!.name}"?',
                                 icon: Icons.delete_outline_rounded,
-                                confirmLabel: 'Delete',
+                                confirmLabel: l10n.commonDelete,
                                 destructive: true,
                               );
                               if (!ok || !context.mounted) return;
@@ -647,7 +650,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                               minimumSize: const Size.fromHeight(48),
                             ),
                             icon: const Icon(Icons.delete_outline_rounded),
-                            label: const Text('Delete customer'),
+                            label: Text(l10n.customersDeleteTitle),
                           ),
                         ],
                       ],

@@ -19,6 +19,7 @@ class ProductsScreen extends ConsumerWidget {
     required Product product,
     required bool inactiveMode,
   }) async {
+    final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     final action = await showModalBottomSheet<String>(
       context: context,
@@ -36,14 +37,14 @@ class ProductsScreen extends ConsumerWidget {
               children: [
                 ListTile(
                   leading: Icon(Icons.visibility_rounded, color: scheme.primary),
-                  title: const Text('View details'),
-                  subtitle: const Text('Pricing, stock & movements'),
+                  title: Text(l10n.productsViewDetails),
+                  subtitle: Text(l10n.productsViewDetailsSubtitle),
                   onTap: () => Navigator.pop(ctx, 'view'),
                 ),
                 ListTile(
                   leading: Icon(Icons.edit_rounded, color: scheme.primary),
-                  title: const Text('Update'),
-                  subtitle: const Text('Edit product details'),
+                  title: Text(l10n.commonUpdate),
+                  subtitle: Text(l10n.productsEditDetails),
                   onTap: () => Navigator.pop(ctx, 'update'),
                 ),
                 ListTile(
@@ -53,7 +54,9 @@ class ProductsScreen extends ConsumerWidget {
                         : Icons.visibility_off_outlined,
                     color: inactiveMode ? AppColors.success : scheme.error,
                   ),
-                  title: Text(inactiveMode ? 'Activate' : 'Deactivate'),
+                  title: Text(
+                    inactiveMode ? l10n.productsActivate : l10n.productsDeactivate,
+                  ),
                   subtitle: Text(
                     inactiveMode
                         ? 'Show this product in billing again'
@@ -82,21 +85,21 @@ class ProductsScreen extends ConsumerWidget {
     if (inactiveMode) {
       final ok = await confirmDialog(
         context,
-        title: 'Activate product',
+        title: l10n.productsActivate,
         body: 'Show "${product.name}" in billing and catalogs again?',
         icon: Icons.restart_alt_rounded,
-        confirmLabel: 'Activate',
+        confirmLabel: l10n.productsActivate,
       );
       if (!ok) return;
       await ref.read(productRepositoryProvider).activateProduct(product.id);
     } else {
       final ok = await confirmDialog(
         context,
-        title: 'Deactivate product',
+        title: l10n.productsDeactivateTitle,
         body:
             'Hide "${product.name}" from billing and catalogs? This is not a permanent delete — you can activate it again from the Inactive filter.',
         icon: Icons.visibility_off_outlined,
-        confirmLabel: 'Deactivate',
+        confirmLabel: l10n.productsDeactivate,
         destructive: true,
       );
       if (!ok) return;
@@ -121,7 +124,7 @@ class ProductsScreen extends ConsumerWidget {
       backgroundColor: scheme.surfaceContainerLowest,
       appBar: GlassPageHeader(
         title: l10n.productsTitle,
-        subtitle: 'Catalog, prices & stock',
+        subtitle: l10n.productsSubtitle,
         height: 64,
         leading: canPop
             ? IconButton(
@@ -131,7 +134,7 @@ class ProductsScreen extends ConsumerWidget {
             : null,
         actions: [
           IconButton(
-            tooltip: 'Scan',
+            tooltip: l10n.commonScan,
             onPressed: () => context.push('/scan?purpose=lookup'),
             icon: const Icon(Icons.qr_code_scanner_rounded),
           ),
@@ -158,7 +161,7 @@ class ProductsScreen extends ConsumerWidget {
             child: Row(
               children: [
                 SoftPeriodBadge(
-                  label: 'All (${counts?.all ?? 0})',
+                  label: '${l10n.commonAll} (${counts?.all ?? 0})',
                   selected: !query.lowStock &&
                       !query.outOfStock &&
                       !query.inactiveOnly,
@@ -192,7 +195,7 @@ class ProductsScreen extends ConsumerWidget {
                       ),
                 ),
                 SoftPeriodBadge(
-                  label: 'Inactive (${counts?.inactive ?? 0})',
+                  label: '${l10n.productsInactive} (${counts?.inactive ?? 0})',
                   selected: query.inactiveOnly,
                   onTap: () => ref.read(catalogQueryProvider.notifier).state =
                       query.copyWith(
@@ -212,10 +215,9 @@ class ProductsScreen extends ConsumerWidget {
                   ErrorState(onRetry: () => ref.invalidate(productsProvider)),
               data: (items) {
                 if (items.isEmpty) {
-                  return const EmptyState(
-                    title: 'No products found',
-                    subtitle:
-                        'Add products to start selling and tracking stock.',
+                  return EmptyState(
+                    title: l10n.productsEmptySearchTitle,
+                    subtitle: l10n.productsEmptySearchBody,
                     showIcon: false,
                   );
                 }
@@ -229,6 +231,9 @@ class ProductsScreen extends ConsumerWidget {
                       product: p,
                       symbol: symbol,
                       stockLabel: l10n.productsStock,
+                      inactiveLabel: l10n.productsInactive,
+                      outOfStockLabel: l10n.productsOutOfStockFilter,
+                      lowStockLabel: l10n.productsLowStockFilter,
                       onTap: () => context.push('/products/view?id=${p.id}'),
                       onLongPress: () => _showProductActions(
                         context,
@@ -253,6 +258,9 @@ class _ProductListCard extends StatelessWidget {
     required this.product,
     required this.symbol,
     required this.stockLabel,
+    required this.inactiveLabel,
+    required this.outOfStockLabel,
+    required this.lowStockLabel,
     required this.onTap,
     this.onLongPress,
   });
@@ -260,6 +268,9 @@ class _ProductListCard extends StatelessWidget {
   final Product product;
   final String symbol;
   final String stockLabel;
+  final String inactiveLabel;
+  final String outOfStockLabel;
+  final String lowStockLabel;
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
 
@@ -272,12 +283,12 @@ class _ProductListCard extends StatelessWidget {
     final out = p.currentStock <= 0;
     final low = !out && p.isLowStock;
     final statusLabel = !p.isActive
-        ? 'Inactive'
+        ? inactiveLabel
         : out
-            ? 'Out of stock'
+            ? outOfStockLabel
             : low
-                ? 'Low stock'
-                : 'In stock';
+                ? lowStockLabel
+                : stockLabel;
     final meta = [
       p.primaryBarcode ?? p.sku ?? '—',
       '$stockLabel: ${p.currentStock}',

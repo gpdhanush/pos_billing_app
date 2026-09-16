@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/app/providers.dart';
 import 'package:pos_billing/app/theme/app_theme.dart';
 import 'package:pos_billing/core/services/data_export_service.dart';
@@ -23,9 +24,10 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
 
   Future<void> _export(DataExportKind kind) async {
     if (_busy != null) return;
+    final l10n = AppLocalizations.of(context);
     final store = ref.read(storeProfileProvider).valueOrNull;
     if (store == null) {
-      showSnack(context, 'Store not found');
+      showSnack(context, l10n.errorsStoreNotReady);
       return;
     }
     setState(() => _busy = kind);
@@ -35,7 +37,13 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
             kind: kind,
           );
     } catch (_) {
-      if (mounted) showSnack(context, 'Export failed. Please try again.');
+      if (mounted) {
+        showSnack(
+          context,
+          '${AppLocalizations.of(context).errorsExportFailed}. '
+          '${AppLocalizations.of(context).commonRetry}.',
+        );
+      }
     } finally {
       if (mounted) setState(() => _busy = null);
     }
@@ -43,13 +51,14 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       backgroundColor: scheme.surfaceContainerLowest,
       appBar: GlassPageHeader(
-        title: 'Export data',
-        subtitle: 'Share reports & CSV files',
+        title: l10n.exportTitle,
+        subtitle: l10n.exportSubtitle,
         height: 64,
         leading: IconButton(
           onPressed: () => context.pop(),
@@ -91,7 +100,7 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Export your business data',
+                  l10n.exportTitle,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w800,
@@ -100,7 +109,7 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Download products, orders, customers, and stock as CSV. Export all packs everything into one ZIP.',
+                  l10n.exportAllSubtitle,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: scheme.onSurfaceVariant,
@@ -126,8 +135,8 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
             child: _ExportTile(
               icon: HugeIcons.strokeRoundedFileZip,
               accent: scheme.primary,
-              title: 'Export all',
-              subtitle: 'ZIP with products, orders, customers & stocks',
+              title: l10n.exportAll,
+              subtitle: l10n.exportAllSubtitle,
               busy: _busy == DataExportKind.all,
               enabled: _busy == null,
               emphasized: true,
@@ -150,8 +159,8 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
                 _ExportTile(
                   icon: HugeIcons.strokeRoundedPackage01,
                   accent: const Color(0xFF2563EB),
-                  title: 'Products',
-                  subtitle: 'Catalog, prices, and stock qty',
+                  title: l10n.productsTitle,
+                  subtitle: l10n.exportProductsSubtitle,
                   busy: _busy == DataExportKind.products,
                   enabled: _busy == null,
                   onTap: () => _export(DataExportKind.products),
@@ -165,8 +174,8 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
                 _ExportTile(
                   icon: HugeIcons.strokeRoundedInvoice01,
                   accent: AppColors.success,
-                  title: 'Orders',
-                  subtitle: 'Invoices and payments',
+                  title: l10n.exportOrders,
+                  subtitle: l10n.exportOrdersSubtitle,
                   busy: _busy == DataExportKind.orders,
                   enabled: _busy == null,
                   onTap: () => _export(DataExportKind.orders),
@@ -180,8 +189,8 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
                 _ExportTile(
                   icon: HugeIcons.strokeRoundedUserGroup02,
                   accent: const Color(0xFFD97706),
-                  title: 'Customers',
-                  subtitle: 'Contacts and balances',
+                  title: l10n.customersTitle,
+                  subtitle: l10n.exportCustomersSubtitle,
                   busy: _busy == DataExportKind.customers,
                   enabled: _busy == null,
                   onTap: () => _export(DataExportKind.customers),
@@ -195,8 +204,8 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
                 _ExportTile(
                   icon: HugeIcons.strokeRoundedPackage,
                   accent: const Color(0xFF7C3AED),
-                  title: 'Stocks',
-                  subtitle: 'Stock movement ledger',
+                  title: l10n.exportStocks,
+                  subtitle: l10n.exportStocksSubtitle,
                   busy: _busy == DataExportKind.stocks,
                   enabled: _busy == null,
                   onTap: () => _export(DataExportKind.stocks),

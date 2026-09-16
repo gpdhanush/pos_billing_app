@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/app/theme/app_theme.dart';
 import 'package:pos_billing/core/services/app_permission_service.dart';
 import 'package:pos_billing/features/onboarding/onboarding_widgets.dart';
@@ -21,26 +22,35 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
   bool _loading = true;
   bool _requesting = false;
 
-  static const _items = <_PermDef>[
-    _PermDef(
-      permission: Permission.camera,
-      title: 'Camera',
-      subtitle: 'Scan product barcodes during billing.',
-      icon: HugeIcons.strokeRoundedCamera01,
-    ),
-    _PermDef(
-      permission: Permission.bluetoothScan,
-      title: 'Bluetooth scan',
-      subtitle: 'Find nearby Bluetooth receipt printers.',
-      icon: HugeIcons.strokeRoundedBluetoothSearch,
-    ),
-    _PermDef(
-      permission: Permission.bluetoothConnect,
-      title: 'Bluetooth connect',
-      subtitle: 'Connect and print to paired printers.',
-      icon: HugeIcons.strokeRoundedBluetooth,
-    ),
+  static const _trackedPermissions = <Permission>[
+    Permission.camera,
+    Permission.bluetoothScan,
+    Permission.bluetoothConnect,
   ];
+
+  List<({Permission permission, String title, String subtitle, List<List<dynamic>> icon})>
+      _items(AppLocalizations l10n) {
+    return [
+      (
+        permission: Permission.camera,
+        title: l10n.commonCamera,
+        subtitle: l10n.permissionsCameraHint,
+        icon: HugeIcons.strokeRoundedCamera01,
+      ),
+      (
+        permission: Permission.bluetoothScan,
+        title: l10n.permissionsBluetoothScan,
+        subtitle: l10n.permissionsBluetoothScanHint,
+        icon: HugeIcons.strokeRoundedBluetoothSearch,
+      ),
+      (
+        permission: Permission.bluetoothConnect,
+        title: l10n.permissionsBluetoothConnect,
+        subtitle: l10n.permissionsBluetoothConnectHint,
+        icon: HugeIcons.strokeRoundedBluetooth,
+      ),
+    ];
+  }
 
   @override
   void initState() {
@@ -64,8 +74,8 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
 
   Future<void> _refresh() async {
     final next = <Permission, PermissionStatus>{};
-    for (final item in _items) {
-      next[item.permission] = await _service.statusOf(item.permission);
+    for (final permission in _trackedPermissions) {
+      next[permission] = await _service.statusOf(permission);
     }
     if (!mounted) return;
     setState(() {
@@ -90,24 +100,23 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
     if (!mounted) return;
 
     if (status.isPermanentlyDenied || status.isRestricted) {
+      final l10n = AppLocalizations.of(context);
       await showDialog<void>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Permission needed'),
-          content: const Text(
-            'This permission was denied. Open Settings and allow it for POS Billing.',
-          ),
+          title: Text(l10n.commonPermissionNeeded),
+          content: Text(l10n.permissionsAllowTitle),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: Text(l10n.commonCancel),
             ),
             FilledButton(
               onPressed: () async {
                 Navigator.pop(context);
                 await _service.openSettings();
               },
-              child: const Text('Open settings'),
+              child: Text(l10n.commonOpenSettings),
             ),
           ],
         ),
@@ -123,35 +132,34 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
     await _service.requestAll();
     await _refresh();
 
-    final denied = _items.where((item) {
-      final status = _statuses[item.permission];
+    final denied = _trackedPermissions.where((permission) {
+      final status = _statuses[permission];
       return status == null || !status.isGranted;
     }).toList();
 
     if (denied.isNotEmpty && mounted) {
-      final permanentlyDenied = denied.any((item) {
-        final status = _statuses[item.permission];
+      final permanentlyDenied = denied.any((permission) {
+        final status = _statuses[permission];
         return status?.isPermanentlyDenied == true;
       });
       if (permanentlyDenied) {
+        final l10n = AppLocalizations.of(context);
         await showDialog<void>(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('Allow permissions'),
-            content: const Text(
-              'Some permissions are still denied. Open Settings to allow Bluetooth and Camera.',
-            ),
+            title: Text(l10n.permissionsAllowTitle),
+            content: Text(l10n.permissionsAllowTitle),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Later'),
+                child: Text(l10n.commonLater),
               ),
               FilledButton(
                 onPressed: () async {
                   Navigator.pop(context);
                   await _service.openSettings();
                 },
-                child: const Text('Open settings'),
+                child: Text(l10n.commonOpenSettings),
               ),
             ],
           ),
@@ -170,19 +178,21 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
     }
   }
 
-  String _statusLabel(PermissionStatus? status) {
-    if (status == null) return 'Checking…';
-    if (status.isGranted) return 'Allowed';
-    if (status.isPermanentlyDenied) return 'Denied — open Settings';
-    if (status.isDenied) return 'Not allowed';
-    if (status.isRestricted) return 'Restricted';
+  String _statusLabel(AppLocalizations l10n, PermissionStatus? status) {
+    if (status == null) return l10n.commonLoading;
+    if (status.isGranted) return l10n.commonAllow;
+    if (status.isPermanentlyDenied) return l10n.commonOpenSettings;
+    if (status.isDenied) return l10n.commonLater;
+    if (status.isRestricted) return l10n.commonFailed;
     return status.name;
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
-    final allGranted = _items.every(
+    final items = _items(l10n);
+    final allGranted = items.every(
       (item) => _statuses[item.permission]?.isGranted == true,
     );
 
@@ -210,7 +220,7 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  'App permissions',
+                  l10n.permissionsAllowTitle,
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.w800,
                         letterSpacing: -0.3,
@@ -218,7 +228,7 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'POS Billing needs these permissions for barcode scanning and Bluetooth printing. If a permission is denied, tap Allow.',
+                  l10n.permissionsCameraHint,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: scheme.onSurfaceVariant,
                         height: 1.4,
@@ -232,10 +242,10 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
                 else
                   Expanded(
                     child: ListView.separated(
-                      itemCount: _items.length,
+                      itemCount: items.length,
                       separatorBuilder: (_, _) => const SizedBox(height: 12),
                       itemBuilder: (context, index) {
-                        final item = _items[index];
+                        final item = items[index];
                         final status = _statuses[item.permission];
                         final granted = status?.isGranted == true;
                         final statusColor = granted
@@ -286,13 +296,13 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
                                     ),
                                     child: Text(
                                       status?.isPermanentlyDenied == true
-                                          ? 'Settings'
-                                          : 'Allow',
+                                          ? l10n.commonOpenSettings
+                                          : l10n.commonAllow,
                                     ),
                                   ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  _statusLabel(status),
+                                  _statusLabel(l10n, status),
                                   style: Theme.of(context)
                                       .textTheme
                                       .labelSmall
@@ -311,7 +321,7 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
                 const SizedBox(height: 12),
                 if (!allGranted)
                   OnboardPrimaryButton(
-                    label: 'Allow all',
+                    label: l10n.permissionsAllowAll,
                     icon: HugeIcons.strokeRoundedSecurityCheck,
                     loading: _requesting,
                     onPressed: _allowAll,
@@ -319,7 +329,7 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
                 if (!allGranted) const SizedBox(height: 8),
                 if (allGranted)
                   OnboardPrimaryButton(
-                    label: 'Continue',
+                    label: l10n.commonContinue,
                     icon: HugeIcons.strokeRoundedArrowRight01,
                     onPressed: _continue,
                   )
@@ -334,7 +344,7 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
                           borderRadius: BorderRadius.circular(AppRadii.md),
                         ),
                       ),
-                      child: const Text('Continue anyway'),
+                      child: Text(l10n.permissionsContinueAnyway),
                     ),
                   ),
               ],
@@ -344,18 +354,4 @@ class _PermissionsScreenState extends ConsumerState<PermissionsScreen>
       ),
     );
   }
-}
-
-class _PermDef {
-  const _PermDef({
-    required this.permission,
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-  });
-
-  final Permission permission;
-  final String title;
-  final String subtitle;
-  final List<List<dynamic>> icon;
 }

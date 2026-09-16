@@ -454,12 +454,18 @@ class CartController extends Notifier<CartState> {
   @override
   CartState build() => const CartState();
 
-  void addProduct(Product product, {String? barcode}) {
+  /// Returns `false` when stock is insufficient and negative stock is disabled.
+  bool addProduct(Product product, {String? barcode}) {
+    final allowNegative =
+        ref.read(appSettingsProvider).valueOrNull?.allowNegativeStock ?? false;
     final index = state.lines.indexWhere((l) => l.product.id == product.id);
+    final nextQty = index >= 0 ? state.lines[index].quantity + 1 : 1;
+    if (!allowNegative && nextQty > product.currentStock) {
+      return false;
+    }
     if (index >= 0) {
       final updated = [...state.lines];
-      updated[index] =
-          updated[index].copyWith(quantity: updated[index].quantity + 1);
+      updated[index] = updated[index].copyWith(quantity: nextQty);
       state = state.copyWith(lines: updated);
     } else {
       state = state.copyWith(
@@ -469,11 +475,21 @@ class CartController extends Notifier<CartState> {
         ],
       );
     }
+    return true;
   }
 
   void setQty(int productId, int qty) {
     if (qty <= 0) {
       remove(productId);
+      return;
+    }
+    final allowNegative =
+        ref.read(appSettingsProvider).valueOrNull?.allowNegativeStock ?? false;
+    final existing =
+        state.lines.where((l) => l.product.id == productId).firstOrNull;
+    if (existing != null &&
+        !allowNegative &&
+        qty > existing.product.currentStock) {
       return;
     }
     state = state.copyWith(

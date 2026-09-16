@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/app/theme/app_theme.dart';
 import 'package:pos_billing/shared/widgets/ui_kit.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -109,6 +110,7 @@ class _InAppBrowserScreenState extends State<InAppBrowserScreen> {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
     final headline =
         _pageTitle?.isNotEmpty == true ? _pageTitle! : widget.title;
 
@@ -124,12 +126,12 @@ class _InAppBrowserScreenState extends State<InAppBrowserScreen> {
         ),
         actions: [
           IconButton(
-            tooltip: 'Refresh',
+            tooltip: l10n.commonRefresh,
             onPressed: _reload,
             icon: const Icon(Icons.refresh_rounded),
           ),
           IconButton(
-            tooltip: 'Open in browser',
+            tooltip: l10n.commonOpenInBrowser,
             onPressed: _openExternal,
             icon: const Icon(Icons.open_in_new_rounded),
           ),
@@ -193,6 +195,7 @@ class _BrowserError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     return Center(
       child: Padding(
@@ -218,7 +221,7 @@ class _BrowserError extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                'Unable to load page',
+                l10n.commonError,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
@@ -227,7 +230,7 @@ class _BrowserError extends StatelessWidget {
               Text(
                 message?.trim().isNotEmpty == true
                     ? message!
-                    : 'Check your connection and try again.',
+                    : '${l10n.connectivityOfflineBody} ${l10n.commonTryAgain}.',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: scheme.onSurfaceVariant,
@@ -240,12 +243,12 @@ class _BrowserError extends StatelessWidget {
                 child: FilledButton.icon(
                   onPressed: onRetry,
                   icon: const Icon(Icons.refresh_rounded),
-                  label: const Text('Retry'),
+                  label: Text(l10n.commonRetry),
                 ),
               ),
               TextButton(
                 onPressed: onOpenExternal,
-                child: const Text('Open in browser'),
+                child: Text(l10n.commonOpenInBrowser),
               ),
             ],
           ),

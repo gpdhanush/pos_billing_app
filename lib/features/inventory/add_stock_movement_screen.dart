@@ -22,8 +22,9 @@ class AddStockMovementScreen extends ConsumerStatefulWidget {
 
 class _AddStockMovementScreenState
     extends ConsumerState<AddStockMovementScreen> {
-  static const _defaultNoteIn = 'Stock in';
-  static const _defaultNoteOut = 'Stock out';
+  late String _defaultNoteIn;
+  late String _defaultNoteOut;
+  bool _defaultNotesReady = false;
 
   final _search = TextEditingController();
   final _qty = TextEditingController();
@@ -45,8 +46,20 @@ class _AddStockMovementScreenState
     if (_product != null) {
       _cost.text = Money(_product!.purchasePricePaise).formatForField();
     }
-    _notes.text = _defaultNoteIn;
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadCatalog());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_defaultNotesReady) return;
+    final l10n = AppLocalizations.of(context);
+    _defaultNoteIn = l10n.inventoryStockIn;
+    _defaultNoteOut = l10n.inventoryStockOut;
+    if (_notes.text.isEmpty) {
+      _notes.text = _isIn ? _defaultNoteIn : _defaultNoteOut;
+    }
+    _defaultNotesReady = true;
   }
 
   @override
@@ -69,6 +82,7 @@ class _AddStockMovementScreenState
 
   bool get _notesAreDefault {
     final n = _notes.text.trim();
+    if (!_defaultNotesReady) return n.isEmpty;
     return n.isEmpty || n == _defaultNoteIn || n == _defaultNoteOut;
   }
 
@@ -170,30 +184,31 @@ class _AddStockMovementScreenState
       showSnack(context, l10n.inventorySaved);
       context.pop(true);
     } catch (_) {
-      if (mounted) showSnack(context, 'Unable to save stock movement');
+      if (mounted) showSnack(context, l10n.errorsDatabase);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
   }
 
-  String _productMeta(Product p) {
+  String _productMeta(AppLocalizations l10n, Product p) {
     return [
-      if ((p.sku ?? '').isNotEmpty) 'SKU ${p.sku}',
+      if ((p.sku ?? '').isNotEmpty) '${l10n.productsSku} ${p.sku}',
       if ((p.categoryName ?? '').isNotEmpty) p.categoryName!,
-      'Stock ${p.currentStock} ${p.unit}',
+      '${l10n.productsStock} ${p.currentStock} ${p.unit}',
       if (p.barcodes.isNotEmpty) p.barcodes.first,
     ].join(' · ');
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       backgroundColor: scheme.surfaceContainerLowest,
       appBar: GlassPageHeader(
-        title: 'Add Stock Movement',
-        subtitle: 'Stock in, stock out & adjustments',
+        title: l10n.inventoryAddMovementTitle,
+        subtitle: l10n.inventoryHistorySubtitle,
         height: 64,
         leading: IconButton(
           onPressed: () => context.pop(),
@@ -208,7 +223,7 @@ class _AddStockMovementScreenState
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                 children: [
                   Text(
-                    'SELECT PRODUCT',
+                    l10n.productsTitle.toUpperCase(),
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: scheme.onSurfaceVariant,
                           fontWeight: FontWeight.w700,
@@ -222,7 +237,7 @@ class _AddStockMovementScreenState
                         Expanded(
                           child: SoftSearchField(
                             controller: _search,
-                            hintText: 'Search name, SKU, or barcode',
+                            hintText: l10n.inventorySearchProductHint,
                             onChanged: _applyFilter,
                           ),
                         ),
@@ -262,8 +277,8 @@ class _AddStockMovementScreenState
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         child: Text(
                           _query.trim().isEmpty
-                              ? 'No products available.'
-                              : 'No products match “${_query.trim()}”.',
+                              ? l10n.productsEmptyTitle
+                              : l10n.productsEmptySearchTitle,
                           style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: scheme.onSurfaceVariant),
                         ),
@@ -284,7 +299,7 @@ class _AddStockMovementScreenState
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
-                                subtitle: Text(_productMeta(_matches[i])),
+                                subtitle: Text(_productMeta(l10n, _matches[i])),
                                 trailing: Icon(
                                   Icons.chevron_right_rounded,
                                   color: scheme.onSurfaceVariant,
@@ -317,7 +332,7 @@ class _AddStockMovementScreenState
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  _productMeta(_product!),
+                                  _productMeta(l10n, _product!),
                                   style: Theme.of(context)
                                       .textTheme
                                       .bodySmall
@@ -337,7 +352,7 @@ class _AddStockMovementScreenState
                               });
                               _applyFilter('');
                             },
-                            child: const Text('Change'),
+                            child: Text(l10n.commonChange),
                           ),
                         ],
                       ),
@@ -345,7 +360,7 @@ class _AddStockMovementScreenState
                   ],
                   const SizedBox(height: 22),
                   Text(
-                    'MOVEMENT DETAILS',
+                    l10n.inventoryAddMovementTitle.toUpperCase(),
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: scheme.onSurfaceVariant,
                           fontWeight: FontWeight.w700,
@@ -358,7 +373,7 @@ class _AddStockMovementScreenState
                       Expanded(
                         child: _TypeChip(
                           selected: _isIn,
-                          label: 'Stock IN',
+                          label: l10n.inventoryStockIn,
                           icon: Icons.add_circle_outline_rounded,
                           color: AppColors.success,
                           onTap: () => _setMovementType(true),
@@ -368,7 +383,7 @@ class _AddStockMovementScreenState
                       Expanded(
                         child: _TypeChip(
                           selected: !_isIn,
-                          label: 'Stock OUT',
+                          label: l10n.inventoryStockOut,
                           icon: Icons.remove_circle_outline_rounded,
                           color: AppColors.danger,
                           onTap: () => _setMovementType(false),
@@ -379,7 +394,7 @@ class _AddStockMovementScreenState
                   const SizedBox(height: 14),
                   _Field(
                     controller: _qty,
-                    label: 'Quantity',
+                    label: l10n.commonQuantity,
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     prefixIcon: Icons.inventory_2_outlined,
@@ -389,7 +404,7 @@ class _AddStockMovementScreenState
                     const SizedBox(height: 12),
                     _Field(
                       controller: _cost,
-                      label: 'Cost Price',
+                      label: l10n.inventoryCostPrice,
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
@@ -401,7 +416,7 @@ class _AddStockMovementScreenState
                   const SizedBox(height: 12),
                   _Field(
                     controller: _notes,
-                    label: 'Notes (Required)',
+                    label: l10n.inventoryNotesRequired,
                     maxLines: 3,
                     prefixIcon: Icons.notes_outlined,
                     onChanged: (_) => setState(() {}),
@@ -418,7 +433,9 @@ class _AddStockMovementScreenState
                   height: 48,
                   child: FilledButton(
                     onPressed: _canSave ? _save : null,
-                    child: Text(_saving ? 'Saving…' : 'Save Movement'),
+                    child: Text(
+                      _saving ? l10n.commonSaving : l10n.inventorySaveMovement,
+                    ),
                   ),
                 ),
               ),

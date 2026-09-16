@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/app/providers.dart';
 import 'package:pos_billing/shared/widgets/ui_kit.dart';
 
@@ -44,19 +45,20 @@ class _CreateCategorySheetState extends ConsumerState<_CreateCategorySheet> {
 
   Future<void> _save() async {
     dismissKeyboard();
+    final l10n = AppLocalizations.of(context);
     final name = _name.text.trim();
     if (name.isEmpty) {
-      setState(() => _error = 'Enter a category name');
+      setState(() => _error = l10n.categoriesName);
       return;
     }
     if (name.length < 2) {
-      setState(() => _error = 'Name must be at least 2 characters');
+      setState(() => _error = l10n.errorsValidation);
       return;
     }
 
     final store = ref.read(storeProfileProvider).valueOrNull;
     if (store == null) {
-      setState(() => _error = 'Complete store setup first');
+      setState(() => _error = l10n.errorsStoreNotReady);
       return;
     }
 
@@ -82,6 +84,7 @@ class _CreateCategorySheetState extends ConsumerState<_CreateCategorySheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     final bottom = MediaQuery.viewInsetsOf(context).bottom;
 
@@ -139,7 +142,7 @@ class _CreateCategorySheetState extends ConsumerState<_CreateCategorySheet> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'New category',
+                            l10n.categoriesAdd,
                             style: Theme.of(context)
                                 .textTheme
                                 .titleMedium
@@ -147,7 +150,7 @@ class _CreateCategorySheetState extends ConsumerState<_CreateCategorySheet> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'Organize products in your catalog',
+                            l10n.categoriesSubtitle,
                             style: Theme.of(context)
                                 .textTheme
                                 .bodySmall
@@ -167,7 +170,7 @@ class _CreateCategorySheetState extends ConsumerState<_CreateCategorySheet> {
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  'Category name',
+                  l10n.categoriesName,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -183,7 +186,7 @@ class _CreateCategorySheetState extends ConsumerState<_CreateCategorySheet> {
                     if (_error != null) setState(() => _error = null);
                   },
                   decoration: InputDecoration(
-                    hintText: 'e.g. Electronics, Groceries',
+                    hintText: l10n.categoriesExampleHint,
                     prefixIcon: const Icon(Icons.sell_outlined),
                     errorText: _error,
                     filled: true,
@@ -221,7 +224,7 @@ class _CreateCategorySheetState extends ConsumerState<_CreateCategorySheet> {
                             borderRadius: BorderRadius.circular(14),
                           ),
                         ),
-                        child: const Text('Cancel'),
+                        child: Text(l10n.commonCancel),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -245,7 +248,9 @@ class _CreateCategorySheetState extends ConsumerState<_CreateCategorySheet> {
                                 ),
                               )
                             : const Icon(Icons.add_rounded),
-                        label: Text(_saving ? 'Saving…' : 'Create category'),
+                        label: Text(
+                          _saving ? l10n.commonSaving : l10n.categoriesAdd,
+                        ),
                       ),
                     ),
                   ],
@@ -310,6 +315,7 @@ class _CategoryPickerSheetState extends State<_CategoryPickerSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     final filtered = _filtered;
     final maxH = MediaQuery.sizeOf(context).height * 0.78;
@@ -343,7 +349,7 @@ class _CategoryPickerSheetState extends State<_CategoryPickerSheet> {
                     children: [
                       Expanded(
                         child: Text(
-                          'Select category',
+                          l10n.productsCategory,
                           style: Theme.of(context)
                               .textTheme
                               .titleMedium
@@ -364,7 +370,7 @@ class _CategoryPickerSheetState extends State<_CategoryPickerSheet> {
                     textInputAction: TextInputAction.search,
                     onChanged: (v) => setState(() => _query = v),
                     decoration: InputDecoration(
-                      hintText: 'Search categories',
+                      hintText: l10n.categoriesSearchHint,
                       prefixIcon: const Icon(Icons.search_rounded, size: 22),
                       suffixIcon: _query.isEmpty
                           ? null
@@ -439,7 +445,7 @@ class _CategoryPickerSheetState extends State<_CategoryPickerSheet> {
                             if (index == 0) {
                               final selected = widget.selectedId == null;
                               return _MinimalCategoryTile(
-                                title: 'No category',
+                                title: l10n.commonNoCategory,
                                 selected: selected,
                                 muted: true,
                                 onTap: () => Navigator.pop(context, -1),

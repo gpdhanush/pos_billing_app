@@ -56,8 +56,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     return Scaffold(
       backgroundColor: scheme.surfaceContainerLowest,
       appBar: GlassPageHeader(
-        title: 'Complete payment',
-        subtitle: 'Choose method & collect amount',
+        title: l10n.checkoutComplete,
+        subtitle: l10n.checkoutSubtitle,
         height: 64,
         leading: IconButton(
           onPressed: () => context.pop(),
@@ -88,7 +88,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
             ),
           ),
           const SizedBox(height: 18),
-          SectionHeader(title: 'Payment method'),
+          SectionHeader(title: l10n.salesPaymentMethod),
           const SizedBox(height: 10),
           SoftCard(
             child: Wrap(
@@ -295,7 +295,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   children: [
                     const Spacer(),
                     IconButton(
-                      tooltip: 'Close',
+                      tooltip: l10n.commonClose,
                       onPressed: () {
                         ref.read(cartProvider.notifier).clear();
                         Navigator.pop(sheetContext);
@@ -358,17 +358,18 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         onPressed: () async {
                           try {
                             await BillShareService().sharePdf(
+                              l10n: l10n,
                               store: store,
                               invoice: invoice,
                             );
                           } catch (_) {
                             if (sheetContext.mounted) {
-                              showSnack(sheetContext, 'Unable to share PDF');
+                              showSnack(sheetContext, l10n.errorsSharePdf);
                             }
                           }
                         },
                         icon: const Icon(Icons.picture_as_pdf_outlined),
-                        label: const Text('Share PDF'),
+                        label: Text(l10n.commonSharePdf),
                       ),
                     ),
                   ],

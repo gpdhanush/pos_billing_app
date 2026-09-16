@@ -39,6 +39,7 @@ class ExpensesScreen extends ConsumerWidget {
     required Expense expense,
     required String symbol,
   }) async {
+    final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     final action = await showModalBottomSheet<String>(
       context: context,
@@ -56,14 +57,14 @@ class ExpensesScreen extends ConsumerWidget {
               children: [
                 ListTile(
                   leading: Icon(Icons.edit_rounded, color: scheme.primary),
-                  title: const Text('Update'),
-                  subtitle: const Text('Edit expense details'),
+                  title: Text(l10n.commonUpdate),
+                  subtitle: Text(l10n.expensesEditDetails),
                   onTap: () => Navigator.pop(ctx, 'update'),
                 ),
                 ListTile(
                   leading: Icon(Icons.delete_outline_rounded, color: scheme.error),
-                  title: const Text('Delete'),
-                  subtitle: const Text('Remove this expense'),
+                  title: Text(l10n.commonDelete),
+                  subtitle: Text(l10n.expensesRemoveHint),
                   onTap: () => Navigator.pop(ctx, 'delete'),
                 ),
               ],
@@ -82,11 +83,11 @@ class ExpensesScreen extends ConsumerWidget {
 
     final ok = await confirmDialog(
       context,
-      title: 'Delete expense',
+      title: l10n.expensesDeleteTitle,
       body:
-          'Remove "${expense.category}" expense of ${Money(expense.amountPaise).format(symbol: symbol)}?',
+          '${l10n.expensesRemoveHint} "${expense.category}" · ${Money(expense.amountPaise).format(symbol: symbol)}?',
       icon: Icons.delete_outline_rounded,
-      confirmLabel: 'Delete',
+      confirmLabel: l10n.commonDelete,
       destructive: true,
     );
     if (!ok) return;
@@ -107,7 +108,7 @@ class ExpensesScreen extends ConsumerWidget {
       backgroundColor: scheme.surfaceContainerLowest,
       appBar: GlassPageHeader(
         title: l10n.expensesTitle,
-        subtitle: 'Shop spending & costs',
+        subtitle: l10n.expensesSubtitle,
         height: 64,
         leading: canPop
             ? IconButton(
@@ -129,7 +130,7 @@ class ExpensesScreen extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: SoftSearchField(
-              hintText: 'Search expenses',
+              hintText: l10n.expensesSearchHint,
               onChanged: (v) => ref.read(_expenseSearch.notifier).state = v,
             ),
           ),
@@ -142,9 +143,9 @@ class ExpensesScreen extends ConsumerWidget {
               ),
               data: (items) {
                 if (items.isEmpty) {
-                  return const EmptyState(
-                    title: 'No expenses found',
-                    subtitle: 'Record shop spending to track your costs.',
+                  return EmptyState(
+                    title: l10n.expensesEmptySearch,
+                    subtitle: l10n.expensesEmptyHint,
                     showIcon: false,
                   );
                 }

@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/material.dart';
+import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/core/constants/app_constants.dart';
 import 'package:pos_billing/core/database/repositories/settings_repository.dart';
 import 'package:pos_billing/core/services/backup_service.dart';
@@ -94,9 +96,12 @@ class BackupCoordinator {
         nowMillis().toString(),
       );
       await dirtyTracker.clearDirty();
+      final localeCode =
+          await settings.get(SettingKeys.localeCode) ?? 'en';
+      final l10n = lookupAppLocalizations(Locale(localeCode));
       await notifications.showLocal(
-        title: 'Backup complete',
-        body: 'Your POS data was backed up to Google Drive.',
+        title: l10n.backupComplete,
+        body: l10n.backupCompleteBody,
         id: 4101,
       );
       await analytics.logEvent('backup_auto_success');

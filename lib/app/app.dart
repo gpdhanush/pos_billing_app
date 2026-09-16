@@ -41,7 +41,7 @@ class PosApp extends ConsumerWidget {
           builder: (context, crash, _) {
             if (crash != null) {
               return AppErrorPage(
-                title: 'Something went wrong',
+                title: AppLocalizations.of(context).commonError,
                 message: crash.message,
                 onRetry: () => AppErrorHandler.clear(),
                 onGoHome: () {
@@ -133,10 +133,12 @@ class _ConnectivityToastHostState
     final top = MediaQuery.paddingOf(context).top;
     final color = online ? AppColors.success : AppColors.danger;
     final icon = online ? Icons.wifi_rounded : Icons.wifi_off_rounded;
-    final title = online ? 'Back online' : 'No internet connection';
+    final l10n = AppLocalizations.of(context);
+    final title =
+        online ? l10n.connectivityBackOnline : l10n.connectivityOfflineTitle;
     final body = online
-        ? 'You are connected again.'
-        : 'Billing continues offline on this device.';
+        ? l10n.connectivityBackOnlineBody
+        : l10n.connectivityOfflineBody;
 
     return IgnorePointer(
       ignoring: !_visible,

@@ -28,8 +28,8 @@ class OrderCheckoutScreen extends ConsumerWidget {
       return Scaffold(
         backgroundColor: scheme.surfaceContainerLowest,
         appBar: GlassPageHeader(
-          title: 'Checkout',
-          subtitle: 'Review cart & continue to payment',
+          title: l10n.billingCheckout,
+          subtitle: l10n.billingCheckoutSubtitle,
           height: 64,
           leading: IconButton(
             onPressed: () => context.pop(),
@@ -49,14 +49,14 @@ class OrderCheckoutScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Cart is empty',
+                  l10n.billingEmptyCart,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Add products from billing to continue.',
+                  l10n.billingEmptyCartContinueHint,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: scheme.onSurfaceVariant,
@@ -90,7 +90,7 @@ class OrderCheckoutScreen extends ConsumerWidget {
       backgroundColor: scheme.surfaceContainerLowest,
       appBar: GlassPageHeader(
         title: orderLabel,
-        subtitle: 'Review cart & continue to payment',
+        subtitle: l10n.billingCheckoutSubtitle,
         height: 64,
         leading: IconButton(
           onPressed: () => context.pop(),
@@ -119,7 +119,7 @@ class OrderCheckoutScreen extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Store',
+                              l10n.setupStepStore,
                               style: Theme.of(context).textTheme.labelMedium,
                             ),
                             const SizedBox(height: 2),
@@ -152,7 +152,7 @@ class OrderCheckoutScreen extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Customer',
+                              l10n.billingCustomer,
                               style: Theme.of(context).textTheme.labelMedium,
                             ),
                             const SizedBox(height: 2),
@@ -180,14 +180,14 @@ class OrderCheckoutScreen extends ConsumerWidget {
                           size: 16,
                           color: scheme.primary,
                         ),
-                        label: const Text('Edit'),
+                        label: Text(l10n.commonEdit),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 22),
                 Text(
-                  'Items',
+                  l10n.invoiceItemsTitle,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -209,9 +209,16 @@ class OrderCheckoutScreen extends ConsumerWidget {
                                 );
                           },
                           onIncrement: () {
-                            ref
+                            final product = cart.lines[i].product;
+                            final added = ref
                                 .read(cartProvider.notifier)
-                                .addProduct(cart.lines[i].product);
+                                .addProduct(product);
+                            if (!added && context.mounted) {
+                              showSnack(
+                                context,
+                                l10n.errorsInsufficientStock(product.name),
+                              );
+                            }
                           },
                         ),
                       ],
@@ -226,13 +233,13 @@ class OrderCheckoutScreen extends ConsumerWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'Total items',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .labelMedium
-                                  ?.copyWith(color: scheme.onSurfaceVariant),
-                            ),
+                              Text(
+                                l10n.invoiceItemsTitle,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelMedium
+                                    ?.copyWith(color: scheme.onSurfaceVariant),
+                              ),
                             const SizedBox(height: 2),
                             Text(
                               '$productCount',
@@ -256,7 +263,7 @@ class OrderCheckoutScreen extends ConsumerWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Total quantity',
+                                l10n.commonQuantity,
                                 style: Theme.of(context)
                                     .textTheme
                                     .labelMedium
@@ -331,7 +338,7 @@ class OrderCheckoutScreen extends ConsumerWidget {
                         const SizedBox(height: 8),
                         _detailRow(
                           context,
-                          'Round off',
+                          l10n.billingRoundOff,
                           '${totals.roundOffPaise > 0 ? '+' : ''}${Money(totals.roundOffPaise).format(symbol: symbol)}',
                         ),
                       ],
@@ -369,7 +376,7 @@ class OrderCheckoutScreen extends ConsumerWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Complete payment',
+                        l10n.checkoutComplete,
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                               color: scheme.onPrimary,
                               fontWeight: FontWeight.w700,
@@ -538,13 +545,13 @@ class OrderCheckoutScreen extends ConsumerWidget {
                 const SizedBox(height: 18),
                 _InfoTip(
                   icon: HugeIcons.strokeRoundedDiscount,
-                  title: 'Discount',
+                  title: l10n.billingDiscount,
                   body: 'Tap Discount to enter a bill-level amount off.',
                 ),
                 const SizedBox(height: 10),
                 _InfoTip(
                   icon: HugeIcons.strokeRoundedPercent,
-                  title: 'Tax %',
+                  title: l10n.billingTaxPercent,
                   body:
                       'Tap Tax to set a percentage. Amount is calculated from subtotal after discount.',
                 ),
@@ -654,7 +661,7 @@ class OrderCheckoutScreen extends ConsumerWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          'Select customer',
+                          l10n.billingSelectCustomer,
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                       ),

@@ -83,7 +83,7 @@ class DashboardScreen extends ConsumerWidget {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              'Manage your business with ease',
+                              l10n.dashboardTagline,
                               style: Theme.of(context)
                                   .textTheme
                                   .bodySmall
@@ -105,8 +105,8 @@ class DashboardScreen extends ConsumerWidget {
               ContainedSliver(
                 padding: const EdgeInsets.fromLTRB(20, 18, 20, 0),
                 child: _SectionLinkHeader(
-                  title: "Today's overview",
-                  actionLabel: 'View all',
+                  title: l10n.dashboardTodayOverview,
+                  actionLabel: l10n.commonViewAll,
                   onAction: () => context.push('/reports'),
                 ),
               ),
@@ -141,8 +141,8 @@ class DashboardScreen extends ConsumerWidget {
                   data: (data) {
                     if (data == null) return const SizedBox.shrink();
                     return _WeekSalesChart(
-                      title: 'This week',
-                      subtitle: 'Sunday – Saturday',
+                      title: l10n.salesThisWeek,
+                      subtitle: l10n.dashboardWeekRange,
                       values: data.last7DaysSalesPaise,
                       changePercent: data.salesChangePercent,
                       symbol: symbol,
@@ -164,6 +164,7 @@ class DashboardScreen extends ConsumerWidget {
                 ContainedSliver(
                   padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
                   child: _GetStartedCard(
+                    l10n: l10n,
                     onAddCategory: () => context.push('/categories/edit'),
                     onAddProduct: () => context.push('/products/edit'),
                   ),
@@ -225,7 +226,7 @@ class DashboardScreen extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
                 child: _SectionLinkHeader(
                   title: l10n.dashboardRecentBills,
-                  actionLabel: 'View all',
+                  actionLabel: l10n.commonViewAll,
                   onAction: () => context.push('/sales'),
                 ),
               ),
@@ -817,7 +818,7 @@ class _StoreSetupCard extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          'Continue',
+                          AppLocalizations.of(context).commonContinue,
                           style: Theme.of(context)
                               .textTheme
                               .labelMedium
@@ -957,7 +958,9 @@ class _RecentBillCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
-                    paid ? 'Paid' : invoice.status.displayTitle,
+                    paid
+                        ? AppLocalizations.of(context).checkoutPaid
+                        : invoice.status.displayTitle,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: paid ? AppColors.success : AppColors.warning,
                           fontWeight: FontWeight.w700,
@@ -990,10 +993,12 @@ bool _needsCatalogSetup(
 
 class _GetStartedCard extends StatelessWidget {
   const _GetStartedCard({
+    required this.l10n,
     required this.onAddCategory,
     required this.onAddProduct,
   });
 
+  final AppLocalizations l10n;
   final VoidCallback onAddCategory;
   final VoidCallback onAddProduct;
 
@@ -1009,7 +1014,7 @@ class _GetStartedCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Get Started',
+            l10n.commonGetStarted,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   color: scheme.primary,
                   fontWeight: FontWeight.w800,
@@ -1017,7 +1022,7 @@ class _GetStartedCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Set up your shop by adding products to your inventory',
+            l10n.dashboardGetStartedBody,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: scheme.onSurfaceVariant,
                 ),
@@ -1029,11 +1034,11 @@ class _GetStartedCard extends StatelessWidget {
             children: [
               FilledButton.tonal(
                 onPressed: onAddCategory,
-                child: const Text('Add Category'),
+                child: Text(l10n.categoriesAdd),
               ),
               FilledButton.tonal(
                 onPressed: onAddProduct,
-                child: const Text('Add Product'),
+                child: Text(l10n.dashboardAddProduct),
               ),
             ],
           ),

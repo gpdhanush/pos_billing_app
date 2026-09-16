@@ -47,7 +47,7 @@ class _SecuritySetupScreenState extends ConsumerState<SecuritySetupScreen> {
     try {
       if (!skip && _enable) {
         if (!_bioAvailable) {
-          showSnack(context, 'Biometrics unavailable on this device');
+          showSnack(context, AppLocalizations.of(context).errorsBiometricUnavailable);
           return;
         }
         final ok = await ref.read(pinServiceProvider).authenticateBiometric(
@@ -55,7 +55,7 @@ class _SecuritySetupScreenState extends ConsumerState<SecuritySetupScreen> {
             );
         if (!ok) {
           if (!mounted) return;
-          showSnack(context, 'Biometric not confirmed');
+          showSnack(context, AppLocalizations.of(context).errorsBiometricNotConfirmed);
           return;
         }
         await ref.read(pinServiceProvider).clearPin();
@@ -149,8 +149,8 @@ class _SecuritySetupScreenState extends ConsumerState<SecuritySetupScreen> {
                     if (_bioAvailable) ...[
                       const SizedBox(height: 28),
                       OnboardOptionCard(
-                        title: 'Enable biometric lock',
-                        subtitle: 'Recommended for shop security',
+                        title: l10n.securityEnableBiometric,
+                        subtitle: l10n.securityBiometricHint,
                         icon: HugeIcons.strokeRoundedSecurityLock,
                         selected: _enable,
                         onTap: () => setState(() => _enable = !_enable),

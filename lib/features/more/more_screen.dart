@@ -96,21 +96,21 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
                 option(
                   value: 'light',
                   title: l10n.themeLight,
-                  subtitle: 'Bright & clear',
+                  subtitle: l10n.themeLightHint,
                   icon: HugeIcons.strokeRoundedSun01,
                   accent: const Color(0xFF3B82F6),
                 ),
                 option(
                   value: 'dark',
                   title: l10n.themeDark,
-                  subtitle: 'Easy on the eyes',
+                  subtitle: l10n.themeDarkHint,
                   icon: HugeIcons.strokeRoundedMoon02,
                   accent: const Color(0xFF6366F1),
                 ),
                 option(
                   value: 'system',
                   title: l10n.themeSystem,
-                  subtitle: 'Match device setting',
+                  subtitle: l10n.themeSystemHint,
                   icon: HugeIcons.strokeRoundedSettings01,
                   accent: const Color(0xFF64748B),
                 ),
@@ -189,13 +189,13 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
                 option(
                   value: 'en',
                   title: l10n.languageEnglish,
-                  subtitle: 'English',
+                  subtitle: l10n.languageEnglishNative,
                   icon: HugeIcons.strokeRoundedLanguageSquare,
                 ),
                 option(
                   value: 'ta',
                   title: l10n.languageTamil,
-                  subtitle: 'தமிழ்',
+                  subtitle: l10n.languageTamilNative,
                   icon: HugeIcons.strokeRoundedTranslate,
                 ),
               ],
@@ -209,6 +209,7 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
   }
 
   Future<void> _pickAccent(AppSettings settings) async {
+    final l10n = AppLocalizations.of(context);
     final current = AccentOptionX.fromStorage(settings.accent);
     final selected = await showModalBottomSheet<AccentOption>(
       context: context,
@@ -228,14 +229,14 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Accent Color',
+                  l10n.themeAccent,
                   style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Choose your preferred color',
+                  l10n.themeAccentHint,
                   style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
                         color: scheme.onSurfaceVariant,
                       ),
@@ -299,25 +300,24 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
 
   Future<void> _logoutAndWipe() async {
     if (_loggingOut) return;
+    final l10n = AppLocalizations.of(context);
 
     final deleteOk = await confirmDialog(
       context,
-      title: 'Delete all data?',
-      body:
-          'This permanently removes products, sales, customers, expenses, stock, store details, backups on this device, and security keys.\n\nData cannot be restored unless you already saved a backup file elsewhere.',
+      title: l10n.moreDeleteAllTitle,
+      body: l10n.moreDeleteAllBody,
       icon: Icons.delete_forever_rounded,
-      confirmLabel: 'Delete everything',
+      confirmLabel: l10n.moreDeleteEverything,
       destructive: true,
     );
     if (!deleteOk || !mounted) return;
 
     final logoutOk = await confirmDialog(
       context,
-      title: 'Log out & reset app?',
-      body:
-          'POS Billing will restart like a new install. You will set up language, theme, and store again.',
+      title: l10n.moreLogoutTitle,
+      body: l10n.moreLogoutBody,
       icon: Icons.logout_rounded,
-      confirmLabel: 'Log out',
+      confirmLabel: l10n.moreLogout,
       destructive: true,
     );
     if (!logoutOk || !mounted) return;
@@ -341,15 +341,16 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
     } catch (_) {
       if (nav.canPop()) nav.pop();
       if (!mounted) return;
-      showSnack(context, 'Logout failed. Please try again.');
+      showSnack(context, l10n.commonTryAgain);
     } finally {
       if (mounted) setState(() => _loggingOut = false);
     }
   }
 
   Future<void> _openPrivacyPolicy() {
+    final l10n = AppLocalizations.of(context);
     return context.push(
-      '/browser?title=${Uri.encodeComponent('Privacy Policy')}'
+      '/browser?title=${Uri.encodeComponent(l10n.settingsPrivacy)}'
       '&url=${Uri.encodeComponent(AppLinks.privacyPolicy)}',
     );
   }
@@ -366,20 +367,21 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
   }
 
   Future<void> _setBiometric(bool enabled) async {
+    final l10n = AppLocalizations.of(context);
     if (enabled) {
       final available =
           await ref.read(pinServiceProvider).biometricAvailable();
       if (!available) {
         if (mounted) {
-          showSnack(context, 'Biometrics unavailable on this device');
+          showSnack(context, l10n.errorsBiometricUnavailable);
         }
         return;
       }
       final ok = await ref.read(pinServiceProvider).authenticateBiometric(
-            reason: 'Enable biometric lock for POS Billing',
+            reason: l10n.securityEnableBiometric,
           );
       if (!ok) {
-        if (mounted) showSnack(context, 'Biometric not confirmed');
+        if (mounted) showSnack(context, l10n.errorsBiometricNotConfirmed);
         return;
       }
       await ref.read(pinServiceProvider).clearPin();
@@ -388,10 +390,10 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
       ref.read(unlockedProvider.notifier).state = true;
     } else {
       final ok = await ref.read(pinServiceProvider).authenticateBiometric(
-            reason: 'Confirm to turn off app lock',
+            reason: l10n.settingsAppLock,
           );
       if (!ok) {
-        if (mounted) showSnack(context, 'Biometric not confirmed');
+        if (mounted) showSnack(context, l10n.errorsBiometricNotConfirmed);
         return;
       }
       await ref.read(pinServiceProvider).clearPin();
@@ -423,21 +425,21 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
         icon: HugeIcons.strokeRoundedPackage,
         accent: AppColors.success,
         title: l10n.productsTitle,
-        subtitle: 'Catalog & prices',
+        subtitle: l10n.moreProductsSubtitle,
         onTap: () => context.push('/products'),
       ),
       _MoreItem(
         icon: HugeIcons.strokeRoundedTag01,
         accent: const Color(0xFF7C3AED),
         title: l10n.categoriesTitle,
-        subtitle: 'Organize your products',
+        subtitle: l10n.moreCategoriesSubtitle,
         onTap: () => context.push('/categories'),
       ),
       _MoreItem(
         icon: HugeIcons.strokeRoundedUserGroup,
         accent: scheme.primary,
         title: l10n.customersTitle,
-        subtitle: 'Buyers & credit',
+        subtitle: l10n.moreCustomersSubtitle,
         onTap: () => context.push('/customers'),
       ),
     ];
@@ -447,14 +449,14 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
         icon: HugeIcons.strokeRoundedWallet01,
         accent: AppColors.danger,
         title: l10n.expensesTitle,
-        subtitle: 'Shop spending',
+        subtitle: l10n.moreExpensesSubtitle,
         onTap: () => context.push('/expenses'),
       ),
       _MoreItem(
         icon: HugeIcons.strokeRoundedAnalyticsUp,
         accent: AppColors.success,
         title: l10n.reportsTitle,
-        subtitle: 'Sales & business overview',
+        subtitle: l10n.moreReportsSubtitle,
         onTap: () => context.push('/reports'),
       ),
     ];
@@ -463,22 +465,22 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
       _MoreItem(
         icon: HugeIcons.strokeRoundedCloudUpload,
         accent: scheme.primary,
-        title: 'Backup & Restore',
-        subtitle: 'Google Drive, local backup',
+        title: l10n.moreBackupTitle,
+        subtitle: l10n.moreBackupSubtitle,
         onTap: () => context.push('/backup'),
       ),
       _MoreItem(
         icon: HugeIcons.strokeRoundedFileExport,
         accent: AppColors.warning,
-        title: 'Export data',
-        subtitle: 'Share reports & files',
+        title: l10n.moreExportTitle,
+        subtitle: l10n.moreExportSubtitle,
         onTap: () => context.push('/settings/export'),
       ),
       _MoreItem(
         icon: HugeIcons.strokeRoundedPrinter,
         accent: const Color(0xFF7C3AED),
-        title: 'Printer',
-        subtitle: 'Receipt printer settings',
+        title: l10n.printerTitle,
+        subtitle: l10n.morePrinterSubtitle,
         onTap: () => context.push('/printer'),
       ),
     ];
@@ -487,8 +489,8 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
       _MoreItem(
         icon: HugeIcons.strokeRoundedHelpCircle,
         accent: const Color(0xFFDB2777),
-        title: 'Help & Feedback',
-        subtitle: 'Guides, FAQs and support',
+        title: l10n.moreHelpTitle,
+        subtitle: l10n.moreHelpSubtitle,
         onTap: () => context.push('/settings/contact'),
       ),
     ];
@@ -496,26 +498,26 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
     final sections = <_MoreSection>[
       _MoreSection(
         icon: HugeIcons.strokeRoundedStore01,
-        title: 'Shop Management',
-        hint: 'Manage your shop',
+        title: l10n.moreSectionShop,
+        hint: l10n.moreProductsSubtitle,
         items: shop,
       ),
       _MoreSection(
         icon: HugeIcons.strokeRoundedChartAverage,
-        title: 'Business',
-        hint: 'Track your business',
+        title: l10n.moreSectionBusiness,
+        hint: l10n.moreReportsSubtitle,
         items: business,
       ),
       _MoreSection(
         icon: HugeIcons.strokeRoundedTools,
-        title: 'Data & Tools',
-        hint: 'Backup & devices',
+        title: l10n.moreSectionData,
+        hint: l10n.moreBackupSubtitle,
         items: tools,
       ),
       _MoreSection(
         icon: HugeIcons.strokeRoundedCustomerSupport,
-        title: 'Support',
-        hint: 'Help & info',
+        title: l10n.moreSectionSupport,
+        hint: l10n.moreHelpSubtitle,
         items: support,
       ),
     ];
@@ -524,7 +526,7 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
       backgroundColor: scheme.surfaceContainerLowest,
       appBar: GlassPageHeader(
         title: l10n.navMore,
-        subtitle: 'Shop tools & preferences',
+        subtitle: l10n.moreSubtitle,
         height: 64,
       ),
       body: CustomScrollView(
@@ -558,8 +560,8 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
               padding: const EdgeInsets.fromLTRB(20, 22, 20, 10),
               child: _SectionHeader(
                 icon: HugeIcons.strokeRoundedSettings01,
-                title: 'Preferences',
-                hint: 'App & store',
+                title: l10n.morePreferences,
+                hint: l10n.moreStoreSettingsSubtitle,
               ),
             ),
             ContainedSliver(
@@ -573,8 +575,8 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
                       item: _MoreItem(
                         icon: HugeIcons.strokeRoundedStore01,
                         accent: scheme.primary,
-                        title: 'Store Settings',
-                        subtitle: 'Business profile & receipts',
+                        title: l10n.moreStoreSettings,
+                        subtitle: l10n.moreStoreSettingsSubtitle,
                         onTap: () => context.push('/settings/store'),
                       ),
                     ),
@@ -583,8 +585,8 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
                       item: _MoreItem(
                         icon: HugeIcons.strokeRoundedFingerprintScan,
                         accent: AppColors.success,
-                        title: 'App Lock',
-                        subtitle: 'Fingerprint or face unlock',
+                        title: l10n.settingsAppLock,
+                        subtitle: l10n.moreAppLockSubtitle,
                         trailing: Switch.adaptive(
                           value: settings.biometricEnabled,
                           onChanged: _setBiometric,
@@ -599,8 +601,8 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
               padding: const EdgeInsets.fromLTRB(20, 22, 20, 10),
               child: _SectionHeader(
                 icon: HugeIcons.strokeRoundedPaintBoard,
-                title: 'Appearance',
-                hint: 'Look & language',
+                title: l10n.moreAppearance,
+                hint: l10n.moreThemeValueHint,
               ),
             ),
             ContainedSliver(
@@ -615,7 +617,7 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
                         icon: HugeIcons.strokeRoundedSun01,
                         accent: const Color(0xFF3B82F6),
                         title: l10n.settingsTheme,
-                        subtitle: 'Light, Dark or System default',
+                        subtitle: l10n.moreThemeValueHint,
                         value: _themeLabel(l10n, settings.themeModeName),
                         onTap: () => _pickTheme(settings),
                       ),
@@ -625,8 +627,8 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
                       item: _MoreItem(
                         icon: HugeIcons.strokeRoundedDroplet,
                         accent: const Color(0xFF7C3AED),
-                        title: 'Accent Color',
-                        subtitle: 'Choose your preferred color',
+                        title: l10n.themeAccent,
+                        subtitle: l10n.themeAccentHint,
                         valueWidget: Container(
                           width: 18,
                           height: 18,
@@ -647,7 +649,8 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
                         icon: HugeIcons.strokeRoundedLanguageCircle,
                         accent: AppColors.success,
                         title: l10n.settingsLanguage,
-                        subtitle: 'English / தமிழ்',
+                        subtitle:
+                            '${l10n.languageEnglish} / ${l10n.languageTamil}',
                         value: languageLabel,
                         onTap: () => _pickLanguage(settings),
                       ),
@@ -660,8 +663,8 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
               padding: const EdgeInsets.fromLTRB(20, 22, 20, 10),
               child: _SectionHeader(
                 icon: HugeIcons.strokeRoundedInformationCircle,
-                title: 'About',
-                hint: 'Legal & support',
+                title: l10n.moreAbout,
+                hint: l10n.morePrivacySubtitle,
               ),
             ),
             ContainedSliver(
@@ -675,8 +678,8 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
                       item: _MoreItem(
                         icon: HugeIcons.strokeRoundedSecurityLock,
                         accent: scheme.primary,
-                        title: 'Privacy Policy',
-                        subtitle: 'How we handle your data',
+                        title: l10n.settingsPrivacy,
+                        subtitle: l10n.morePrivacySubtitle,
                         onTap: _openPrivacyPolicy,
                       ),
                     ),
@@ -685,8 +688,8 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
                       item: _MoreItem(
                         icon: HugeIcons.strokeRoundedBug01,
                         accent: AppColors.warning,
-                        title: 'Send app logs',
-                        subtitle: 'Share diagnostics on WhatsApp',
+                        title: l10n.moreSendLogs,
+                        subtitle: l10n.moreSendLogsSubtitle,
                         onTap: _sendAppLogs,
                       ),
                     ),
@@ -695,8 +698,8 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
                       item: _MoreItem(
                         icon: HugeIcons.strokeRoundedInformationCircle,
                         accent: const Color(0xFF0EA5E9),
-                        title: 'App Version',
-                        subtitle: 'POS Billing ${DbConstants.appVersion}',
+                        title: l10n.settingsAppVersion,
+                        subtitle: '${l10n.appTitle} ${DbConstants.appVersion}',
                       ),
                     ),
                   ],
@@ -707,8 +710,8 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
               padding: const EdgeInsets.fromLTRB(20, 22, 20, 10),
               child: _SectionHeader(
                 icon: HugeIcons.strokeRoundedAlert02,
-                title: 'Danger zone',
-                hint: 'Irreversible',
+                title: l10n.moreDangerZone,
+                hint: l10n.moreDeleteEverything,
                 color: scheme.error,
               ),
             ),
@@ -722,8 +725,8 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
                   item: _MoreItem(
                     icon: HugeIcons.strokeRoundedLogout01,
                     accent: scheme.error,
-                    title: _loggingOut ? 'Logging out…' : 'Log out & reset',
-                    subtitle: 'Delete all local shop data',
+                    title: _loggingOut ? l10n.moreLoggingOut : l10n.moreLogoutTitle,
+                    subtitle: l10n.moreDeleteAllBody,
                     destructive: true,
                     onTap: _loggingOut ? null : _logoutAndWipe,
                   ),
@@ -742,7 +745,7 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Offline-first billing built for daily shop use.',
+                        l10n.moreFooterTagline,
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                     ),

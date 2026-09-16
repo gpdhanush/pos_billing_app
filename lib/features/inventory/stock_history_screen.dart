@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:intl/intl.dart';
+import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/app/providers.dart';
 import 'package:pos_billing/app/theme/app_theme.dart';
 import 'package:pos_billing/core/constants/app_constants.dart';
@@ -13,15 +14,15 @@ import 'package:pos_billing/shared/widgets/ui_kit.dart';
 class StockHistoryScreen extends ConsumerWidget {
   const StockHistoryScreen({super.key});
 
-  String _typeLabel(StockMovement m) {
+  String _typeLabel(AppLocalizations l10n, StockMovement m) {
     if (m.isIn) {
-      if (m.type == StockTxn.purchase) return 'Purchase';
-      if (m.type == StockTxn.opening) return 'Opening';
-      if (m.type == StockTxn.refund) return 'Return';
-      return 'Stock in';
+      if (m.type == StockTxn.purchase) return l10n.inventoryPurchase;
+      if (m.type == StockTxn.opening) return l10n.productsOpeningStock;
+      if (m.type == StockTxn.refund) return l10n.inventoryReturn;
+      return l10n.inventoryStockIn;
     }
-    if (m.type == StockTxn.sale) return 'Sale';
-    return 'Stock out';
+    if (m.type == StockTxn.sale) return l10n.inventorySale;
+    return l10n.inventoryStockOut;
   }
 
   String? _refHint(StockMovement m) {
@@ -36,6 +37,7 @@ class StockHistoryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     final store = ref.watch(storeProfileProvider).valueOrNull;
     final symbol = store?.currencySymbol ?? '₹';
@@ -47,8 +49,8 @@ class StockHistoryScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: scheme.surfaceContainerLowest,
       appBar: GlassPageHeader(
-        title: 'Stock History',
-        subtitle: 'Stock in, stock out & adjustments',
+        title: l10n.inventoryHistory,
+        subtitle: l10n.inventoryHistorySubtitle,
         height: 64,
         leading: canPop
             ? IconButton(
@@ -67,7 +69,7 @@ class StockHistoryScreen extends ConsumerWidget {
           }
         },
         icon: const Icon(Icons.add_rounded),
-        label: const Text('Add movement'),
+        label: Text(l10n.inventoryAddMovement),
       ),
       body: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -75,11 +77,11 @@ class StockHistoryScreen extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
               child: SoftSearchField(
-                hintText: 'Search by product name or SKU',
+                hintText: l10n.inventorySearchProductHint,
                 onChanged: (v) =>
                     ref.read(stockHistorySearchProvider.notifier).state = v,
                 trailing: IconButton(
-                  tooltip: 'Scan',
+                  tooltip: l10n.commonScan,
                   visualDensity: VisualDensity.compact,
                   onPressed: () async {
                     final product =
@@ -98,21 +100,21 @@ class StockHistoryScreen extends ConsumerWidget {
               child: Row(
                 children: [
                   SoftPeriodBadge(
-                    label: 'All',
+                    label: l10n.commonAll,
                     selected: filter == StockHistoryFilter.all,
                     onTap: () => ref
                         .read(stockHistoryFilterProvider.notifier)
                         .state = StockHistoryFilter.all,
                   ),
                   SoftPeriodBadge(
-                    label: 'Stock IN',
+                    label: l10n.inventoryStockIn,
                     selected: filter == StockHistoryFilter.stockIn,
                     onTap: () => ref
                         .read(stockHistoryFilterProvider.notifier)
                         .state = StockHistoryFilter.stockIn,
                   ),
                   SoftPeriodBadge(
-                    label: 'Stock OUT',
+                    label: l10n.inventoryStockOut,
                     selected: filter == StockHistoryFilter.stockOut,
                     onTap: () => ref
                         .read(stockHistoryFilterProvider.notifier)
@@ -130,10 +132,9 @@ class StockHistoryScreen extends ConsumerWidget {
                 ),
                 data: (items) {
                   if (items.isEmpty) {
-                    return const EmptyState(
-                      title: 'No stock movements',
-                      subtitle:
-                          'Stock in and stock out activity will show here.',
+                    return EmptyState(
+                      title: l10n.inventoryMovementsEmpty,
+                      subtitle: l10n.productsRecentMovementsHint,
                       showIcon: false,
                     );
                   }
@@ -156,7 +157,7 @@ class StockHistoryScreen extends ConsumerWidget {
                       final refHint = _refHint(m);
                       final meta = [
                         when,
-                        _typeLabel(m),
+                        _typeLabel(l10n, m),
                         ?refHint,
                       ].join(' • ');
 

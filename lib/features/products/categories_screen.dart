@@ -18,6 +18,7 @@ class CategoriesScreen extends ConsumerWidget {
     WidgetRef ref, {
     required Category category,
   }) async {
+    final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     final action = await showModalBottomSheet<String>(
       context: context,
@@ -35,14 +36,14 @@ class CategoriesScreen extends ConsumerWidget {
               children: [
                 ListTile(
                   leading: Icon(Icons.edit_rounded, color: scheme.primary),
-                  title: const Text('Update'),
-                  subtitle: const Text('Rename this category'),
+                  title: Text(l10n.commonUpdate),
+                  subtitle: Text(l10n.categoriesRename),
                   onTap: () => Navigator.pop(ctx, 'update'),
                 ),
                 ListTile(
                   leading: Icon(Icons.delete_outline_rounded, color: scheme.error),
-                  title: const Text('Delete'),
-                  subtitle: const Text('Remove from product forms'),
+                  title: Text(l10n.commonDelete),
+                  subtitle: Text(l10n.categoriesRemoveFromForms),
                   onTap: () => Navigator.pop(ctx, 'delete'),
                 ),
               ],
@@ -63,10 +64,10 @@ class CategoriesScreen extends ConsumerWidget {
 
     final ok = await confirmDialog(
       context,
-      title: 'Delete category',
+      title: l10n.categoriesDeleteConfirm,
       body: 'Remove "${category.name}" from product forms?',
       icon: Icons.delete_outline_rounded,
-      confirmLabel: 'Delete',
+      confirmLabel: l10n.commonDelete,
       destructive: true,
     );
     if (!ok) return;
@@ -86,7 +87,7 @@ class CategoriesScreen extends ConsumerWidget {
       backgroundColor: scheme.surfaceContainerLowest,
       appBar: GlassPageHeader(
         title: l10n.categoriesTitle,
-        subtitle: 'Organize your product catalog',
+        subtitle: l10n.categoriesSubtitle,
         height: 64,
         leading: canPop
             ? IconButton(
@@ -108,7 +109,7 @@ class CategoriesScreen extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: SoftSearchField(
-              hintText: 'Search categories',
+              hintText: l10n.categoriesSearchHint,
               onChanged: (v) => ref.read(_categorySearch.notifier).state = v,
             ),
           ),
@@ -186,7 +187,7 @@ class CategoriesScreen extends ConsumerWidget {
                                 ),
                                 const SizedBox(height: 3),
                                 Text(
-                                  'Product category',
+                                  l10n.categoriesTitle,
                                   style: Theme.of(context)
                                       .textTheme
                                       .bodySmall

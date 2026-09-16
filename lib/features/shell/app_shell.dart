@@ -25,14 +25,14 @@ class _AppShellState extends ConsumerState<AppShell> {
     final cart = ref.read(cartProvider);
     if (!cart.hasUnsavedValues) return true;
 
+    final l10n = AppLocalizations.of(context);
     final ok = await confirmDialog(
       context,
-      title: 'Leave billing?',
-      body:
-          'All items in the cart will be lost. Do you want to exit without completing this bill?',
+      title: l10n.billingLeaveConfirm,
+      body: l10n.billingLeaveBody,
       icon: Icons.shopping_cart_outlined,
-      confirmLabel: 'Exit',
-      cancelLabel: 'Stay',
+      confirmLabel: l10n.commonExit,
+      cancelLabel: l10n.commonStay,
       destructive: true,
     );
     if (!ok) return false;
@@ -122,7 +122,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                     ),
                     _navItem(
                       context: context,
-                      label: 'Billing',
+                      label: l10n.navBilling,
                       icon: const Icon(LineIcons.cashRegister),
                       selected: shell.currentIndex == 2,
                       onTap: () => _goBranch(2),

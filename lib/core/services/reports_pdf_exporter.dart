@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/core/constants/app_constants.dart';
 import 'package:pos_billing/core/services/pdf_fonts.dart';
 import 'package:pos_billing/shared/models/models.dart';
@@ -12,6 +13,7 @@ import 'package:share_plus/share_plus.dart';
 
 class ReportsPdfExporter {
   Future<void> exportAndShare({
+    required AppLocalizations l10n,
     required StoreProfile store,
     required String rangeLabel,
     required int todaySalesPaise,
@@ -61,39 +63,39 @@ class ReportsPdfExporter {
             style: pw.TextStyle(fontSize: 22, fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 4),
-          pw.Text('Business Report'),
-          pw.Text('Period: $rangeLabel'),
-          pw.Text('Generated: $generatedAt'),
+          pw.Text(l10n.reportsPdfTitle),
+          pw.Text(l10n.reportsPdfPeriod(rangeLabel)),
+          pw.Text(l10n.reportsPdfGenerated(generatedAt)),
           pw.SizedBox(height: 16),
           pw.Divider(),
           pw.SizedBox(height: 12),
           pw.Text(
-            'Summary',
+            l10n.reportsPdfSummary,
             style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 8),
-          kv('Today sales', pdfMoney(todaySalesPaise)),
-          kv('Bills today', '$billsToday'),
-          kv('Stock value', pdfMoney(stockValuePaise)),
-          kv('Expenses total', pdfMoney(expensesPaise), bold: true),
+          kv(l10n.reportsPdfTodaySales, pdfMoney(todaySalesPaise)),
+          kv(l10n.reportsPdfBillsToday, '$billsToday'),
+          kv(l10n.reportsPdfStockValue, pdfMoney(stockValuePaise)),
+          kv(l10n.reportsPdfExpensesTotal, pdfMoney(expensesPaise), bold: true),
           pw.SizedBox(height: 16),
           pw.Text(
-            'Collections',
+            l10n.reportsCollections,
             style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 8),
-          kv('CASH', pdfMoney(payments[PaymentMethods.cash] ?? 0)),
-          kv('UPI', pdfMoney(payments[PaymentMethods.upi] ?? 0)),
-          kv('CARD', pdfMoney(payments[PaymentMethods.card] ?? 0)),
-          kv('CREDIT', pdfMoney(payments[PaymentMethods.credit] ?? 0)),
+          kv(l10n.reportsCash, pdfMoney(payments[PaymentMethods.cash] ?? 0)),
+          kv(l10n.reportsUpi, pdfMoney(payments[PaymentMethods.upi] ?? 0)),
+          kv(l10n.reportsCard, pdfMoney(payments[PaymentMethods.card] ?? 0)),
+          kv(l10n.reportsCredit, pdfMoney(payments[PaymentMethods.credit] ?? 0)),
           pw.SizedBox(height: 16),
           pw.Text(
-            'Top products (by quantity)',
+            l10n.reportsPdfTopProducts,
             style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 8),
           if (topProducts.isEmpty)
-            pw.Text('No sales in this period')
+            pw.Text(l10n.reportsPdfNoSales)
           else
             pw.Table(
               border: pw.TableBorder.all(color: PdfColors.grey400, width: 0.5),
@@ -108,9 +110,9 @@ class ReportsPdfExporter {
                   decoration: const pw.BoxDecoration(color: PdfColors.grey200),
                   children: [
                     _cell('#', bold: true),
-                    _cell('Product', bold: true),
-                    _cell('Qty', bold: true, align: pw.TextAlign.right),
-                    _cell('Sales', bold: true, align: pw.TextAlign.right),
+                    _cell(l10n.productsTitle, bold: true),
+                    _cell(l10n.billingQty, bold: true, align: pw.TextAlign.right),
+                    _cell(l10n.navSales, bold: true, align: pw.TextAlign.right),
                   ],
                 ),
                 for (var i = 0; i < topProducts.length; i++)
@@ -129,12 +131,12 @@ class ReportsPdfExporter {
             ),
           pw.SizedBox(height: 16),
           pw.Text(
-            'Expenses',
+            l10n.reportsPdfExpensesSection,
             style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 8),
           if (expenses.isEmpty)
-            pw.Text('No expenses in this period')
+            pw.Text(l10n.reportsExpensesEmptyHint)
           else
             pw.Table(
               border: pw.TableBorder.all(color: PdfColors.grey400, width: 0.5),
@@ -148,10 +150,10 @@ class ReportsPdfExporter {
                 pw.TableRow(
                   decoration: const pw.BoxDecoration(color: PdfColors.grey200),
                   children: [
-                    _cell('Date', bold: true),
-                    _cell('Category', bold: true),
-                    _cell('Mode', bold: true),
-                    _cell('Amount', bold: true, align: pw.TextAlign.right),
+                    _cell(l10n.commonDate, bold: true),
+                    _cell(l10n.productsCategory, bold: true),
+                    _cell(l10n.salesPaymentMethod, bold: true),
+                    _cell(l10n.commonAmount, bold: true, align: pw.TextAlign.right),
                   ],
                 ),
                 for (final e in expenses)
@@ -173,10 +175,14 @@ class ReportsPdfExporter {
                 pw.TableRow(
                   decoration: const pw.BoxDecoration(color: PdfColors.grey100),
                   children: [
-                    _cell('TOTAL', bold: true),
+                    _cell(l10n.billingTotal.toUpperCase(), bold: true),
                     _cell(''),
                     _cell(''),
-                    _cell(pdfMoney(expensesPaise), bold: true, align: pw.TextAlign.right),
+                    _cell(
+                      pdfMoney(expensesPaise),
+                      bold: true,
+                      align: pw.TextAlign.right,
+                    ),
                   ],
                 ),
               ],
@@ -184,7 +190,7 @@ class ReportsPdfExporter {
           pw.SizedBox(height: 24),
           pw.Center(
             child: pw.Text(
-              'Generated by POS Billing',
+              l10n.appTitle,
               style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
             ),
           ),
@@ -199,8 +205,8 @@ class ReportsPdfExporter {
     await SharePlus.instance.share(
       ShareParams(
         files: [XFile(file.path, mimeType: 'application/pdf')],
-        text: '${store.name} report - $rangeLabel',
-        subject: '${store.name} Report',
+        text: '${store.name} — $rangeLabel',
+        subject: '${store.name} — ${l10n.reportsPdfTitle}',
       ),
     );
   }

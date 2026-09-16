@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:pos_billing/core/constants/app_constants.dart';
+import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/core/services/app_log_service.dart';
 
 /// Holds the latest fatal/uncaught app error for a full-screen recovery UI.
@@ -80,9 +80,12 @@ class AppErrorHandler {
           ),
           child: Material(
             color: const Color(0xFFF7F5F2),
-            child: AppErrorPage(
-              title: 'Something went wrong',
-              message: info.message,
+            child: Localizations(
+              locale: WidgetsBinding.instance.platformDispatcher.locale,
+              delegates: AppLocalizations.localizationsDelegates,
+              child: AppErrorPage(
+                message: info.message,
+              ),
             ),
           ),
         ),
@@ -97,13 +100,13 @@ class AppErrorHandler {
 class AppErrorPage extends StatefulWidget {
   const AppErrorPage({
     super.key,
-    this.title = 'Something went wrong',
+    this.title,
     this.message,
     this.onRetry,
     this.onGoHome,
   });
 
-  final String title;
+  final String? title;
   final String? message;
   final VoidCallback? onRetry;
   final VoidCallback? onGoHome;
@@ -139,9 +142,11 @@ class _AppErrorPageState extends State<AppErrorPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    final friendly = _friendlyMessage(widget.message);
+    final friendly = _friendlyMessage(l10n, widget.message);
+    final pageTitle = widget.title ?? l10n.commonError;
 
     return ColoredBox(
       color: scheme.surface,
@@ -179,7 +184,7 @@ class _AppErrorPageState extends State<AppErrorPage> {
                   ),
                   const SizedBox(height: 28),
                   Text(
-                    widget.title,
+                    pageTitle,
                     textAlign: TextAlign.center,
                     style: textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w700,
@@ -233,7 +238,7 @@ class _AppErrorPageState extends State<AppErrorPage> {
                             borderRadius: BorderRadius.circular(14),
                           ),
                         ),
-                        child: const Text('Try again'),
+                        child: Text(l10n.commonTryAgain),
                       ),
                     ),
                   if (widget.onGoHome != null) ...[
@@ -248,7 +253,7 @@ class _AppErrorPageState extends State<AppErrorPage> {
                             borderRadius: BorderRadius.circular(14),
                           ),
                         ),
-                        child: const Text('Go to home'),
+                        child: Text(l10n.commonGoHome),
                       ),
                     ),
                   ],
@@ -265,7 +270,7 @@ class _AppErrorPageState extends State<AppErrorPage> {
                             )
                           : const Icon(Icons.bug_report_outlined),
                       label: Text(
-                        _sending ? 'Preparing logs…' : 'Send crash log',
+                        _sending ? l10n.commonLoading : l10n.moreSendLogs,
                       ),
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size.fromHeight(52),
@@ -278,7 +283,7 @@ class _AppErrorPageState extends State<AppErrorPage> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Sends device details + log file to ${AppLinks.supportEmail}',
+                    l10n.moreSendLogsSubtitle,
                     textAlign: TextAlign.center,
                     style: textTheme.bodySmall?.copyWith(
                       color: scheme.onSurfaceVariant,
@@ -293,24 +298,24 @@ class _AppErrorPageState extends State<AppErrorPage> {
     );
   }
 
-  String _friendlyMessage(String? raw) {
+  String _friendlyMessage(AppLocalizations l10n, String? raw) {
     if (raw == null || raw.trim().isEmpty) {
-      return 'The app hit an unexpected problem. You can try again, return home, or send us the crash log.';
+      return l10n.commonError;
     }
     final lower = raw.toLowerCase();
     if (lower.contains('socket') ||
         lower.contains('network') ||
         lower.contains('failed host lookup')) {
-      return 'Network issue detected. Check your connection and try again.';
+      return l10n.connectivityOfflineBody;
     }
     if (lower.contains('database') ||
         lower.contains('sqlite') ||
         lower.contains('sql')) {
-      return 'Something went wrong while reading local data. Try again.';
+      return l10n.errorsDatabase;
     }
     if (lower.contains('permission')) {
-      return 'A required permission is missing. Update permissions and retry.';
+      return l10n.commonPermissionNeeded;
     }
-    return 'The app hit an unexpected problem. You can try again, return home, or send us the crash log.';
+    return l10n.commonError;
   }
 }

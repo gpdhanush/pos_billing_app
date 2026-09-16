@@ -37,12 +37,13 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) {
+        final sheetL10n = AppLocalizations.of(ctx);
         return SafeArea(
           child: ListView(
             shrinkWrap: true,
             children: [
               ListTile(
-                title: const Text('All Categories'),
+                title: Text(sheetL10n.inventoryAllCategories),
                 trailing: _categoryId == null
                     ? const Icon(Icons.check_rounded)
                     : null,
@@ -98,18 +99,18 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     final symbol = store?.currencySymbol ?? '₹';
     final scheme = Theme.of(context).colorScheme;
     final categoryName = _categoryId == null
-        ? 'All Categories'
+        ? l10n.inventoryAllCategories
         : (categories
                 .where((c) => c.id == _categoryId)
                 .map((c) => c.name.displayTitle)
                 .firstOrNull ??
-            'All Categories');
+            l10n.inventoryAllCategories);
 
     return Scaffold(
       backgroundColor: scheme.surfaceContainerLowest,
       appBar: GlassPageHeader(
         title: l10n.inventoryTitle,
-        subtitle: 'Products, availability & stock',
+        subtitle: l10n.inventorySubtitle,
         height: 64,
       ),
       bottomNavigationBar: SafeArea(
@@ -157,10 +158,10 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
               child: SoftSearchField(
-                hintText: 'Search products by name, SKU, or barcode',
+                hintText: l10n.inventorySearchHint,
                 onChanged: (v) => setState(() => _search = v),
                 trailing: IconButton(
-                  tooltip: 'Scan',
+                  tooltip: l10n.commonScan,
                   visualDensity: VisualDensity.compact,
                   onPressed: _scanLookup,
                   icon: const Icon(Icons.qr_code_scanner_rounded),
@@ -196,10 +197,9 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                 data: (items) {
                   final visible = _filter(items);
                   if (visible.isEmpty) {
-                    return const EmptyState(
-                      title: 'No inventory items',
-                      subtitle:
-                          'Add products to track available stock and status here.',
+                    return EmptyState(
+                      title: l10n.inventoryEmptyTitle,
+                      subtitle: l10n.inventoryEmptyBody,
                       showIcon: false,
                     );
                   }
@@ -238,6 +238,7 @@ class _InventoryProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     final p = product;
     final path = p.imagePath;
@@ -245,10 +246,10 @@ class _InventoryProductCard extends StatelessWidget {
     final out = p.isOutOfStock;
     final low = !out && p.isLowStock;
     final statusLabel = out
-        ? 'Out of stock'
+        ? l10n.productsOutOfStockFilter
         : low
-            ? 'Low stock'
-            : 'In stock';
+            ? l10n.productsLowStockFilter
+            : l10n.commonInStock;
     final statusColor = out
         ? AppColors.danger
         : low
@@ -386,12 +387,22 @@ class _AdjustStockSheetState extends ConsumerState<_AdjustStockSheet> {
   late final TextEditingController _qty;
   late final TextEditingController _reason;
   bool _saving = false;
+  bool _defaultReasonSet = false;
 
   @override
   void initState() {
     super.initState();
     _qty = TextEditingController(text: '${widget.product.currentStock}');
-    _reason = TextEditingController(text: 'Manual stock update');
+    _reason = TextEditingController();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_defaultReasonSet) {
+      _reason.text = AppLocalizations.of(context).inventoryAdjust;
+      _defaultReasonSet = true;
+    }
   }
 
   @override
@@ -509,9 +520,9 @@ class _AdjustStockSheetState extends ConsumerState<_AdjustStockSheet> {
                   TextField(
                     controller: _reason,
                     textCapitalization: TextCapitalization.sentences,
-                    decoration: const InputDecoration(
-                      hintText: 'Reason',
-                      prefixIcon: Icon(Icons.notes_outlined),
+                    decoration: InputDecoration(
+                      hintText: l10n.commonReason,
+                      prefixIcon: const Icon(Icons.notes_outlined),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -534,7 +545,7 @@ class _AdjustStockSheetState extends ConsumerState<_AdjustStockSheet> {
                             Navigator.pop(context, false);
                             router.push('/products/edit?id=$id');
                           },
-                    child: const Text('Edit product'),
+                    child: Text(l10n.productsEditProduct),
                   ),
                 ],
               ),

@@ -117,6 +117,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     try {
       final range = ref.read(salesRangeProvider);
       await ReportsPdfExporter().exportAndShare(
+        l10n: l10n,
         store: store,
         rangeLabel: _rangeLabel(l10n, range),
         todaySalesPaise: stats.todaySalesPaise as int,
@@ -128,7 +129,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
         expenses: expenses,
       );
     } catch (_) {
-      if (mounted) showSnack(context, 'Unable to export report PDF');
+      if (mounted) showSnack(context, l10n.errorsSharePdf);
     } finally {
       if (mounted) setState(() => _exporting = false);
     }
@@ -150,7 +151,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
       backgroundColor: scheme.surfaceContainerLowest,
       appBar: GlassPageHeader(
         title: l10n.reportsTitle,
-        subtitle: 'View your business insights',
+        subtitle: l10n.reportsSubtitle,
         height: 64,
         leading: canPop
             ? IconButton(
@@ -227,7 +228,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                         ),
                         const SizedBox(width: 10),
                         Text(
-                          'Date range',
+                          l10n.reportsDateRange,
                           style:
                               Theme.of(context).textTheme.titleSmall?.copyWith(
                                     fontWeight: FontWeight.w800,
@@ -240,7 +241,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                       children: [
                         Expanded(
                           child: _DateField(
-                            label: 'From',
+                            label: l10n.reportsFrom,
                             value: dateFmt.format(_from),
                             onTap: _pickFrom,
                           ),
@@ -248,7 +249,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                         const SizedBox(width: 10),
                         Expanded(
                           child: _DateField(
-                            label: 'To',
+                            label: l10n.reportsTo,
                             value: dateFmt.format(_to),
                             onTap: _pickTo,
                           ),
@@ -300,8 +301,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                             : const Icon(Icons.picture_as_pdf_outlined),
                         label: Text(
                           _exporting
-                              ? 'Exporting…'
-                              : 'Export PDF (${_rangeLabel(l10n, range)})',
+                              ? l10n.commonExporting
+                              : l10n.reportsExportPdf(_rangeLabel(l10n, range)),
                         ),
                       ),
                     ),
@@ -310,7 +311,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
               ),
               const SizedBox(height: 14),
               _ReportSectionHeader(
-                title: 'Collections',
+                title: l10n.reportsCollections,
                 icon: HugeIcons.strokeRoundedWallet01,
                 accent: AppColors.success,
               ),
@@ -324,28 +325,28 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                 mainAxisSpacing: 8,
                 children: [
                   _ReportMetricCard(
-                    label: 'CASH',
+                    label: l10n.checkoutCash,
                     value: Money(payments[PaymentMethods.cash] ?? 0)
                         .format(symbol: symbol),
                     accent: AppColors.success,
                     icon: HugeIcons.strokeRoundedMoney01,
                   ),
                   _ReportMetricCard(
-                    label: 'UPI',
+                    label: l10n.checkoutUpi,
                     value: Money(payments[PaymentMethods.upi] ?? 0)
                         .format(symbol: symbol),
                     accent: const Color(0xFF2563EB),
                     icon: HugeIcons.strokeRoundedQrCode,
                   ),
                   _ReportMetricCard(
-                    label: 'CARD',
+                    label: l10n.checkoutCard,
                     value: Money(payments[PaymentMethods.card] ?? 0)
                         .format(symbol: symbol),
                     accent: const Color(0xFF7C3AED),
                     icon: HugeIcons.strokeRoundedCreditCard,
                   ),
                   _ReportMetricCard(
-                    label: 'CREDIT',
+                    label: l10n.checkoutCredit,
                     value: Money(payments[PaymentMethods.credit] ?? 0)
                         .format(symbol: symbol),
                     accent: const Color(0xFFEA580C),
@@ -364,9 +365,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                 _ReportEmptyCard(
                   icon: HugeIcons.strokeRoundedChartBarLine,
                   accent: AppColors.success,
-                  title: 'No top products yet',
-                  subtitle:
-                      'Sales in this period will appear here once you record bills.',
+                  title: l10n.reportsTopProductsEmpty,
+                  subtitle: l10n.productsEmptySearchBody,
                 )
               else
                 SoftCard(
@@ -422,9 +422,8 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                 _ReportEmptyCard(
                   icon: HugeIcons.strokeRoundedWallet02,
                   accent: AppColors.danger,
-                  title: 'No expenses yet',
-                  subtitle:
-                      'Expenses logged in this date range will show up here.',
+                  title: l10n.expensesEmpty,
+                  subtitle: l10n.reportsExpensesEmptyHint,
                 )
               else
                 SoftCard(

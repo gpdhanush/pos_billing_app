@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/features/onboarding/onboarding_widgets.dart';
 import 'package:pos_billing/shared/widgets/ui_kit.dart';
 
@@ -85,14 +86,15 @@ class _BackupPassphrasePageState extends State<BackupPassphrasePage> {
   }
 
   void _submit() {
+    final l10n = AppLocalizations.of(context);
     dismissKeyboard();
     final value = _controller.text;
     if (value.length < 8) {
-      setState(() => _error = 'Minimum 8 characters');
+      setState(() => _error = l10n.passphraseMinHint);
       return;
     }
     if (widget.confirmMatch && value != _confirm.text) {
-      setState(() => _error = 'Passphrases do not match');
+      setState(() => _error = l10n.errorsPinMismatch);
       return;
     }
     setState(() => _error = null);
@@ -101,6 +103,7 @@ class _BackupPassphrasePageState extends State<BackupPassphrasePage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -163,9 +166,7 @@ class _BackupPassphrasePageState extends State<BackupPassphrasePage> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        widget.body ??
-                            'This passphrase protects your backup encryption key across devices. '
-                                'Store it safely — it cannot be recovered.',
+                        widget.body ?? l10n.backupLocalOnly,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: scheme.onSurfaceVariant,
                               height: 1.4,
@@ -178,7 +179,9 @@ class _BackupPassphrasePageState extends State<BackupPassphrasePage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Passphrase',
+                              widget.confirmMatch
+                                  ? l10n.passphraseSetTitle
+                                  : l10n.passphraseEnterTitle,
                               style: Theme.of(context)
                                   .textTheme
                                   .titleSmall
@@ -206,7 +209,7 @@ class _BackupPassphrasePageState extends State<BackupPassphrasePage> {
                                 }
                               },
                               decoration: InputDecoration(
-                                hintText: 'Min. 8 characters',
+                                hintText: l10n.passphraseMinHint,
                                 prefixIcon: Padding(
                                   padding: const EdgeInsets.only(
                                     left: 12,
@@ -238,7 +241,7 @@ class _BackupPassphrasePageState extends State<BackupPassphrasePage> {
                             if (widget.confirmMatch) ...[
                               const SizedBox(height: 16),
                               Text(
-                                'Confirm passphrase',
+                                l10n.passphraseReenter,
                                 style: Theme.of(context)
                                     .textTheme
                                     .titleSmall
@@ -257,7 +260,7 @@ class _BackupPassphrasePageState extends State<BackupPassphrasePage> {
                                 },
                                 onSubmitted: (_) => _submit(),
                                 decoration: InputDecoration(
-                                  hintText: 'Re-enter passphrase',
+                                  hintText: l10n.passphraseReenter,
                                   prefixIcon: Padding(
                                     padding: const EdgeInsets.only(
                                       left: 12,
@@ -314,7 +317,7 @@ class _BackupPassphrasePageState extends State<BackupPassphrasePage> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'We never store your passphrase. Without it, Drive backups cannot be unlocked on a new phone.',
+                              l10n.backupLocalOnly,
                               style: Theme.of(context)
                                   .textTheme
                                   .bodySmall
@@ -329,7 +332,7 @@ class _BackupPassphrasePageState extends State<BackupPassphrasePage> {
                       const Spacer(),
                       const SizedBox(height: 24),
                       OnboardPrimaryButton(
-                        label: 'Continue',
+                        label: l10n.commonContinue,
                         icon: HugeIcons.strokeRoundedArrowRight01,
                         onPressed: _submit,
                       ),
@@ -341,7 +344,7 @@ class _BackupPassphrasePageState extends State<BackupPassphrasePage> {
                             Navigator.pop(context);
                           },
                           child: Text(
-                            'Cancel',
+                            l10n.commonCancel,
                             style: TextStyle(
                               color: scheme.onSurfaceVariant,
                               fontWeight: FontWeight.w600,
@@ -362,33 +365,33 @@ class _BackupPassphrasePageState extends State<BackupPassphrasePage> {
 }
 
 Future<String?> promptCreateBackupPassphrase(BuildContext context) {
+  final l10n = AppLocalizations.of(context);
   return showBackupPassphraseDialog(
     context,
-    title: 'Set recovery passphrase',
-    body:
-        'Create a passphrase (min 8 characters) so you can restore backups on a new device.',
+    title: l10n.passphraseSetTitle,
+    body: l10n.onboardingBackupBody,
     confirmMatch: true,
   );
 }
 
 Future<String?> promptUnlockBackupPassphrase(BuildContext context) {
+  final l10n = AppLocalizations.of(context);
   return showBackupPassphraseDialog(
     context,
-    title: 'Enter recovery passphrase',
-    body:
-        'Enter the passphrase used when Google Drive backup was first enabled on this account.',
+    title: l10n.passphraseEnterTitle,
+    body: l10n.backupLocalOnly,
     confirmMatch: false,
   );
 }
 
 Future<bool> confirmDisconnectGoogle(BuildContext context) {
+  final l10n = AppLocalizations.of(context);
   return confirmDialog(
     context,
-    title: 'Disconnect Google Drive?',
-    body:
-        'Automatic Drive backups will stop. Existing appDataFolder backups remain on Google until you delete them.',
+    title: l10n.passphraseDisconnectDrive,
+    body: l10n.backupLocalOnly,
     icon: Icons.link_off_rounded,
-    confirmLabel: 'Disconnect',
+    confirmLabel: l10n.googleDisconnect,
     destructive: true,
   );
 }

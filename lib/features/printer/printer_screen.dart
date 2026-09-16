@@ -70,7 +70,7 @@ class _PrinterScreenState extends ConsumerState<PrinterScreen> {
           content: Text(isPermission ? e.message : l10n.errorsPrinter),
           action: isPermission
               ? SnackBarAction(
-                  label: 'Allow',
+                  label: l10n.commonAllow,
                   onPressed: () => context.push('/permissions'),
                 )
               : null,
@@ -109,9 +109,9 @@ class _PrinterScreenState extends ConsumerState<PrinterScreen> {
     final l10n = AppLocalizations.of(context);
     final ok = await confirmDialog(
       context,
-      title: 'Disconnect printer?',
+      title: l10n.printerDisconnectConfirm,
       body: _connectedName == null
-          ? 'Stop using the current Bluetooth printer?'
+          ? l10n.printerDisconnectHint
           : 'Disconnect "$_connectedName"?',
       icon: Icons.bluetooth_disabled_rounded,
       confirmLabel: l10n.printerDisconnect,
@@ -126,7 +126,7 @@ class _PrinterScreenState extends ConsumerState<PrinterScreen> {
         _connected = false;
         _connectedName = null;
       });
-      showSnack(context, 'Printer disconnected');
+      showSnack(context, l10n.commonSuccess);
     } catch (_) {
       if (!mounted) return;
       showSnack(context, l10n.errorsPrinter);
@@ -148,7 +148,7 @@ class _PrinterScreenState extends ConsumerState<PrinterScreen> {
       await _printer.printBytes(bytes);
       if (!mounted) return;
       messenger?.showSnackBar(
-        const SnackBar(content: Text('Test print sent')),
+        SnackBar(content: Text(l10n.printerTestSent)),
       );
     } catch (_) {
       if (!mounted) return;
@@ -173,7 +173,7 @@ class _PrinterScreenState extends ConsumerState<PrinterScreen> {
       if (!mounted) return;
       if (last == null) {
         messenger?.showSnackBar(
-          const SnackBar(content: Text('No completed bill to reprint')),
+          SnackBar(content: Text(l10n.printerNoBillToReprint)),
         );
         return;
       }
@@ -182,7 +182,7 @@ class _PrinterScreenState extends ConsumerState<PrinterScreen> {
       messenger?.showSnackBar(
         SnackBar(
           content: Text(
-            ok ? 'Last bill sent to printer' : l10n.errorsPrinter,
+            ok ? l10n.commonSuccess : l10n.errorsPrinter,
           ),
         ),
       );
@@ -203,7 +203,7 @@ class _PrinterScreenState extends ConsumerState<PrinterScreen> {
       backgroundColor: scheme.surfaceContainerLowest,
       appBar: GlassPageHeader(
         title: l10n.printerTitle,
-        subtitle: 'Receipt printer settings',
+        subtitle: l10n.printerSubtitle,
         height: 64,
         leading: canPop
             ? IconButton(
@@ -426,7 +426,7 @@ class _PrinterScreenState extends ConsumerState<PrinterScreen> {
                     icon: HugeIcons.strokeRoundedPrinter,
                     accent: scheme.primary,
                     title: l10n.printerTest,
-                    subtitle: 'Print a sample receipt',
+                    subtitle: l10n.printerTestHint,
                     onTap: _busy ? null : () => _testPrint(paper),
                   ),
                   Divider(
@@ -437,7 +437,7 @@ class _PrinterScreenState extends ConsumerState<PrinterScreen> {
                     icon: HugeIcons.strokeRoundedInvoice01,
                     accent: const Color(0xFF2563EB),
                     title: l10n.printerLastBill,
-                    subtitle: 'Reprint your last completed bill',
+                    subtitle: l10n.printerLastBillHint,
                     onTap: _busy ? null : _reprintLast,
                   ),
                   Divider(
@@ -448,7 +448,7 @@ class _PrinterScreenState extends ConsumerState<PrinterScreen> {
                     icon: HugeIcons.strokeRoundedLinkBackward,
                     accent: scheme.error,
                     title: l10n.printerDisconnect,
-                    subtitle: 'Stop using this printer',
+                    subtitle: l10n.printerDisconnectHint,
                     onTap: _busy ? null : _disconnect,
                     destructive: true,
                   ),

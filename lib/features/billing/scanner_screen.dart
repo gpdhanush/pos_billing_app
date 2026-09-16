@@ -113,8 +113,19 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
 
     switch (widget.purpose) {
       case ScanPurpose.addToCart:
-        ref.read(cartProvider.notifier).addProduct(product, barcode: code);
-        if (mounted) context.pop();
+        final added = ref
+            .read(cartProvider.notifier)
+            .addProduct(product, barcode: code);
+        if (!added) {
+          if (mounted) {
+            showSnack(
+              context,
+              l10n.errorsInsufficientStock(product.name),
+            );
+          }
+        } else if (mounted) {
+          context.pop();
+        }
       case ScanPurpose.lookup:
         if (mounted) context.pushReplacement('/products/edit?id=${product.id}');
       case ScanPurpose.stockIn:

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/core/money/money.dart';
 import 'package:pos_billing/core/services/pdf_fonts.dart';
 import 'package:pos_billing/shared/models/models.dart';
@@ -13,6 +14,7 @@ import 'package:share_plus/share_plus.dart';
 
 class BillShareService {
   Future<File> buildPdfFile({
+    required AppLocalizations l10n,
     required StoreProfile store,
     required InvoiceDetail invoice,
   }) async {
@@ -170,7 +172,7 @@ class BillShareService {
                       crossAxisAlignment: pw.CrossAxisAlignment.start,
                       children: [
                         pw.Text(
-                          'BILL TO',
+                          l10n.invoiceBillTo,
                           style: pw.TextStyle(
                             fontSize: 9,
                             fontWeight: pw.FontWeight.bold,
@@ -180,7 +182,7 @@ class BillShareService {
                         ),
                         pw.SizedBox(height: 4),
                         pw.Text(
-                          invoice.summary.customerName ?? 'Customer',
+                          invoice.summary.customerName ?? l10n.commonCustomer,
                           style: pw.TextStyle(
                             fontSize: 13,
                             fontWeight: pw.FontWeight.bold,
@@ -194,7 +196,7 @@ class BillShareService {
                       crossAxisAlignment: pw.CrossAxisAlignment.end,
                       children: [
                         pw.Text(
-                          'STATUS',
+                          l10n.invoiceStatusLabel,
                           style: pw.TextStyle(
                             fontSize: 9,
                             fontWeight: pw.FontWeight.bold,
@@ -237,10 +239,10 @@ class BillShareService {
                       color: PdfColors.grey100,
                     ),
                     children: [
-                      _cell('Item', bold: true),
-                      _cell('Qty', bold: true, align: pw.TextAlign.right),
-                      _cell('Price', bold: true, align: pw.TextAlign.right),
-                      _cell('Amount', bold: true, align: pw.TextAlign.right),
+                      _cell(l10n.invoiceItemColumn, bold: true),
+                      _cell(l10n.billingQty, bold: true, align: pw.TextAlign.right),
+                      _cell(l10n.commonPrice, bold: true, align: pw.TextAlign.right),
+                      _cell(l10n.commonAmount, bold: true, align: pw.TextAlign.right),
                     ],
                   ),
                   for (final item in invoice.items)
@@ -275,7 +277,7 @@ class BillShareService {
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
                       pw.Text(
-                        'Billing details',
+                        l10n.invoiceBillingDetails,
                         style: pw.TextStyle(
                           fontSize: 11,
                           fontWeight: pw.FontWeight.bold,
@@ -283,11 +285,11 @@ class BillShareService {
                         ),
                       ),
                       pw.SizedBox(height: 8),
-                      _kv('Subtotal', pdfMoney(invoice.subtotalPaise)),
-                      _kv('Discount', pdfMoney(invoice.billDiscountPaise)),
-                      _kv('Tax', pdfMoney(invoice.taxPaise)),
+                      _kv(l10n.billingSubtotal, pdfMoney(invoice.subtotalPaise)),
+                      _kv(l10n.billingDiscount, pdfMoney(invoice.billDiscountPaise)),
+                      _kv(l10n.billingTax, pdfMoney(invoice.taxPaise)),
                       _kv(
-                        'Round off',
+                        l10n.billingRoundOff,
                         invoice.roundOffPaise > 0
                             ? '+${pdfMoney(invoice.roundOffPaise)}'
                             : pdfMoney(invoice.roundOffPaise),
@@ -296,7 +298,7 @@ class BillShareService {
                       pw.Divider(color: PdfColors.grey400, height: 1),
                       pw.SizedBox(height: 8),
                       _kv(
-                        'TOTAL',
+                        l10n.billingTotal.toUpperCase(),
                         pdfMoney(invoice.summary.totalPaise),
                         bold: true,
                       ),
@@ -319,7 +321,7 @@ class BillShareService {
                 child: pw.Text(
                   store.receiptFooter?.trim().isNotEmpty == true
                       ? store.receiptFooter!
-                      : 'Thank you for shopping with us!',
+                      : l10n.invoiceThankYou,
                   style: pw.TextStyle(
                     fontSize: 11,
                     color: PdfColors.grey700,
@@ -344,21 +346,23 @@ class BillShareService {
   }
 
   Future<void> sharePdf({
+    required AppLocalizations l10n,
     required StoreProfile store,
     required InvoiceDetail invoice,
   }) async {
-    final file = await buildPdfFile(store: store, invoice: invoice);
+    final file = await buildPdfFile(l10n: l10n, store: store, invoice: invoice);
     await SharePlus.instance.share(
       ShareParams(
         files: [XFile(file.path, mimeType: 'application/pdf')],
         text:
             '${invoice.summary.invoiceNumber} · ${Money(invoice.summary.totalPaise).format(symbol: store.currencySymbol)}',
-        subject: 'Invoice ${invoice.summary.invoiceNumber}',
+        subject: l10n.invoiceSubject(invoice.summary.invoiceNumber),
       ),
     );
   }
 
   Future<File> buildReceiptImageFile({
+    required AppLocalizations l10n,
     required StoreProfile store,
     required InvoiceDetail invoice,
   }) async {
@@ -366,29 +370,30 @@ class BillShareService {
     final symbol = store.currencySymbol;
     final date = DateTime.fromMillisecondsSinceEpoch(invoice.summary.createdAt);
     final fmt = DateFormat('dd MMM yyyy, hh:mm a');
+    final totalLabel = l10n.billingTotal.toUpperCase();
 
     final lines = <String>[
       store.name,
-      if ((store.phone ?? '').isNotEmpty) store.phone!,
+      if ((store.phone ?? '').trim().isNotEmpty) store.phone!,
       '',
       invoice.summary.invoiceNumber,
       fmt.format(date),
-      invoice.summary.customerName ?? 'Customer',
+      invoice.summary.customerName ?? l10n.commonCustomer,
       '------------------------------',
       for (final item in invoice.items) ...[
         item.name,
         '  ${item.quantity} x ${Money(item.unitPricePaise).format(symbol: symbol)} = ${Money(item.totalPaise).format(symbol: symbol)}',
       ],
       '------------------------------',
-      'Subtotal  ${Money(invoice.subtotalPaise).format(symbol: symbol)}',
-      'Discount  ${Money(invoice.billDiscountPaise).format(symbol: symbol)}',
-      'Tax  ${Money(invoice.taxPaise).format(symbol: symbol)}',
-      'Round off  ${invoice.roundOffPaise > 0 ? '+' : ''}${Money(invoice.roundOffPaise).format(symbol: symbol)}',
-      'TOTAL  ${Money(invoice.summary.totalPaise).format(symbol: symbol)}',
+      '${l10n.billingSubtotal}  ${Money(invoice.subtotalPaise).format(symbol: symbol)}',
+      '${l10n.billingDiscount}  ${Money(invoice.billDiscountPaise).format(symbol: symbol)}',
+      '${l10n.billingTax}  ${Money(invoice.taxPaise).format(symbol: symbol)}',
+      '${l10n.billingRoundOff}  ${invoice.roundOffPaise > 0 ? '+' : ''}${Money(invoice.roundOffPaise).format(symbol: symbol)}',
+      '$totalLabel  ${Money(invoice.summary.totalPaise).format(symbol: symbol)}',
       '',
       store.receiptFooter?.trim().isNotEmpty == true
           ? store.receiptFooter!
-          : 'Thank you!',
+          : l10n.invoiceThankYouShort,
     ];
 
     final height = 48.0 + lines.length * 28.0;
@@ -400,7 +405,7 @@ class BillShareService {
     var y = 28.0;
     for (var i = 0; i < lines.length; i++) {
       final isTitle = i == 0;
-      final isTotal = lines[i].startsWith('TOTAL');
+      final isTotal = lines[i].startsWith(totalLabel);
       final builder = ui.ParagraphBuilder(
         ui.ParagraphStyle(
           fontSize: isTitle ? 22 : (isTotal ? 18 : 15),
@@ -431,16 +436,18 @@ class BillShareService {
   }
 
   Future<void> shareReceiptImage({
+    required AppLocalizations l10n,
     required StoreProfile store,
     required InvoiceDetail invoice,
   }) async {
-    final file = await buildReceiptImageFile(store: store, invoice: invoice);
+    final file =
+        await buildReceiptImageFile(l10n: l10n, store: store, invoice: invoice);
     await SharePlus.instance.share(
       ShareParams(
         files: [XFile(file.path, mimeType: 'image/png')],
         text:
             '${invoice.summary.invoiceNumber} · ${Money(invoice.summary.totalPaise).format(symbol: store.currencySymbol)}',
-        subject: 'Invoice ${invoice.summary.invoiceNumber}',
+        subject: l10n.invoiceSubject(invoice.summary.invoiceNumber),
       ),
     );
   }

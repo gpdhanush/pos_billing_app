@@ -817,6 +817,7 @@ Future<DateTime?> showAppDatePicker(
   required DateTime firstDate,
   required DateTime lastDate,
 }) {
+  final l10n = AppLocalizations.of(context);
   final scheme = Theme.of(context).colorScheme;
   return showDatePicker(
     context: context,
@@ -825,9 +826,9 @@ Future<DateTime?> showAppDatePicker(
         : (initialDate.isAfter(lastDate) ? lastDate : initialDate),
     firstDate: firstDate,
     lastDate: lastDate,
-    helpText: 'Select date',
-    cancelText: 'Cancel',
-    confirmText: 'Done',
+    helpText: l10n.commonSelectDate,
+    cancelText: l10n.commonCancel,
+    confirmText: l10n.commonDone,
     builder: (context, child) {
       return Theme(
         data: Theme.of(context).copyWith(
@@ -1072,12 +1073,13 @@ void showSnack(BuildContext context, String message) {
 }
 
 Future<bool> showExitBottomSheet(BuildContext context) {
+  final l10n = AppLocalizations.of(context);
   return showConfirmBottomSheet(
     context,
-    title: 'Exit app?',
-    body: 'Are you sure you want to close POS Billing?',
-    confirmLabel: 'Exit',
-    cancelLabel: 'Stay',
+    title: l10n.commonExitApp,
+    body: l10n.appTagline,
+    confirmLabel: l10n.commonClose,
+    cancelLabel: l10n.commonCancel,
     icon: Icons.logout_rounded,
   );
 }

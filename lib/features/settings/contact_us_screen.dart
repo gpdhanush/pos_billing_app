@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:line_icons/line_icons.dart';
+import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/core/constants/app_constants.dart';
 import 'package:pos_billing/shared/widgets/ui_kit.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -21,10 +22,12 @@ class ContactUsScreen extends StatelessWidget {
     try {
       final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
       if (!ok && context.mounted) {
-        showSnack(context, 'Unable to open link');
+        showSnack(context, AppLocalizations.of(context).commonError);
       }
     } catch (_) {
-      if (context.mounted) showSnack(context, 'Unable to open link');
+      if (context.mounted) {
+        showSnack(context, AppLocalizations.of(context).commonError);
+      }
     }
   }
 
@@ -62,13 +65,14 @@ class ContactUsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       backgroundColor: scheme.surfaceContainerLowest,
       appBar: GlassPageHeader(
-        title: 'Contact us',
-        subtitle: 'Guides, FAQs and support',
+        title: l10n.contactUsTitle,
+        subtitle: l10n.contactUsSubtitle,
         height: 64,
         leading: IconButton(
           onPressed: () => context.pop(),
@@ -191,36 +195,37 @@ class ContactUsScreen extends StatelessWidget {
                     _ContactTile(
                       icon: Icons.call_rounded,
                       iconColor: const Color(0xFF2563EB),
-                      title: 'Mobile',
+                      title: l10n.contactMobile,
                       subtitle: phone,
                       onTap: () => _call(context),
-                      onLongPress: () => _copy(context, phone, 'Mobile number'),
+                      onLongPress: () => _copy(context, phone, l10n.contactMobile),
                     ),
                     const SizedBox(height: 10),
                     _ContactTile(
                       icon: LineIcons.whatSApp,
                       iconColor: const Color(0xFF25D366),
-                      title: 'WhatsApp',
-                      subtitle: 'Chat with us',
+                      title: l10n.contactWhatsApp,
+                      subtitle: l10n.contactWhatsAppHint,
                       onTap: () => _whatsApp(context),
                     ),
                     const SizedBox(height: 10),
                     _ContactTile(
                       icon: Icons.mail_rounded,
                       iconColor: const Color(0xFFEA4335),
-                      title: 'Email',
+                      title: l10n.commonEmail,
                       subtitle: email,
                       onTap: () => _mail(context),
-                      onLongPress: () => _copy(context, email, 'Email'),
+                      onLongPress: () => _copy(context, email, l10n.commonEmail),
                     ),
                     const SizedBox(height: 10),
                     _ContactTile(
                       icon: Icons.location_on_rounded,
                       iconColor: const Color(0xFFF59E0B),
-                      title: 'Address',
+                      title: l10n.commonAddress,
                       subtitle: address,
                       onTap: () => _maps(context),
-                      onLongPress: () => _copy(context, address, 'Address'),
+                      onLongPress: () =>
+                          _copy(context, address, l10n.commonAddress),
                     ),
                   ],
                 ),

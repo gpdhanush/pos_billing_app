@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:intl/intl.dart';
+import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/app/providers.dart';
 import 'package:pos_billing/app/theme/app_theme.dart';
 import 'package:pos_billing/core/constants/app_constants.dart';
@@ -32,6 +33,7 @@ class ProductDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final async = ref.watch(productDetailProvider(productId));
     final scheme = Theme.of(context).colorScheme;
     final store = ref.watch(storeProfileProvider).valueOrNull;
@@ -44,8 +46,8 @@ class ProductDetailScreen extends ConsumerWidget {
         error: (_, _) => Scaffold(
           backgroundColor: scheme.surfaceContainerLowest,
           appBar: GlassPageHeader(
-            title: 'Product Details',
-            subtitle: 'View and manage product information',
+            title: l10n.productsDetailsTitle,
+            subtitle: l10n.productsDetailsSubtitle,
             height: 64,
             leading: IconButton(
               onPressed: () => context.pop(),
@@ -61,22 +63,22 @@ class ProductDetailScreen extends ConsumerWidget {
             return Scaffold(
               backgroundColor: scheme.surfaceContainerLowest,
               appBar: GlassPageHeader(
-                title: 'Product Details',
-                subtitle: 'View and manage product information',
+                title: l10n.productsDetailsTitle,
+                subtitle: l10n.productsDetailsSubtitle,
                 height: 64,
                 leading: IconButton(
                   onPressed: () => context.pop(),
                   icon: const Icon(Icons.arrow_back_rounded),
                 ),
               ),
-              body: const EmptyState(
-                title: 'Product not found',
-                subtitle: 'It may have been removed.',
+              body: EmptyState(
+                title: l10n.productsNotFound,
+                subtitle: l10n.productsNotFoundHint,
                 showIcon: false,
               ),
             );
           }
-          return _ProductDetailBody(product: product, symbol: symbol);
+          return _ProductDetailBody(l10n: l10n, product: product, symbol: symbol);
         },
       ),
     );
@@ -84,8 +86,13 @@ class ProductDetailScreen extends ConsumerWidget {
 }
 
 class _ProductDetailBody extends ConsumerWidget {
-  const _ProductDetailBody({required this.product, required this.symbol});
+  const _ProductDetailBody({
+    required this.l10n,
+    required this.product,
+    required this.symbol,
+  });
 
+  final AppLocalizations l10n;
   final Product product;
   final String symbol;
 
@@ -98,17 +105,21 @@ class _ProductDetailBody extends ConsumerWidget {
 
   String _movementLabel(StockMovement m) {
     if (m.isIn) {
-      if (m.type == StockTxn.purchase) return 'Purchase';
-      if (m.type == StockTxn.opening) return 'Opening';
-      if (m.type == StockTxn.refund) return 'Return';
-      return 'Stock in';
+      if (m.type == StockTxn.purchase) return l10n.inventoryPurchase;
+      if (m.type == StockTxn.opening) return l10n.productsOpeningStock;
+      if (m.type == StockTxn.refund) return l10n.inventoryReturn;
+      return l10n.inventoryStockIn;
     }
     if (m.type == StockTxn.sale) {
       final inv = m.referenceLabel;
-      if (inv != null && inv.isNotEmpty) return 'Sale - Order #$inv';
-      return 'Sale';
+      if (inv != null && inv.isNotEmpty) {
+        return '${l10n.inventorySale} - Order #$inv';
+      }
+      return l10n.inventorySale;
     }
-    return m.note?.trim().isNotEmpty == true ? m.note!.trim() : 'Stock out';
+    return m.note?.trim().isNotEmpty == true
+        ? m.note!.trim()
+        : l10n.inventoryStockOut;
   }
 
   @override
@@ -142,8 +153,8 @@ class _ProductDetailBody extends ConsumerWidget {
     return Scaffold(
       backgroundColor: scheme.surfaceContainerLowest,
       appBar: GlassPageHeader(
-        title: 'Product Details',
-        subtitle: 'View and manage product information',
+        title: l10n.productsDetailsTitle,
+        subtitle: l10n.productsDetailsSubtitle,
         height: 64,
         leading: IconButton(
           onPressed: () => context.pop(),
@@ -208,7 +219,9 @@ class _ProductDetailBody extends ConsumerWidget {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            p.isActive ? 'Active product' : 'Inactive product',
+                            p.isActive
+                                ? l10n.productsTitle
+                                : l10n.productsInactive,
                             style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(color: scheme.onSurfaceVariant),
                           ),
@@ -216,19 +229,19 @@ class _ProductDetailBody extends ConsumerWidget {
                           _metaRow(
                             context,
                             Icons.grid_view_rounded,
-                            'SKU',
+                            l10n.productsSku,
                             p.sku?.isNotEmpty == true ? p.sku! : '—',
                           ),
                           _metaRow(
                             context,
                             Icons.qr_code_2_rounded,
-                            'Barcode',
+                            l10n.productsBarcode,
                             p.primaryBarcode ?? '—',
                           ),
                           _metaRow(
                             context,
                             Icons.sell_outlined,
-                            'Category',
+                            l10n.productsCategory,
                             category ?? '—',
                           ),
                           _metaRow(
@@ -260,19 +273,19 @@ class _ProductDetailBody extends ConsumerWidget {
                       context,
                       icon: HugeIcons.strokeRoundedWallet01,
                       color: AppColors.success,
-                      title: 'Pricing',
-                      subtitle: 'Cost and selling price details.',
+                      title: l10n.productsPricingSection,
+                      subtitle: l10n.productsPricingSectionHint,
                     ),
                     const SizedBox(height: 14),
                     _priceRow(
                       context,
-                      'Cost Price',
+                      l10n.inventoryCostPrice,
                       Money(p.purchasePricePaise).format(symbol: symbol),
                     ),
                     const SizedBox(height: 8),
                     _priceRow(
                       context,
-                      'Selling Price',
+                      l10n.productsSellingPrice,
                       Money(p.sellingPricePaise).format(symbol: symbol),
                     ),
                     const SizedBox(height: 12),
@@ -360,8 +373,8 @@ class _ProductDetailBody extends ConsumerWidget {
                       context,
                       icon: HugeIcons.strokeRoundedPackage,
                       color: scheme.primary,
-                      title: 'Stock Information',
-                      subtitle: 'Current stock and alert settings.',
+                      title: l10n.productsStockSection,
+                      subtitle: l10n.productsStockSectionHint,
                     ),
                     const SizedBox(height: 14),
                     Row(
@@ -378,7 +391,7 @@ class _ProductDetailBody extends ConsumerWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Current Stock',
+                                  l10n.inventoryCurrentStock,
                                   style: Theme.of(context).textTheme.labelMedium
                                       ?.copyWith(
                                         color: scheme.onSurfaceVariant,
@@ -407,7 +420,7 @@ class _ProductDetailBody extends ConsumerWidget {
                                 context,
                                 icon: Icons.notifications_active_outlined,
                                 iconColor: AppColors.danger,
-                                label: 'Min Stock Alert',
+                                label: l10n.productsMinStockAlert,
                                 value: '${p.minimumStock} ${p.unit}',
                               ),
                               const SizedBox(height: 10),
@@ -415,7 +428,7 @@ class _ProductDetailBody extends ConsumerWidget {
                                 context,
                                 icon: Icons.monitor_heart_outlined,
                                 iconColor: AppColors.success,
-                                label: 'Stock Health',
+                                label: l10n.productsStockHealth,
                                 value: '${health.toStringAsFixed(0)}%',
                               ),
                             ],
@@ -450,8 +463,8 @@ class _ProductDetailBody extends ConsumerWidget {
                             context,
                             icon: HugeIcons.strokeRoundedClock01,
                             color: const Color(0xFF7C3AED),
-                            title: 'Recent Stock Movements',
-                            subtitle: 'Latest in and out transactions.',
+                            title: l10n.productsRecentMovements,
+                            subtitle: l10n.productsRecentMovementsHint,
                           ),
                         ),
                         TextButton(
@@ -462,12 +475,12 @@ class _ProductDetailBody extends ConsumerWidget {
                                 p.name;
                             context.push('/stock/history');
                           },
-                          child: const Row(
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text('View All'),
-                              SizedBox(width: 2),
-                              Icon(Icons.chevron_right_rounded, size: 18),
+                              Text(l10n.commonViewAll),
+                              const SizedBox(width: 2),
+                              const Icon(Icons.chevron_right_rounded, size: 18),
                             ],
                           ),
                         ),
@@ -479,16 +492,16 @@ class _ProductDetailBody extends ConsumerWidget {
                         padding: EdgeInsets.all(16),
                         child: Center(child: CircularProgressIndicator()),
                       ),
-                      error: (_, _) => const Padding(
-                        padding: EdgeInsets.all(12),
-                        child: Text('Unable to load movements'),
+                      error: (_, _) => Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Text(l10n.productsMovementsLoadFailed),
                       ),
                       data: (items) {
                         if (items.isEmpty) {
                           return Padding(
                             padding: const EdgeInsets.fromLTRB(4, 8, 4, 12),
                             child: Text(
-                              'No stock movements yet.',
+                              l10n.inventoryMovementsEmpty,
                               style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(color: scheme.onSurfaceVariant),
                             ),

@@ -30,20 +30,12 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
 
   static final _stamp = DateFormat('MMM d, yyyy h:mm a');
 
-  String _stageLabel(BackupProgressStage stage) {
+  String _stageLabel(AppLocalizations l10n, BackupProgressStage stage) {
     switch (stage) {
-      case BackupProgressStage.preparing:
-        return 'Preparing…';
-      case BackupProgressStage.creatingCopy:
-        return 'Creating database copy…';
-      case BackupProgressStage.encrypting:
-        return 'Encrypting…';
-      case BackupProgressStage.uploading:
-        return 'Uploading to Drive…';
-      case BackupProgressStage.verifying:
-        return 'Verifying upload…';
       case BackupProgressStage.completed:
-        return 'Completed';
+        return l10n.backupComplete;
+      default:
+        return l10n.commonInProgress;
     }
   }
 
@@ -94,14 +86,15 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
   }
 
   Future<void> _deleteBackup(BackupRecord record) async {
+    final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.maybeOf(context);
     final ok = await confirmDialog(
       context,
-      title: 'Delete backup?',
+      title: l10n.backupDeleteTitle,
       body:
           'Remove "${record.fileName}" from this device? The latest backup cannot be deleted.',
       icon: Icons.delete_outline_rounded,
-      confirmLabel: 'Delete',
+      confirmLabel: l10n.commonDelete,
       destructive: true,
     );
     if (!ok) return;
@@ -109,7 +102,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
       await ref.read(backupServiceProvider).deleteBackup(record.id);
       if (!mounted) return;
       messenger?.showSnackBar(
-        const SnackBar(content: Text('Backup deleted')),
+        SnackBar(content: Text(l10n.backupDeleted)),
       );
       setState(() {});
     } on BackupException catch (e) {
@@ -118,19 +111,20 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
     } catch (_) {
       if (!mounted) return;
       messenger?.showSnackBar(
-        const SnackBar(content: Text('Unable to delete backup')),
+        SnackBar(content: Text(l10n.backupDeleteFailed)),
       );
     }
   }
 
   Future<void> _deleteDriveBackup(DriveBackupEntry entry) async {
+    final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.maybeOf(context);
     final ok = await confirmDialog(
       context,
-      title: 'Delete Drive backup?',
+      title: l10n.backupDeleteDriveTitle,
       body: 'Remove "${entry.name}" from Google Drive?',
       icon: Icons.delete_outline_rounded,
-      confirmLabel: 'Delete',
+      confirmLabel: l10n.commonDelete,
       destructive: true,
     );
     if (!ok) return;
@@ -139,13 +133,13 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
       await ref.read(driveClientProvider).deleteBackupFile(entry.id);
       if (!mounted) return;
       messenger?.showSnackBar(
-        const SnackBar(content: Text('Drive backup deleted')),
+        SnackBar(content: Text(l10n.backupDriveDeleted)),
       );
       await _refreshDriveList();
     } catch (_) {
       if (!mounted) return;
       messenger?.showSnackBar(
-        const SnackBar(content: Text('Unable to delete Drive backup')),
+        SnackBar(content: Text(l10n.backupDriveDeleteFailed)),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -153,6 +147,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
   }
 
   Future<void> _backupNow({required bool signedIn}) async {
+    final l10n = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.maybeOf(context);
     final analytics = ref.read(analyticsServiceProvider);
     setState(() {
@@ -186,7 +181,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
       await analytics.logEvent('backup_success');
       if (!mounted) return;
       messenger?.showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context).commonSuccess)),
+        SnackBar(content: Text(l10n.backupComplete)),
       );
       await _refreshDriveList();
       setState(() {});
@@ -267,6 +262,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) {
+        final helpL10n = AppLocalizations.of(ctx);
         final scheme = Theme.of(ctx).colorScheme;
         return Padding(
           padding: const EdgeInsets.fromLTRB(24, 4, 24, 28),
@@ -275,14 +271,14 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'About backups',
+                helpL10n.onboardingBackupTitle,
                 style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
               ),
               const SizedBox(height: 12),
               Text(
-                'Local backups are saved on this device. Connect Google Drive to also sync encrypted copies to your private Drive app data folder. Backups include your database plus product photos and store logo. Your recovery passphrase is required to restore encrypted Drive backups.',
+                helpL10n.onboardingBackupBody,
                 style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
                       color: scheme.onSurfaceVariant,
                       height: 1.45,
@@ -293,7 +289,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
                 width: double.infinity,
                 child: FilledButton(
                   onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Got it'),
+                  child: Text(helpL10n.commonGotIt),
                 ),
               ),
             ],
@@ -316,6 +312,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) {
+        final detailL10n = AppLocalizations.of(ctx);
         final scheme = Theme.of(ctx).colorScheme;
         final size = _formatBytes(last.fileSize);
         return Padding(
@@ -325,23 +322,23 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Last backup details',
+                detailL10n.backupLast,
                 style: Theme.of(ctx).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
               ),
               const SizedBox(height: 16),
-              _detailRow(ctx, 'File', last.fileName),
+              _detailRow(ctx, detailL10n.commonName, last.fileName),
               _detailRow(
                 ctx,
-                'Created',
+                detailL10n.commonDate,
                 _stamp.format(
                   DateTime.fromMillisecondsSinceEpoch(last.createdAt),
                 ),
               ),
               _detailRow(
                 ctx,
-                'Status',
+                detailL10n.commonStatus,
                 last.status.displayTitle,
                 valueColor: last.status == 'successful'
                     ? AppColors.success
@@ -355,7 +352,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
                 width: double.infinity,
                 child: FilledButton(
                   onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Close'),
+                  child: Text(detailL10n.commonClose),
                 ),
               ),
             ],
@@ -424,8 +421,8 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
     return Scaffold(
       backgroundColor: AppColors.canvas,
       appBar: GlassPageHeader(
-        title: 'Backup & Restore',
-        subtitle: 'Keep your data safe and accessible',
+        title: l10n.backupTitle,
+        subtitle: l10n.backupSubtitle,
         height: 64,
         leading: IconButton(
           onPressed: () => context.pop(),
@@ -433,7 +430,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
         ),
         actions: [
           IconButton(
-            tooltip: 'Refresh Drive backups',
+            tooltip: l10n.backupRefreshDrive,
             onPressed: _busy
                 ? null
                 : () async {
@@ -453,7 +450,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
             icon: Icon(Icons.refresh_rounded, color: scheme.primary),
           ),
           IconButton(
-            tooltip: 'Help',
+            tooltip: l10n.commonHelp,
             onPressed: _showHelp,
             icon: Icon(Icons.help_outline_rounded, color: scheme.primary),
           ),
@@ -488,7 +485,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
                 photoUrl: session?.photoUrl,
                 busy: _busy,
                 connectLabel: l10n.backupConnectGoogle,
-                disconnectLabel: 'Disconnect',
+                disconnectLabel: l10n.googleDisconnect,
                 onToggle: () => _toggleGoogle(signedIn ? email : null),
               ),
               const SizedBox(height: 12),
@@ -506,7 +503,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
                     _SettingsTile(
                       icon: HugeIcons.strokeRoundedClock01,
                       title: l10n.backupAutomatic,
-                      subtitle: 'Automatically backup your data',
+                      subtitle: l10n.backupAutomaticSubtitle,
                       trailing: _AutoBackupMenu(
                         value: settings?.autoBackup ?? 'off',
                         label: _autoLabel(l10n, settings?.autoBackup),
@@ -525,8 +522,8 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
                     ),
                     _SettingsTile(
                       icon: HugeIcons.strokeRoundedWifi01,
-                      title: 'Wi‑Fi only',
-                      subtitle: 'Auto-backup only when connected to Wi‑Fi',
+                      title: l10n.backupWifiOnly,
+                      subtitle: l10n.backupWifiOnlyHint,
                       trailing: Switch.adaptive(
                         value: settings?.backupWifiOnly ?? true,
                         onChanged: (v) => ref
@@ -590,7 +587,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        _stageLabel(_stage!),
+                        _stageLabel(l10n, _stage!),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: scheme.onSurfaceVariant,
                             ),
@@ -631,9 +628,9 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
               if (signedIn) ...[
                 const SizedBox(height: 26),
                 _SectionTitle(
-                  title: 'Drive backups',
+                  title: l10n.backupDriveSection,
                   actionLabel: _driveBackups.length > 3
-                      ? (_showAllDrive ? 'Show less' : 'View all')
+                      ? (_showAllDrive ? 'Show less' : l10n.commonViewAll)
                       : null,
                   onAction: _driveBackups.length > 3
                       ? () => setState(() => _showAllDrive = !_showAllDrive)
@@ -706,9 +703,9 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
               ],
               const SizedBox(height: 26),
               _SectionTitle(
-                title: 'Local backups',
+                title: l10n.backupLocalSection,
                 actionLabel: history.length > 3
-                    ? (_showAllLocal ? 'Show less' : 'View all')
+                    ? (_showAllLocal ? 'Show less' : l10n.commonViewAll)
                     : null,
                 onAction: history.length > 3
                     ? () => setState(() => _showAllLocal = !_showAllLocal)
@@ -814,11 +811,11 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
             item.localPath!,
             confirmStoreMismatch: (backupId, currentId) => confirmDialog(
               context,
-              title: 'Different store?',
+              title: l10n.backupDifferentStore,
               body:
                   'This backup belongs to store #$backupId, but this device has store #${currentId ?? '-'}. Continue?',
               icon: Icons.warning_amber_rounded,
-              confirmLabel: 'Restore anyway',
+              confirmLabel: l10n.commonRestore,
               destructive: true,
             ),
             afterClosed: () async {
@@ -853,11 +850,11 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
                 promptUnlockBackupPassphrase(context),
             confirmStoreMismatch: (backupId, currentId) => confirmDialog(
               context,
-              title: 'Different store?',
+              title: l10n.backupDifferentStore,
               body:
                   'This backup belongs to store #$backupId, but this device has store #${currentId ?? '-'}. Continue?',
               icon: Icons.warning_amber_rounded,
-              confirmLabel: 'Restore anyway',
+              confirmLabel: l10n.commonRestore,
               destructive: true,
             ),
             afterClosed: () async {
@@ -1093,6 +1090,7 @@ class _GoogleDriveCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     final name = (displayName?.trim().isNotEmpty == true)
         ? displayName!.trim()
@@ -1122,7 +1120,7 @@ class _GoogleDriveCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Google Drive',
+                  l10n.backupGoogle,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w800,
                       ),
@@ -1133,7 +1131,7 @@ class _GoogleDriveCard extends StatelessWidget {
                       ? (displayName?.trim().isNotEmpty == true
                           ? '$name\n$email'
                           : (email ?? ''))
-                      : 'Connect to sync encrypted backups',
+                      : l10n.onboardingBackupBody,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -1149,7 +1147,7 @@ class _GoogleDriveCard extends StatelessWidget {
             icon: signedIn
                 ? HugeIcons.strokeRoundedUnlink01
                 : HugeIcons.strokeRoundedLink01,
-            label: signedIn ? disconnectLabel : 'Connect',
+            label: signedIn ? disconnectLabel : l10n.backupConnectGoogle,
             onPressed: busy ? null : onToggle,
           ),
         ],
@@ -1171,6 +1169,7 @@ class _LastBackupCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     final ok = last?.status == 'successful';
     final accent = last == null
@@ -1207,7 +1206,7 @@ class _LastBackupCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Last backup',
+                  l10n.backupLast,
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
                         color: scheme.onSurfaceVariant,
                       ),
@@ -1215,7 +1214,7 @@ class _LastBackupCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   last == null
-                      ? AppLocalizations.of(context).backupNone
+                      ? l10n.backupNone
                       : stamp.format(
                           DateTime.fromMillisecondsSinceEpoch(last!.createdAt),
                         ),
@@ -1226,7 +1225,7 @@ class _LastBackupCard extends StatelessWidget {
                 if (last != null) ...[
                   const SizedBox(height: 2),
                   Text(
-                    'Status: ${last!.status.displayTitle}',
+                    '${l10n.commonStatus}: ${last!.status.displayTitle}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: accent,
                           fontWeight: FontWeight.w600,
@@ -1249,7 +1248,7 @@ class _LastBackupCard extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'View details',
+                      l10n.productsViewDetails,
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
                             color: scheme.primary,
                             fontWeight: FontWeight.w700,
@@ -1400,9 +1399,10 @@ class _DriveBackupTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     final when = entry.modifiedTime == null
-        ? 'Drive'
+        ? l10n.backupGoogle
         : stamp.format(entry.modifiedTime!);
 
     return Padding(
@@ -1434,15 +1434,21 @@ class _DriveBackupTile extends StatelessWidget {
             ),
           ),
           PopupMenuButton<String>(
-            tooltip: 'More',
+            tooltip: l10n.commonMore,
             enabled: !busy,
             onSelected: (v) {
               if (v == 'restore') onRestore();
               if (v == 'delete') onDelete();
             },
-            itemBuilder: (context) => const [
-              PopupMenuItem(value: 'restore', child: Text('Restore')),
-              PopupMenuItem(value: 'delete', child: Text('Delete')),
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'restore',
+                child: Text(l10n.commonRestore),
+              ),
+              PopupMenuItem(
+                value: 'delete',
+                child: Text(l10n.commonDelete),
+              ),
             ],
             icon: HugeIcon(
               icon: HugeIcons.strokeRoundedMoreVertical,
@@ -1475,6 +1481,7 @@ class _LocalBackupTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
 
     return Padding(
@@ -1507,21 +1514,21 @@ class _LocalBackupTile extends StatelessWidget {
           ),
           if (canRestore || canDelete)
             PopupMenuButton<String>(
-              tooltip: 'More',
+              tooltip: l10n.commonMore,
               onSelected: (v) {
                 if (v == 'restore') onRestore();
                 if (v == 'delete') onDelete();
               },
               itemBuilder: (context) => [
                 if (canRestore)
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'restore',
-                    child: Text('Restore'),
+                    child: Text(l10n.commonRestore),
                   ),
                 if (canDelete)
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'delete',
-                    child: Text('Delete'),
+                    child: Text(l10n.commonDelete),
                   ),
               ],
               icon: HugeIcon(

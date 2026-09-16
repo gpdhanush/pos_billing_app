@@ -21,26 +21,29 @@ class InvoiceDetailScreen extends ConsumerWidget {
 
   final int invoiceId;
 
-  ({Color color, IconData icon, String label}) _statusStyle(String status) {
+  ({Color color, IconData icon, String label}) _statusStyle(
+    String status,
+    AppLocalizations l10n,
+  ) {
     switch (status) {
       case InvoiceStatus.cancelled:
         return (
           color: AppColors.danger,
           icon: Icons.cancel_outlined,
-          label: 'Cancelled',
+          label: l10n.salesStatusCancelled,
         );
       case InvoiceStatus.refunded:
         return (
           color: AppColors.warning,
           icon: Icons.replay_circle_filled_outlined,
-          label: 'Refunded',
+          label: l10n.salesStatusRefunded,
         );
       case InvoiceStatus.completed:
       default:
         return (
           color: AppColors.success,
           icon: Icons.check_circle_rounded,
-          label: 'Completed',
+          label: l10n.salesStatusCompleted,
         );
     }
   }
@@ -61,13 +64,13 @@ class InvoiceDetailScreen extends ConsumerWidget {
       builder: (context, snap) {
         final style = snap.data == null
             ? null
-            : _statusStyle(snap.data!.summary.status);
+            : _statusStyle(snap.data!.summary.status, l10n);
 
         return Scaffold(
           backgroundColor: scheme.surfaceContainerLowest,
           appBar: GlassPageHeader(
             title: l10n.salesDetails,
-            subtitle: 'Invoice & payment details',
+            subtitle: l10n.invoiceDetailSubtitle,
             height: 64,
             leading: IconButton(
               onPressed: () => context.pop(),
@@ -153,7 +156,7 @@ class _InvoiceBody extends ConsumerWidget {
         ),
         const SizedBox(height: 12),
         _SectionPanel(
-          title: 'Payments',
+          title: l10n.customersPayments,
           child: Column(
             children: [
               for (final p in invoice.payments)
@@ -204,19 +207,20 @@ class _InvoiceBody extends ConsumerWidget {
             const SizedBox(width: 10),
             Expanded(
               child: _ActionTile(
-                label: 'Share PDF',
+                label: l10n.commonSharePdf,
                 icon: Icons.picture_as_pdf_outlined,
                 onTap: () async {
                   final s = ref.read(storeProfileProvider).valueOrNull;
                   if (s == null) return;
                   try {
                     await BillShareService().sharePdf(
+                      l10n: l10n,
                       store: s,
                       invoice: invoice,
                     );
                   } catch (_) {
                     if (context.mounted) {
-                      showSnack(context, 'Unable to share PDF');
+                      showSnack(context, l10n.errorsSharePdf);
                     }
                   }
                 },
@@ -340,6 +344,7 @@ class _InvoiceHeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
 
     return Container(
@@ -390,7 +395,7 @@ class _InvoiceHeroCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Invoice No.',
+                              l10n.invoiceNumberLabel,
                               style: Theme.of(context)
                                   .textTheme
                                   .labelSmall
@@ -468,7 +473,7 @@ class _InvoiceHeroCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Total Amount',
+                    l10n.checkoutTotalAmount,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: scheme.onSurfaceVariant,
                           fontWeight: FontWeight.w600,
@@ -511,7 +516,7 @@ class _InvoiceHeroCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          paid ? 'Paid' : 'Unpaid',
+                          paid ? l10n.checkoutPaid : l10n.checkoutUnpaid,
                           style:
                               Theme.of(context).textTheme.labelSmall?.copyWith(
                                     color: paid
@@ -544,8 +549,9 @@ class _ItemsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
-    final countLabel = items.length == 1 ? '1 item' : '${items.length} items';
+    final countLabel = l10n.invoiceItemCount(items.length);
 
     return SoftCard(
       radius: AppRadii.lg,
@@ -571,7 +577,7 @@ class _ItemsCard extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               Text(
-                'Items',
+                l10n.invoiceItemsTitle,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
@@ -609,12 +615,12 @@ class _ItemsCard extends StatelessWidget {
                 ),
                 Expanded(
                   flex: 5,
-                  child: Text('Item', style: _headerStyle(context)),
+                  child: Text(l10n.invoiceItemColumn, style: _headerStyle(context)),
                 ),
                 Expanded(
                   flex: 3,
                   child: Text(
-                    'Qty × Price',
+                    l10n.invoiceQtyPriceColumn,
                     textAlign: TextAlign.center,
                     style: _headerStyle(context),
                   ),
@@ -622,7 +628,7 @@ class _ItemsCard extends StatelessWidget {
                 Expanded(
                   flex: 3,
                   child: Text(
-                    'Amount',
+                    l10n.commonAmount,
                     textAlign: TextAlign.right,
                     style: _headerStyle(context),
                   ),
@@ -737,6 +743,7 @@ class _BillingDetailsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
 
     return SoftCard(
@@ -763,7 +770,7 @@ class _BillingDetailsCard extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               Text(
-                'Billing details',
+                l10n.invoiceBillingDetails,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                     ),
@@ -784,7 +791,7 @@ class _BillingDetailsCard extends StatelessWidget {
             value: Money(taxPaise).format(symbol: symbol),
           ),
           _MoneyRow(
-            label: 'Round off',
+            label: l10n.billingRoundOff,
             value: _signedMoney(roundOffPaise),
           ),
           Padding(
