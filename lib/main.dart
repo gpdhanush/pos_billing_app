@@ -6,9 +6,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:pos_billing/app/app.dart';
 import 'package:pos_billing/app/providers.dart';
+import 'package:pos_billing/core/analytics/analytics_service.dart';
 import 'package:pos_billing/core/database/app_database.dart';
 import 'package:pos_billing/core/errors/app_error_handler.dart';
+import 'package:pos_billing/core/notifications/notification_service.dart';
 import 'package:pos_billing/core/services/app_log_service.dart';
+import 'package:pos_billing/core/services/backup_background.dart';
 import 'package:pos_billing/core/services/env_loader.dart';
 
 Future<void> main() async {
@@ -17,19 +20,29 @@ Future<void> main() async {
     AppErrorHandler.install();
     await AppLogService.init();
     await loadAppEnv();
-    await MobileAds.instance.initialize();
     await AppLogService.info('App starting');
 
+    // Open DB first so splash/settings can load, then show UI immediately.
     final db = await AppDatabase.open();
+    final notifications = NotificationService();
+    final analytics = AnalyticsService(notifications: notifications);
+
     runApp(
       ProviderScope(
         overrides: [
-          // Seed DB; logout wipe / backup restore may replace via notifier.
           databaseHolderProvider.overrideWith((ref) => db),
+          analyticsServiceProvider.overrideWithValue(analytics),
+          notificationServiceProvider.overrideWithValue(notifications),
         ],
         child: const PosApp(),
       ),
     );
+
+    // Heavy plugins after first frame — never block the splash.
+    unawaited(_initSecondaryServices(
+      analytics: analytics,
+      notifications: notifications,
+    ));
   }, (error, stack) {
     AppLogService.crash(error, stack, 'runZonedGuarded');
     if (kDebugMode) {
@@ -38,4 +51,41 @@ Future<void> main() async {
     }
     appCrashNotifier.value = AppCrashInfo.fromObject(error, stack);
   });
+}
+
+Future<void> _initSecondaryServices({
+  required AnalyticsService analytics,
+  required NotificationService notifications,
+}) async {
+  try {
+    await MobileAds.instance.initialize();
+  } catch (e) {
+    unawaited(AppLogService.warn('MobileAds init failed: $e'));
+  }
+
+  try {
+    await BackupBackgroundScheduler.initialize();
+  } catch (e) {
+    unawaited(AppLogService.warn('WorkManager init failed: $e'));
+  }
+
+  var firebaseOk = false;
+  try {
+    await analytics.init();
+    firebaseOk = analytics.isReady;
+  } catch (e) {
+    unawaited(AppLogService.warn('Analytics init failed: $e'));
+    firebaseOk = false;
+  }
+
+  try {
+    await notifications.init(firebaseAvailable: firebaseOk);
+  } catch (e) {
+    unawaited(AppLogService.warn('Notifications init failed: $e'));
+  }
+
+  if (firebaseOk) {
+    unawaited(analytics.flushQueuedTelemetry());
+    unawaited(notifications.refreshFcm());
+  }
 }

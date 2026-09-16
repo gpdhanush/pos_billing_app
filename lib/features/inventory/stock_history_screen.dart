@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:intl/intl.dart';
 import 'package:pos_billing/app/providers.dart';
 import 'package:pos_billing/app/theme/app_theme.dart';
@@ -14,13 +15,13 @@ class StockHistoryScreen extends ConsumerWidget {
 
   String _typeLabel(StockMovement m) {
     if (m.isIn) {
-      if (m.type == StockTxn.purchase) return 'PURCHASE';
-      if (m.type == StockTxn.opening) return 'OPENING';
-      if (m.type == StockTxn.refund) return 'RETURN';
-      return 'IN';
+      if (m.type == StockTxn.purchase) return 'Purchase';
+      if (m.type == StockTxn.opening) return 'Opening';
+      if (m.type == StockTxn.refund) return 'Return';
+      return 'Stock in';
     }
-    if (m.type == StockTxn.sale) return 'SALE';
-    return 'OUT';
+    if (m.type == StockTxn.sale) return 'Sale';
+    return 'Stock out';
   }
 
   String? _refHint(StockMovement m) {
@@ -40,28 +41,33 @@ class StockHistoryScreen extends ConsumerWidget {
     final symbol = store?.currencySymbol ?? '₹';
     final filter = ref.watch(stockHistoryFilterProvider);
     final history = ref.watch(stockHistoryProvider);
-    final dateFmt = DateFormat('dd-MMM-yyyy hh:mm:ss a');
+    final dateFmt = DateFormat('dd MMM yyyy, hh:mm a');
+    final canPop = context.canPop();
 
     return Scaffold(
+      backgroundColor: scheme.surfaceContainerLowest,
       appBar: GlassPageHeader(
         title: 'Stock History',
-        actions: [
-          IconButton(
-            tooltip: 'Stock overview',
-            onPressed: () => context.push('/stock/overview'),
-            icon: const Icon(Icons.inventory_2_outlined),
-          ),
-        ],
+        subtitle: 'Stock in, stock out & adjustments',
+        height: 64,
+        leading: canPop
+            ? IconButton(
+                onPressed: () => context.pop(),
+                icon: const Icon(Icons.arrow_back_rounded),
+              )
+            : null,
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
           final saved = await context.push<bool>('/stock/movement');
           if (saved == true) {
             ref.invalidate(stockHistoryProvider);
             ref.invalidate(productsProvider);
+            ref.invalidate(inventoryProductsProvider);
           }
         },
-        child: const Icon(Icons.add_rounded),
+        icon: const Icon(Icons.add_rounded),
+        label: const Text('Add movement'),
       ),
       body: Column(
         children: [
@@ -81,16 +87,13 @@ class StockHistoryScreen extends ConsumerWidget {
                   ref.read(stockHistorySearchProvider.notifier).state =
                       product.name;
                 },
-                icon: Icon(
-                  Icons.qr_code_scanner_rounded,
-                  color: scheme.onSurfaceVariant,
-                ),
+                icon: const Icon(Icons.qr_code_scanner_rounded),
               ),
             ),
           ),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
                 SoftPeriodBadge(
@@ -117,6 +120,7 @@ class StockHistoryScreen extends ConsumerWidget {
               ],
             ),
           ),
+          const SizedBox(height: 10),
           Expanded(
             child: history.when(
               loading: () => const Center(child: CircularProgressIndicator()),
@@ -132,9 +136,9 @@ class StockHistoryScreen extends ConsumerWidget {
                   );
                 }
                 return ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
                   itemCount: items.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 8),
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
                   itemBuilder: (context, i) {
                     final m = items[i];
                     final inMove = m.isIn;
@@ -148,36 +152,38 @@ class StockHistoryScreen extends ConsumerWidget {
                       DateTime.fromMillisecondsSinceEpoch(m.createdAt),
                     );
                     final refHint = _refHint(m);
-                    final subtitle = [
+                    final meta = [
                       when,
                       _typeLabel(m),
                       ?refHint,
-                    ].join(' · ');
+                    ].join(' • ');
 
                     return SoftCard(
-                      radius: 10,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
+                      radius: AppRadii.md,
+                      padding: const EdgeInsets.fromLTRB(12, 12, 14, 12),
                       child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Container(
-                            width: 36,
-                            height: 36,
-                            decoration: BoxDecoration(
-                              color: color.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Icon(
-                              inMove
-                                  ? Icons.arrow_upward_rounded
-                                  : Icons.arrow_downward_rounded,
-                              color: color,
-                              size: 18,
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: SizedBox(
+                              width: 52,
+                              height: 52,
+                              child: ColoredBox(
+                                color: color.withValues(alpha: 0.12),
+                                child: Center(
+                                  child: HugeIcon(
+                                    icon: inMove
+                                        ? HugeIcons.strokeRoundedArrowUp01
+                                        : HugeIcons.strokeRoundedArrowDown01,
+                                    size: 22,
+                                    color: color,
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
-                          const SizedBox(width: 10),
+                          const SizedBox(width: 12),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -187,32 +193,26 @@ class StockHistoryScreen extends ConsumerWidget {
                                   style: Theme.of(context)
                                       .textTheme
                                       .titleSmall
-                                      ?.copyWith(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 13.5,
-                                      ),
+                                      ?.copyWith(fontWeight: FontWeight.w800),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 const SizedBox(height: 3),
                                 Text(
-                                  subtitle,
+                                  meta,
                                   style: Theme.of(context)
                                       .textTheme
-                                      .labelSmall
+                                      .bodySmall
                                       ?.copyWith(
-                                        color: color,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 11,
-                                        height: 1.25,
+                                        color: scheme.onSurfaceVariant,
                                       ),
-                                  maxLines: 2,
+                                  maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ],
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 10),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
@@ -220,10 +220,9 @@ class StockHistoryScreen extends ConsumerWidget {
                                 '${inMove ? '+' : '-'}$qtyAbs ${m.productUnit}',
                                 style: Theme.of(context)
                                     .textTheme
-                                    .labelLarge
+                                    .titleSmall
                                     ?.copyWith(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 13,
+                                      fontWeight: FontWeight.w800,
                                       color: color,
                                     ),
                               ),
@@ -233,11 +232,10 @@ class StockHistoryScreen extends ConsumerWidget {
                                   Money(pricePaise).format(symbol: symbol),
                                   style: Theme.of(context)
                                       .textTheme
-                                      .labelSmall
+                                      .bodySmall
                                       ?.copyWith(
-                                        color: color,
+                                        color: scheme.onSurfaceVariant,
                                         fontWeight: FontWeight.w600,
-                                        fontSize: 11,
                                       ),
                                 ),
                               ],

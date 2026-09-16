@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/app/providers.dart';
 import 'package:pos_billing/app/theme/app_theme.dart';
@@ -25,17 +26,94 @@ final customersListProvider = FutureProvider.autoDispose<List<Customer>>((
 class CustomersScreen extends ConsumerWidget {
   const CustomersScreen({super.key});
 
+  Future<void> _showCustomerActions(
+    BuildContext context,
+    WidgetRef ref, {
+    required Customer customer,
+  }) async {
+    final scheme = Theme.of(context).colorScheme;
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: scheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: Icon(Icons.edit_rounded, color: scheme.primary),
+                  title: const Text('Update'),
+                  subtitle: const Text('Edit customer details'),
+                  onTap: () => Navigator.pop(ctx, 'update'),
+                ),
+                ListTile(
+                  leading:
+                      Icon(Icons.delete_outline_rounded, color: scheme.error),
+                  title: const Text('Delete'),
+                  subtitle: const Text('Remove from customer list'),
+                  onTap: () => Navigator.pop(ctx, 'delete'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+    if (action == null || !context.mounted) return;
+
+    if (action == 'update') {
+      final saved =
+          await context.push<Object?>('/customers/edit?id=${customer.id}');
+      if (saved != null) ref.invalidate(customersListProvider);
+      return;
+    }
+
+    final ok = await confirmDialog(
+      context,
+      title: 'Delete customer',
+      body: 'Remove "${customer.name}" from your customer list?',
+      icon: Icons.delete_outline_rounded,
+      confirmLabel: 'Delete',
+      destructive: true,
+    );
+    if (!ok) return;
+    await ref.read(customerRepositoryProvider).deactivate(customer.id);
+    ref.invalidate(customersListProvider);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final list = ref.watch(customersListProvider);
     final store = ref.watch(storeProfileProvider).valueOrNull;
+    final symbol = store?.currencySymbol ?? '₹';
     final scheme = Theme.of(context).colorScheme;
+    final canPop = context.canPop();
 
     return Scaffold(
-      appBar: GlassPageHeader(title: l10n.customersTitle),
+      backgroundColor: scheme.surfaceContainerLowest,
+      appBar: GlassPageHeader(
+        title: l10n.customersTitle,
+        subtitle: 'Contacts, credit & dues',
+        height: 64,
+        leading: canPop
+            ? IconButton(
+                onPressed: () => context.pop(),
+                icon: const Icon(Icons.arrow_back_rounded),
+              )
+            : null,
+      ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push('/customers/edit'),
+        onPressed: () async {
+          final saved = await context.push<Object?>('/customers/edit');
+          if (saved != null) ref.invalidate(customersListProvider);
+        },
         icon: const Icon(Icons.add_rounded),
         label: Text(l10n.customersAdd),
       ),
@@ -45,10 +123,10 @@ class CustomersScreen extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: SoftSearchField(
               hintText: l10n.customersSearchHint,
-              onChanged: (v) =>
-                  ref.read(_customerSearch.notifier).state = v,
+              onChanged: (v) => ref.read(_customerSearch.notifier).state = v,
             ),
           ),
+          const SizedBox(height: 2),
           Expanded(
             child: list.when(
               loading: () => const Center(child: CircularProgressIndicator()),
@@ -57,93 +135,94 @@ class CustomersScreen extends ConsumerWidget {
               ),
               data: (items) {
                 if (items.isEmpty) {
-                  return EmptyState(
+                  return const EmptyState(
                     title: 'No customers found',
-                    subtitle: 'Add customers to track credit and billing history.',
-                    icon: Icons.people_outline_rounded,
+                    subtitle:
+                        'Add customers to track credit and billing history.',
+                    showIcon: false,
                   );
                 }
                 return ListView.separated(
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
                   itemCount: items.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 6),
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
                   itemBuilder: (context, i) {
                     final c = items[i];
+                    final due = c.outstandingBalancePaise > 0;
+                    final meta = [
+                      if ((c.phone ?? '').isNotEmpty) c.phone!,
+                      if ((c.email ?? '').isNotEmpty) c.email!,
+                      due ? 'Due' : 'Settled',
+                    ].join(' • ');
+
                     return SoftCard(
-                      radius: AppRadii.compact,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
+                      radius: AppRadii.md,
+                      padding: const EdgeInsets.fromLTRB(12, 12, 14, 12),
+                      onTap: () => _showCustomerActions(
+                        context,
+                        ref,
+                        customer: c,
                       ),
-                      onTap: () => context.push('/customers/edit?id=${c.id}'),
                       child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          InitialsAvatar(label: c.name, size: 36),
-                          const SizedBox(width: 10),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: SizedBox(
+                              width: 52,
+                              height: 52,
+                              child: ColoredBox(
+                                color: scheme.primary.withValues(alpha: 0.08),
+                                child: Center(
+                                  child: HugeIcon(
+                                    icon: HugeIcons.strokeRoundedUser,
+                                    size: 22,
+                                    color: scheme.primary,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  c.name.toUpperCase(),
+                                  c.name.displayTitle,
                                   style: Theme.of(context)
                                       .textTheme
                                       .titleSmall
-                                      ?.copyWith(fontWeight: FontWeight.w700),
+                                      ?.copyWith(fontWeight: FontWeight.w800),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
-                                if ((c.phone ?? '').isNotEmpty) ...[
-                                  const SizedBox(height: 1),
-                                  Text(
-                                    c.phone!,
-                                    style:
-                                        Theme.of(context).textTheme.bodySmall,
-                                  ),
-                                ],
+                                const SizedBox(height: 3),
+                                Text(
+                                  meta.isEmpty ? 'Customer' : meta,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                        color: scheme.onSurfaceVariant,
+                                      ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ],
                             ),
                           ),
+                          const SizedBox(width: 10),
                           Text(
-                            Money(c.outstandingBalancePaise).format(
-                              symbol: store?.currencySymbol ?? '₹',
-                            ),
-                            style: Theme.of(context).textTheme.titleSmall
+                            Money(c.outstandingBalancePaise)
+                                .format(symbol: symbol),
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleSmall
                                 ?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                  color: c.outstandingBalancePaise > 0
-                                      ? scheme.error
-                                      : scheme.onSurface,
+                                  fontWeight: FontWeight.w800,
+                                  color: due ? scheme.error : scheme.primary,
                                 ),
-                          ),
-                          IconButton(
-                            tooltip: 'Delete',
-                            visualDensity: VisualDensity.compact,
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(
-                              minWidth: 36,
-                              minHeight: 36,
-                            ),
-                            onPressed: () async {
-                              final ok = await confirmDialog(
-                                context,
-                                title: 'Delete customer',
-                                body:
-                                    'Remove "${c.name}" from your customer list?',
-                                icon: Icons.delete_outline_rounded,
-                                confirmLabel: 'Delete',
-                                destructive: true,
-                              );
-                              if (!ok) return;
-                              await ref
-                                  .read(customerRepositoryProvider)
-                                  .deactivate(c.id);
-                              ref.invalidate(customersListProvider);
-                            },
-                            icon: Icon(
-                              Icons.delete_outline_rounded,
-                              color: scheme.error,
-                            ),
                           ),
                         ],
                       ),
@@ -356,24 +435,17 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: scheme.surface,
-      appBar: AppBar(
-        backgroundColor: scheme.primary,
-        foregroundColor: scheme.onPrimary,
-        centerTitle: true,
-        elevation: 0,
+      backgroundColor: scheme.surfaceContainerLowest,
+      appBar: GlassPageHeader(
+        title: isEdit ? l10n.customersEdit : l10n.customersAdd,
+        subtitle: isEdit
+            ? 'Update contact & credit details'
+            : 'Save buyer for billing & dues',
+        height: 64,
         leading: IconButton(
           onPressed: () => context.pop(),
           icon: const Icon(Icons.arrow_back_rounded),
         ),
-        title: Text(
-          isEdit ? l10n.customersEdit : l10n.customersAdd,
-          style: TextStyle(
-            color: scheme.onPrimary,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        iconTheme: IconThemeData(color: scheme.onPrimary),
       ),
       body: !_loaded
           ? const Center(child: CircularProgressIndicator())
@@ -556,8 +628,8 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
                               navigator.pop();
                             },
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: scheme.onSurface,
-                              side: BorderSide(color: scheme.outline),
+                              foregroundColor: scheme.error,
+                              side: BorderSide(color: scheme.error),
                               minimumSize: const Size.fromHeight(48),
                             ),
                             icon: const Icon(Icons.delete_outline_rounded),

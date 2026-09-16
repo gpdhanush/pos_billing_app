@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/app/providers.dart';
+import 'package:pos_billing/app/theme/app_theme.dart';
 import 'package:pos_billing/core/database/repositories/sales_repository.dart';
 import 'package:pos_billing/core/money/money.dart';
 import 'package:pos_billing/core/utils/invoice_numbering.dart';
@@ -27,16 +29,48 @@ class OrderCheckoutScreen extends ConsumerWidget {
         appBar: AppBar(
           leading: IconButton(
             onPressed: () => context.pop(),
-            icon: const Icon(Icons.arrow_back_rounded),
+            icon: HugeIcon(
+              icon: HugeIcons.strokeRoundedArrowLeft01,
+              size: 22,
+              color: scheme.onSurface,
+            ),
           ),
           title: const Text('Checkout'),
         ),
-        body: EmptyState(
-          title: 'Cart is empty',
-          subtitle: 'Add products from billing to continue.',
-          actionLabel: l10n.navBilling,
-          onAction: () => context.go('/billing'),
-          icon: Icons.shopping_cart_outlined,
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                HugeIcon(
+                  icon: HugeIcons.strokeRoundedShoppingCart01,
+                  size: 48,
+                  color: scheme.onSurfaceVariant,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Cart is empty',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Add products from billing to continue.',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                ),
+                const SizedBox(height: 20),
+                FilledButton(
+                  onPressed: () => context.go('/billing'),
+                  child: Text(l10n.navBilling),
+                ),
+              ],
+            ),
+          ),
         ),
       );
     }
@@ -47,6 +81,11 @@ class OrderCheckoutScreen extends ConsumerWidget {
     );
     final totalQty = cart.lines.fold<int>(0, (sum, line) => sum + line.quantity);
     final productCount = cart.lines.length;
+    final taxablePaise =
+        (totals.subtotalPaise - totals.billDiscountPaise).clamp(0, 1 << 62);
+    final taxPercent = taxablePaise > 0
+        ? (totals.taxPaise * 100 / taxablePaise)
+        : 0.0;
 
     return Scaffold(
       backgroundColor: scheme.surfaceContainerLowest,
@@ -54,36 +93,27 @@ class OrderCheckoutScreen extends ConsumerWidget {
         backgroundColor: scheme.surfaceContainerLowest,
         leading: IconButton(
           onPressed: () => context.pop(),
-          icon: const Icon(Icons.arrow_back_rounded),
+          icon: HugeIcon(
+            icon: HugeIcons.strokeRoundedArrowLeft01,
+            size: 22,
+            color: scheme.onSurface,
+          ),
         ),
         centerTitle: true,
         title: Text(
           orderLabel,
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w700,
-          ),
+                fontWeight: FontWeight.w700,
+              ),
         ),
         actions: [
           IconButton(
-            onPressed: () {
-              showDialog<void>(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('Order'),
-                  content: const Text(
-                    'Review items and customer, then continue to payment. '
-                    'Tap Discount or Tax to adjust amounts.',
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: Text(l10n.commonClose),
-                    ),
-                  ],
-                ),
-              );
-            },
-            icon: const Icon(Icons.info_outline_rounded),
+            onPressed: () => _showInfoDialog(context, l10n),
+            icon: HugeIcon(
+              icon: HugeIcons.strokeRoundedInformationCircle,
+              size: 22,
+              color: scheme.onSurface,
+            ),
           ),
         ],
       ),
@@ -94,10 +124,9 @@ class OrderCheckoutScreen extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
               children: [
                 SoftCard(
-                  onTap: () {},
                   child: Row(
                     children: [
-                      _softIcon(scheme, Icons.storefront_rounded),
+                      _softHugeIcon(scheme, HugeIcons.strokeRoundedStore01),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -110,14 +139,17 @@ class OrderCheckoutScreen extends ConsumerWidget {
                             const SizedBox(height: 2),
                             Text(
                               store?.name ?? 'Your Business',
-                              style: Theme.of(context).textTheme.titleMedium
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
                                   ?.copyWith(fontWeight: FontWeight.w700),
                             ),
                           ],
                         ),
                       ),
-                      Icon(
-                        Icons.chevron_right_rounded,
+                      HugeIcon(
+                        icon: HugeIcons.strokeRoundedArrowRight01,
+                        size: 18,
                         color: scheme.onSurfaceVariant,
                       ),
                     ],
@@ -127,7 +159,7 @@ class OrderCheckoutScreen extends ConsumerWidget {
                 SoftCard(
                   child: Row(
                     children: [
-                      _softIcon(scheme, Icons.person_rounded),
+                      _softHugeIcon(scheme, HugeIcons.strokeRoundedUser),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -140,7 +172,9 @@ class OrderCheckoutScreen extends ConsumerWidget {
                             const SizedBox(height: 2),
                             Text(
                               cart.customer?.name ?? l10n.billingWalkIn,
-                              style: Theme.of(context).textTheme.titleMedium
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleMedium
                                   ?.copyWith(fontWeight: FontWeight.w700),
                             ),
                           ],
@@ -155,7 +189,11 @@ class OrderCheckoutScreen extends ConsumerWidget {
                             borderRadius: BorderRadius.circular(999),
                           ),
                         ),
-                        icon: const Icon(Icons.edit_outlined, size: 16),
+                        icon: HugeIcon(
+                          icon: HugeIcons.strokeRoundedEdit02,
+                          size: 16,
+                          color: scheme.primary,
+                        ),
                         label: const Text('Edit'),
                       ),
                     ],
@@ -165,8 +203,8 @@ class OrderCheckoutScreen extends ConsumerWidget {
                 Text(
                   'Items',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+                        fontWeight: FontWeight.w700,
+                      ),
                 ),
                 const SizedBox(height: 10),
                 SoftCard(
@@ -204,13 +242,17 @@ class OrderCheckoutScreen extends ConsumerWidget {
                           children: [
                             Text(
                               'Total items',
-                              style: Theme.of(context).textTheme.labelMedium
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelMedium
                                   ?.copyWith(color: scheme.onSurfaceVariant),
                             ),
                             const SizedBox(height: 2),
                             Text(
                               '$productCount',
-                              style: Theme.of(context).textTheme.titleLarge
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleLarge
                                   ?.copyWith(fontWeight: FontWeight.w700),
                             ),
                           ],
@@ -229,13 +271,17 @@ class OrderCheckoutScreen extends ConsumerWidget {
                             children: [
                               Text(
                                 'Total quantity',
-                                style: Theme.of(context).textTheme.labelMedium
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelMedium
                                     ?.copyWith(color: scheme.onSurfaceVariant),
                               ),
                               const SizedBox(height: 2),
                               Text(
                                 '$totalQty',
-                                style: Theme.of(context).textTheme.titleLarge
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
                                     ?.copyWith(fontWeight: FontWeight.w700),
                               ),
                             ],
@@ -253,8 +299,8 @@ class OrderCheckoutScreen extends ConsumerWidget {
                       Text(
                         'Details',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
+                              fontWeight: FontWeight.w700,
+                            ),
                       ),
                       const SizedBox(height: 14),
                       _detailRow(
@@ -270,7 +316,6 @@ class OrderCheckoutScreen extends ConsumerWidget {
                         editable: true,
                         onTap: () => _editAmount(
                           context,
-                          ref,
                           title: l10n.billingDiscount,
                           symbol: symbol,
                           currentPaise: cart.billDiscountPaise,
@@ -282,18 +327,18 @@ class OrderCheckoutScreen extends ConsumerWidget {
                       const SizedBox(height: 8),
                       _detailRow(
                         context,
-                        l10n.billingTax,
+                        taxPercent > 0
+                            ? '${l10n.billingTax} (${_formatPercent(taxPercent)}%)'
+                            : l10n.billingTax,
                         Money(totals.taxPaise).format(symbol: symbol),
                         editable: true,
-                        onTap: () => _editAmount(
+                        onTap: () => _editTaxPercent(
                           context,
                           ref,
                           title: l10n.billingTax,
                           symbol: symbol,
-                          currentPaise: totals.taxPaise,
-                          onSave: (paise) => ref
-                              .read(cartProvider.notifier)
-                              .setTaxOverride(paise),
+                          taxablePaise: taxablePaise,
+                          currentTaxPaise: totals.taxPaise,
                         ),
                       ),
                       if (totals.roundOffPaise != 0) ...[
@@ -334,12 +379,23 @@ class OrderCheckoutScreen extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(999),
                     ),
                   ),
-                  child: Text(
-                    'Complete payment',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: scheme.onPrimary,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Complete payment',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: scheme.onPrimary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                      ),
+                      const SizedBox(width: 8),
+                      HugeIcon(
+                        icon: HugeIcons.strokeRoundedArrowRight01,
+                        size: 18,
+                        color: scheme.onPrimary,
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -350,7 +406,12 @@ class OrderCheckoutScreen extends ConsumerWidget {
     );
   }
 
-  Widget _softIcon(ColorScheme scheme, IconData icon) {
+  static String _formatPercent(double value) {
+    if (value == value.roundToDouble()) return value.toStringAsFixed(0);
+    return value.toStringAsFixed(2).replaceFirst(RegExp(r'0+$'), '').replaceFirst(RegExp(r'\.$'), '');
+  }
+
+  Widget _softHugeIcon(ColorScheme scheme, List<List<dynamic>> icon) {
     return Container(
       width: 42,
       height: 42,
@@ -358,7 +419,14 @@ class OrderCheckoutScreen extends ConsumerWidget {
         color: scheme.primary.withValues(alpha: 0.12),
         shape: BoxShape.circle,
       ),
-      child: Icon(icon, color: scheme.primary, size: 20),
+      child: Center(
+        child: HugeIcon(
+          icon: icon,
+          color: scheme.primary,
+          size: 20,
+          strokeWidth: 1.7,
+        ),
+      ),
     );
   }
 
@@ -373,18 +441,18 @@ class OrderCheckoutScreen extends ConsumerWidget {
     final scheme = Theme.of(context).colorScheme;
     final style = emphasize
         ? Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w700,
-          )
+              fontWeight: FontWeight.w700,
+            )
         : Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: scheme.onSurfaceVariant,
-          );
+              color: scheme.onSurfaceVariant,
+            );
     final valueStyle = emphasize
         ? Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w700,
-          )
+              fontWeight: FontWeight.w700,
+            )
         : Theme.of(context).textTheme.bodyMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          );
+              fontWeight: FontWeight.w600,
+            );
     final row = Row(
       children: [
         Flexible(
@@ -393,7 +461,12 @@ class OrderCheckoutScreen extends ConsumerWidget {
               Flexible(child: Text(label, style: style)),
               if (editable) ...[
                 const SizedBox(width: 6),
-                Icon(Icons.edit_outlined, size: 16, color: scheme.primary),
+                HugeIcon(
+                  icon: HugeIcons.strokeRoundedEdit02,
+                  size: 15,
+                  color: scheme.primary,
+                  strokeWidth: 1.8,
+                ),
               ],
             ],
           ),
@@ -413,9 +486,106 @@ class OrderCheckoutScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _editAmount(
+  Future<void> _showInfoDialog(
     BuildContext context,
-    WidgetRef ref, {
+    AppLocalizations l10n,
+  ) async {
+    final scheme = Theme.of(context).colorScheme;
+    await showDialog<void>(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadii.xl),
+          ),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 28),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(22, 24, 22, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        scheme.primary,
+                        Color.lerp(scheme.primary, scheme.secondary, 0.4)!,
+                      ],
+                    ),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: scheme.primary.withValues(alpha: 0.28),
+                        blurRadius: 18,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: HugeIcon(
+                      icon: HugeIcons.strokeRoundedInformationCircle,
+                      size: 28,
+                      color: scheme.onPrimary,
+                      strokeWidth: 1.8,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  'Invoice confirmation',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Review items and customer, then continue to payment.',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                        height: 1.4,
+                      ),
+                ),
+                const SizedBox(height: 18),
+                _InfoTip(
+                  icon: HugeIcons.strokeRoundedDiscount,
+                  title: 'Discount',
+                  body: 'Tap Discount to enter a bill-level amount off.',
+                ),
+                const SizedBox(height: 10),
+                _InfoTip(
+                  icon: HugeIcons.strokeRoundedPercent,
+                  title: 'Tax %',
+                  body:
+                      'Tap Tax to set a percentage. Amount is calculated from subtotal after discount.',
+                ),
+                const SizedBox(height: 22),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: FilledButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: FilledButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadii.md),
+                      ),
+                    ),
+                    child: Text(l10n.commonClose),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _editAmount(
+    BuildContext context, {
     required String title,
     required String symbol,
     required int currentPaise,
@@ -436,6 +606,32 @@ class OrderCheckoutScreen extends ConsumerWidget {
     if (result != null) onSave(result);
   }
 
+  Future<void> _editTaxPercent(
+    BuildContext context,
+    WidgetRef ref, {
+    required String title,
+    required String symbol,
+    required int taxablePaise,
+    required int currentTaxPaise,
+  }) async {
+    final result = await showModalBottomSheet<int>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => _TaxPercentEditSheet(
+        title: title,
+        symbol: symbol,
+        taxablePaise: taxablePaise,
+        currentTaxPaise: currentTaxPaise,
+      ),
+    );
+    if (result != null) {
+      ref.read(cartProvider.notifier).setTaxOverride(result);
+    }
+  }
+
   Future<void> _pickCustomer(BuildContext context, WidgetRef ref) async {
     final l10n = AppLocalizations.of(context);
     final store = ref.read(storeProfileProvider).valueOrNull;
@@ -451,6 +647,7 @@ class OrderCheckoutScreen extends ConsumerWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
+        final scheme = Theme.of(context).colorScheme;
         return SafeArea(
           child: SizedBox(
             height: MediaQuery.of(context).size.height * 0.55,
@@ -461,7 +658,7 @@ class OrderCheckoutScreen extends ConsumerWidget {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.outline,
+                    color: scheme.outline,
                     borderRadius: BorderRadius.circular(999),
                   ),
                 ),
@@ -484,7 +681,7 @@ class OrderCheckoutScreen extends ConsumerWidget {
                 ),
                 Expanded(
                   child: customers.isEmpty
-                      ? EmptyState(title: l10n.customersEmpty)
+                      ? Center(child: Text(l10n.customersEmpty))
                       : ListView.separated(
                           itemCount: customers.length,
                           separatorBuilder: (_, _) => const Divider(height: 1),
@@ -507,6 +704,75 @@ class OrderCheckoutScreen extends ConsumerWidget {
     );
 
     ref.read(cartProvider.notifier).setCustomer(selected);
+  }
+}
+
+class _InfoTip extends StatelessWidget {
+  const _InfoTip({
+    required this.icon,
+    required this.title,
+    required this.body,
+  });
+
+  final List<List<dynamic>> icon;
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(AppRadii.md),
+        border: Border.all(color: scheme.outlineVariant),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: scheme.primary.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Center(
+              child: HugeIcon(
+                icon: icon,
+                size: 18,
+                color: scheme.primary,
+                strokeWidth: 1.7,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  body,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                        height: 1.35,
+                      ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -547,6 +813,7 @@ class _AmountEditSheetState extends State<_AmountEditSheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
     return Padding(
       padding: EdgeInsets.fromLTRB(
         20,
@@ -563,13 +830,23 @@ class _AmountEditSheetState extends State<_AmountEditSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.outline,
+                color: scheme.outline,
                 borderRadius: BorderRadius.circular(999),
               ),
             ),
           ),
           const SizedBox(height: 16),
-          Text(widget.title, style: Theme.of(context).textTheme.titleLarge),
+          Row(
+            children: [
+              HugeIcon(
+                icon: HugeIcons.strokeRoundedDiscount,
+                size: 22,
+                color: scheme.primary,
+              ),
+              const SizedBox(width: 10),
+              Text(widget.title, style: Theme.of(context).textTheme.titleLarge),
+            ],
+          ),
           const SizedBox(height: 12),
           TextField(
             controller: _controller,
@@ -586,6 +863,191 @@ class _AmountEditSheetState extends State<_AmountEditSheet> {
             onPressed: () {
               dismissKeyboard();
               Navigator.pop(context, parseRupeesToPaise(_controller.text));
+            },
+            child: Text(l10n.commonSave),
+          ),
+          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
+}
+
+class _TaxPercentEditSheet extends StatefulWidget {
+  const _TaxPercentEditSheet({
+    required this.title,
+    required this.symbol,
+    required this.taxablePaise,
+    required this.currentTaxPaise,
+  });
+
+  final String title;
+  final String symbol;
+  final int taxablePaise;
+  final int currentTaxPaise;
+
+  @override
+  State<_TaxPercentEditSheet> createState() => _TaxPercentEditSheetState();
+}
+
+class _TaxPercentEditSheetState extends State<_TaxPercentEditSheet> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    final percent = widget.taxablePaise > 0
+        ? widget.currentTaxPaise * 100 / widget.taxablePaise
+        : 0.0;
+    _controller = TextEditingController(
+      text: widget.currentTaxPaise == 0 && percent == 0
+          ? ''
+          : OrderCheckoutScreen._formatPercent(percent),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  double get _percent {
+    final raw = _controller.text.trim().replaceAll(',', '');
+    return double.tryParse(raw) ?? 0;
+  }
+
+  int get _taxPaise {
+    if (widget.taxablePaise <= 0 || _percent <= 0) return 0;
+    final rateBp = (_percent * 100).round();
+    return roundHalfUp(widget.taxablePaise * rateBp / 10000);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final taxableLabel =
+        Money(widget.taxablePaise).format(symbol: widget.symbol);
+    final taxLabel = Money(_taxPaise).format(symbol: widget.symbol);
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        20,
+        16,
+        20,
+        16 + MediaQuery.of(context).viewInsets.bottom,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: scheme.outline,
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              HugeIcon(
+                icon: HugeIcons.strokeRoundedPercent,
+                size: 22,
+                color: scheme.primary,
+              ),
+              const SizedBox(width: 10),
+              Text(widget.title, style: Theme.of(context).textTheme.titleLarge),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Tax is calculated on taxable amount after discount.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+          ),
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: scheme.surfaceContainerLowest,
+              borderRadius: BorderRadius.circular(AppRadii.md),
+              border: Border.all(color: scheme.outlineVariant),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      'Taxable amount',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      taxableLabel,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Text(
+                      'Tax amount',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      taxLabel,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: scheme.primary,
+                          ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: _controller,
+            autofocus: true,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            onChanged: (_) => setState(() {}),
+            decoration: InputDecoration(
+              hintText: 'e.g. 18',
+              suffixText: '%',
+              prefixIcon: Padding(
+                padding: const EdgeInsets.only(left: 12, right: 8),
+                child: HugeIcon(
+                  icon: HugeIcons.strokeRoundedPercentCircle,
+                  size: 20,
+                  color: scheme.primary,
+                ),
+              ),
+              prefixIconConstraints: const BoxConstraints(
+                minWidth: 40,
+                minHeight: 24,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          FilledButton(
+            onPressed: () {
+              dismissKeyboard();
+              Navigator.pop(context, _taxPaise);
             },
             child: Text(l10n.commonSave),
           ),
@@ -633,17 +1095,23 @@ class _ItemRow extends StatelessWidget {
                       fit: BoxFit.cover,
                       placeholder: ColoredBox(
                         color: scheme.primary.withValues(alpha: 0.08),
-                        child: Icon(
-                          Icons.inventory_2_outlined,
-                          color: scheme.primary,
+                        child: Center(
+                          child: HugeIcon(
+                            icon: HugeIcons.strokeRoundedPackage01,
+                            color: scheme.primary,
+                            size: 22,
+                          ),
                         ),
                       ),
                     )
                   : ColoredBox(
                       color: scheme.primary.withValues(alpha: 0.08),
-                      child: Icon(
-                        Icons.inventory_2_outlined,
-                        color: scheme.primary,
+                      child: Center(
+                        child: HugeIcon(
+                          icon: HugeIcons.strokeRoundedPackage01,
+                          color: scheme.primary,
+                          size: 22,
+                        ),
                       ),
                     ),
             ),
@@ -656,8 +1124,8 @@ class _ItemRow extends StatelessWidget {
                 Text(
                   product.name.displayTitle,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+                        fontWeight: FontWeight.w700,
+                      ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -665,8 +1133,8 @@ class _ItemRow extends StatelessWidget {
                 Text(
                   Money(product.sellingPricePaise).format(symbol: symbol),
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+                        fontWeight: FontWeight.w700,
+                      ),
                 ),
               ],
             ),
@@ -676,7 +1144,7 @@ class _ItemRow extends StatelessWidget {
             children: [
               _roundBtn(
                 context,
-                icon: Icons.remove_rounded,
+                icon: HugeIcons.strokeRoundedMinusSign,
                 onTap: onDecrement,
               ),
               Padding(
@@ -684,13 +1152,13 @@ class _ItemRow extends StatelessWidget {
                 child: Text(
                   '${line.quantity}',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+                        fontWeight: FontWeight.w700,
+                      ),
                 ),
               ),
               _roundBtn(
                 context,
-                icon: Icons.add_rounded,
+                icon: HugeIcons.strokeRoundedAdd01,
                 onTap: onIncrement,
               ),
             ],
@@ -702,7 +1170,7 @@ class _ItemRow extends StatelessWidget {
 
   Widget _roundBtn(
     BuildContext context, {
-    required IconData icon,
+    required List<List<dynamic>> icon,
     required VoidCallback onTap,
   }) {
     final scheme = Theme.of(context).colorScheme;
@@ -717,7 +1185,14 @@ class _ItemRow extends StatelessWidget {
         child: SizedBox(
           width: 34,
           height: 34,
-          child: Icon(icon, size: 18),
+          child: Center(
+            child: HugeIcon(
+              icon: icon,
+              size: 16,
+              color: scheme.onSurface,
+              strokeWidth: 1.8,
+            ),
+          ),
         ),
       ),
     );

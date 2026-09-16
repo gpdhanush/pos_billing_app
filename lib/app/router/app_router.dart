@@ -18,6 +18,7 @@ import 'package:pos_billing/features/inventory/add_stock_movement_screen.dart';
 import 'package:pos_billing/features/inventory/inventory_screen.dart';
 import 'package:pos_billing/features/inventory/stock_history_screen.dart';
 import 'package:pos_billing/features/more/more_screen.dart';
+import 'package:pos_billing/features/notifications/notifications_screen.dart';
 import 'package:pos_billing/features/onboarding/language_screen.dart';
 import 'package:pos_billing/features/onboarding/onboarding_screen.dart';
 import 'package:pos_billing/features/onboarding/permissions_screen.dart';
@@ -26,16 +27,19 @@ import 'package:pos_billing/features/onboarding/theme_screen.dart';
 import 'package:pos_billing/features/printer/printer_screen.dart';
 import 'package:pos_billing/features/products/categories_screen.dart';
 import 'package:pos_billing/features/products/category_form_screen.dart';
+import 'package:pos_billing/features/products/product_detail_screen.dart';
 import 'package:pos_billing/features/products/product_form_screen.dart';
 import 'package:pos_billing/features/products/products_screen.dart';
 import 'package:pos_billing/features/reports/reports_screen.dart';
 import 'package:pos_billing/features/sales/invoice_detail_screen.dart';
 import 'package:pos_billing/features/settings/contact_us_screen.dart';
 import 'package:pos_billing/features/settings/export_data_screen.dart';
-import 'package:pos_billing/features/settings/settings_screen.dart';
+import 'package:pos_billing/features/setup/google_connect_screen.dart';
 import 'package:pos_billing/features/setup/store_setup_screen.dart';
 import 'package:pos_billing/features/shell/app_shell.dart';
 import 'package:pos_billing/features/splash/splash_screen.dart';
+import 'package:pos_billing/shared/widgets/in_app_browser_screen.dart';
+import 'package:pos_billing/core/constants/app_constants.dart';
 
 final _refresh = ValueNotifier(0);
 
@@ -104,6 +108,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/setup/security',
         builder: (c, s) => const SecuritySetupScreen(),
       ),
+      GoRoute(
+        path: '/setup/google',
+        builder: (c, s) => GoogleConnectScreen(
+          fromSettings: s.uri.queryParameters['from'] == 'settings',
+        ),
+      ),
       GoRoute(path: '/lock', builder: (c, s) => const PinLockScreen()),
       GoRoute(
         path: '/checkout',
@@ -121,6 +131,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(path: '/products', builder: (c, s) => const ProductsScreen()),
+      GoRoute(
+        path: '/products/view',
+        builder: (c, s) {
+          final id = int.tryParse(s.uri.queryParameters['id'] ?? '') ?? 0;
+          return ProductDetailScreen(productId: id);
+        },
+      ),
       GoRoute(
         path: '/products/edit',
         builder: (c, s) {
@@ -167,10 +184,21 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (c, s) => const InventoryScreen(),
       ),
       GoRoute(
+        path: '/stock/history',
+        builder: (c, s) => const StockHistoryScreen(),
+      ),
+      GoRoute(
         path: '/stock/movement',
         builder: (c, s) => const AddStockMovementScreen(),
       ),
-      GoRoute(path: '/settings', builder: (c, s) => const SettingsScreen()),
+      GoRoute(
+        path: '/settings',
+        redirect: (c, s) => '/more',
+      ),
+      GoRoute(
+        path: '/notifications',
+        builder: (c, s) => const NotificationsScreen(),
+      ),
       GoRoute(
         path: '/settings/contact',
         builder: (c, s) => const ContactUsScreen(),
@@ -182,6 +210,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/settings/store',
         builder: (c, s) => const StoreSetupScreen(editing: true),
+      ),
+      GoRoute(
+        path: '/browser',
+        builder: (c, s) {
+          final url = s.uri.queryParameters['url'] ?? AppLinks.privacyPolicy;
+          final title = s.uri.queryParameters['title'] ?? 'Privacy Policy';
+          return InAppBrowserScreen(url: url, title: title);
+        },
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => AppShell(shell: shell),
@@ -211,7 +247,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/stock',
-                builder: (c, s) => const StockHistoryScreen(),
+                builder: (c, s) => const InventoryScreen(),
               ),
             ],
           ),

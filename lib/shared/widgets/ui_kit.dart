@@ -55,6 +55,7 @@ class SoftCard extends StatelessWidget {
     required this.child,
     this.padding = const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
     this.onTap,
+    this.onLongPress,
     this.color,
     this.borderColor,
     this.radius,
@@ -63,6 +64,7 @@ class SoftCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
   final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
   final Color? color;
   final Color? borderColor;
   final double? radius;
@@ -93,10 +95,11 @@ class SoftCard extends StatelessWidget {
           ),
         ),
         clipBehavior: Clip.antiAlias,
-        child: onTap == null
+        child: onTap == null && onLongPress == null
             ? Padding(padding: padding, child: child)
             : InkWell(
                 onTap: onTap,
+                onLongPress: onLongPress,
                 child: Padding(padding: padding, child: child),
               ),
       ),
@@ -688,12 +691,11 @@ class SoftPeriodBadge extends StatelessWidget {
     final style = TextButton.styleFrom(
       minimumSize: Size.zero,
       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadii.md),
+        borderRadius: BorderRadius.circular(999),
       ),
-      textStyle: Theme.of(context).textTheme.labelSmall?.copyWith(
-            fontSize: 11,
+      textStyle: Theme.of(context).textTheme.labelMedium?.copyWith(
             fontWeight: FontWeight.w700,
             letterSpacing: 0.1,
             height: 1.1,

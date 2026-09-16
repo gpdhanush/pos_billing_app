@@ -9,9 +9,11 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/app/providers.dart';
+import 'package:pos_billing/app/theme/app_theme.dart';
 import 'package:pos_billing/core/database/repositories/product_repository.dart';
 import 'package:pos_billing/core/errors/app_exception.dart';
 import 'package:pos_billing/core/money/money.dart';
+import 'package:pos_billing/features/products/category_create_sheet.dart';
 import 'package:pos_billing/shared/models/models.dart';
 import 'package:pos_billing/shared/widgets/app_image.dart';
 import 'package:pos_billing/shared/widgets/ui_kit.dart';
@@ -46,7 +48,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   final _selling = TextEditingController();
   final _tax = TextEditingController();
   final _min = TextEditingController(text: '10');
-  final _opening = TextEditingController(text: '0');
+  final _opening = TextEditingController();
   String _unit = 'pcs';
   int? _categoryId;
   String? _imagePath;
@@ -110,6 +112,35 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     setState(() => _sku.text = 'SKU$suffix$noise');
   }
 
+  Future<void> _pickCategory(List<Category> cats) async {
+    final selected = await showCategoryPickerSheet(
+      context,
+      categories: [
+        for (final c in cats) (id: c.id, name: c.name),
+      ],
+      selectedId: _categoryId,
+    );
+    if (!mounted || selected == null) return;
+    setState(() => _categoryId = selected < 0 ? null : selected);
+  }
+
+  Future<bool> _confirmRemovePhoto() {
+    return confirmDialog(
+      context,
+      title: 'Remove photo?',
+      body: 'This product photo will be removed. You can upload a new one anytime.',
+      icon: Icons.hide_image_outlined,
+      confirmLabel: 'Remove',
+      destructive: true,
+    );
+  }
+
+  Future<void> _removePhoto() async {
+    final ok = await _confirmRemovePhoto();
+    if (!ok || !mounted) return;
+    setState(() => _imagePath = null);
+  }
+
   Future<void> _pickImage() async {
     final action = await showModalBottomSheet<String>(
       context: context,
@@ -140,7 +171,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
     if (!mounted || action == null) return;
     if (action == 'remove') {
-      setState(() => _imagePath = null);
+      await _removePhoto();
       return;
     }
 
@@ -215,15 +246,28 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
     );
   }
 
-  Widget _label(String text) {
+  Widget _label(String text, {bool required = false}) {
+    final scheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Align(
         alignment: Alignment.centerLeft,
-        child: Text(
-          text,
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w700,
+        child: Text.rich(
+          TextSpan(
+            text: text,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+            children: [
+              if (required)
+                TextSpan(
+                  text: ' *',
+                  style: TextStyle(
+                    color: scheme.error,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+            ],
           ),
         ),
       ),
@@ -244,23 +288,16 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
     return Scaffold(
       backgroundColor: scheme.surfaceContainerLowest,
-      appBar: AppBar(
-        backgroundColor: scheme.primary,
-        foregroundColor: scheme.onPrimary,
-        centerTitle: true,
-        elevation: 0,
+      appBar: GlassPageHeader(
+        title: isEdit ? l10n.productsEditProduct : l10n.productsAddProduct,
+        subtitle: isEdit
+            ? 'Update catalog details & pricing'
+            : 'Add to catalog with price & stock',
+        height: 64,
         leading: IconButton(
           onPressed: () => context.pop(),
           icon: const Icon(Icons.arrow_back_rounded),
         ),
-        title: Text(
-          isEdit ? l10n.productsEditProduct : l10n.productsAddProduct,
-          style: TextStyle(
-            color: scheme.onPrimary,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        iconTheme: IconThemeData(color: scheme.onPrimary),
       ),
       body: !_loaded
           ? const Center(child: CircularProgressIndicator())
@@ -270,67 +307,121 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
                     children: [
-                      Center(
-                        child: Column(
+                      SoftCard(
+                        radius: AppRadii.md,
+                        padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+                        onTap: _pickImage,
+                        child: Row(
                           children: [
-                            Material(
-                              color: scheme.surface,
-                              borderRadius:
-                                  BorderRadius.circular(_fieldRadius + 7),
-                              child: InkWell(
-                                onTap: _pickImage,
-                                borderRadius:
-                                    BorderRadius.circular(_fieldRadius + 7),
-                                child: Ink(
-                                  width: 120,
-                                  height: 120,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(
-                                      _fieldRadius + 7,
-                                    ),
-                                    border: Border.all(color: scheme.outline),
-                                    color: scheme.surface,
-                                  ),
-                                  child: _hasImage
-                                      ? ClipRRect(
-                                          borderRadius: BorderRadius.circular(
-                                            _fieldRadius + 6,
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(14),
+                              child: SizedBox(
+                                width: 72,
+                                height: 72,
+                                child: _hasImage
+                                    ? AppImage(
+                                        path: _imagePath,
+                                        width: 72,
+                                        height: 72,
+                                        fit: BoxFit.cover,
+                                        error: ColoredBox(
+                                          color: scheme.primary
+                                              .withValues(alpha: 0.08),
+                                          child: Icon(
+                                            Icons.broken_image_outlined,
+                                            color: scheme.onSurfaceVariant,
                                           ),
-                                          child: AppImage(
-                                            path: _imagePath,
-                                            fit: BoxFit.cover,
-                                            width: 140,
-                                            height: 140,
-                                            error: Icon(
-                                              Icons.broken_image_outlined,
-                                              color: scheme.onSurfaceVariant,
-                                              size: 36,
-                                            ),
-                                          ),
-                                        )
-                                      : Icon(
-                                          Icons.add_photo_alternate_outlined,
-                                          size: 40,
-                                          color: scheme.onSurfaceVariant,
                                         ),
-                                ),
+                                      )
+                                    : ColoredBox(
+                                        color: scheme.primary
+                                            .withValues(alpha: 0.08),
+                                        child: Icon(
+                                          Icons.add_photo_alternate_outlined,
+                                          size: 28,
+                                          color: scheme.primary,
+                                        ),
+                                      ),
                               ),
                             ),
-                            const SizedBox(height: 10),
-                            TextButton.icon(
-                              onPressed: _pickImage,
-                              icon: const Icon(Icons.photo_camera_outlined),
-                              label: Text(
-                                _hasImage
-                                    ? 'Change Product Image'
-                                    : 'Add Product Image',
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _hasImage
+                                        ? 'Product photo'
+                                        : 'Add product photo',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleSmall
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    _hasImage
+                                        ? 'Tap to change or remove'
+                                        : 'Camera or gallery • optional',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.copyWith(
+                                          color: scheme.onSurfaceVariant,
+                                        ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 7,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: scheme.primary
+                                              .withValues(alpha: 0.12),
+                                          borderRadius:
+                                              BorderRadius.circular(999),
+                                        ),
+                                        child: Text(
+                                          _hasImage ? 'Change' : 'Upload',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .labelMedium
+                                              ?.copyWith(
+                                                color: scheme.primary,
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                        ),
+                                      ),
+                                      if (_hasImage) ...[
+                                        const SizedBox(width: 8),
+                                        TextButton(
+                                          onPressed: _removePhoto,
+                                          style: TextButton.styleFrom(
+                                            foregroundColor: scheme.error,
+                                            visualDensity:
+                                                VisualDensity.compact,
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                            ),
+                                          ),
+                                          child: const Text('Remove'),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                ],
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      _label(l10n.productsProductName),
+                      const SizedBox(height: 18),
+                      _label(l10n.productsProductName, required: true),
                       TextField(
                         controller: _name,
                         textCapitalization: TextCapitalization.words,
@@ -340,81 +431,95 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                         ),
                       ),
                       const SizedBox(height: 14),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              children: [
-                                _label('SKU (Optional)'),
-                                TextField(
-                                  controller: _sku,
-                                  decoration: _decoration(
-                                    hint: 'SKU',
-                                    icon: Icons.tag_rounded,
-                                    suffix: IconButton(
-                                      tooltip: 'Generate SKU',
-                                      onPressed: _generateSku,
-                                      icon: Icon(
-                                        Icons.auto_awesome_rounded,
-                                        color: scheme.primary,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
+                      _label('SKU (Optional)'),
+                      TextField(
+                        controller: _sku,
+                        decoration: _decoration(
+                          hint: 'SKU',
+                          icon: Icons.tag_rounded,
+                          suffix: IconButton(
+                            tooltip: 'Generate SKU',
+                            onPressed: _generateSku,
+                            icon: Icon(
+                              Icons.auto_awesome_rounded,
+                              color: scheme.primary,
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              children: [
-                                _label('Barcode (Optional)'),
-                                TextField(
-                                  controller: _barcode,
-                                  decoration: _decoration(
-                                    hint: 'Barcode',
-                                    icon: Icons.qr_code_2_rounded,
-                                    suffix: IconButton(
-                                      tooltip: 'Scan barcode',
-                                      onPressed: _scanBarcode,
-                                      icon: Icon(
-                                        Icons.qr_code_scanner_rounded,
-                                        color: scheme.primary,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      _label('Barcode (Optional)'),
+                      TextField(
+                        controller: _barcode,
+                        decoration: _decoration(
+                          hint: 'Barcode',
+                          icon: Icons.qr_code_2_rounded,
+                          suffix: IconButton(
+                            tooltip: 'Scan barcode',
+                            onPressed: _scanBarcode,
+                            icon: Icon(
+                              Icons.qr_code_scanner_rounded,
+                              color: scheme.primary,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Row(
+                        children: [
+                          Expanded(child: _label('Category (Optional)')),
+                          TextButton.icon(
+                            onPressed: () async {
+                              final id = await showCreateCategoryDialog(context);
+                              if (id != null && mounted) {
+                                setState(() => _categoryId = id);
+                              }
+                            },
+                            icon: Icon(
+                              Icons.add_rounded,
+                              size: 18,
+                              color: scheme.primary,
+                            ),
+                            label: Text(
+                              'Add',
+                              style: TextStyle(
+                                color: scheme.primary,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            style: TextButton.styleFrom(
+                              visualDensity: VisualDensity.compact,
+                              padding: const EdgeInsets.symmetric(horizontal: 8),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 14),
-                      _label('Category (Optional)'),
-                      DropdownButtonFormField<int?>(
-                        initialValue: _categoryId,
-                        isExpanded: true,
-                        items: [
-                          DropdownMenuItem<int?>(
-                            value: null,
-                            child: Text(
-                              'Select Category',
-                              style: TextStyle(
-                                color: scheme.onSurfaceVariant,
-                              ),
+                      InkWell(
+                        onTap: () => _pickCategory(cats),
+                        borderRadius: BorderRadius.circular(_fieldRadius),
+                        child: InputDecorator(
+                          decoration: _decoration(
+                            hint: 'Select Category',
+                            icon: Icons.category_outlined,
+                            suffix: Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              color: scheme.onSurfaceVariant,
                             ),
                           ),
-                          for (final c in cats)
-                            DropdownMenuItem<int?>(
-                              value: c.id,
-                              child: Text(c.name.displayTitle),
-                            ),
-                        ],
-                        onChanged: (v) => setState(() => _categoryId = v),
-                        decoration: _decoration(
-                          hint: 'Select Category',
-                          icon: Icons.category_outlined,
+                          child: Text(
+                            _categoryId == null
+                                ? 'Select Category'
+                                : (cats
+                                        .where((c) => c.id == _categoryId)
+                                        .map((c) => c.name.displayTitle)
+                                        .firstOrNull ??
+                                    'Select Category'),
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                  color: _categoryId == null
+                                      ? scheme.onSurfaceVariant
+                                      : scheme.onSurface,
+                                ),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 14),
@@ -435,7 +540,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                     ThousandDecimalFormatter(),
                                   ],
                                   decoration: _decoration(
-                                    hint: '0.00',
+                                    hint: 'Enter cost price',
                                     icon: Icons.currency_rupee_rounded,
                                   ),
                                 ),
@@ -446,7 +551,10 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                           Expanded(
                             child: Column(
                               children: [
-                                _label(l10n.productsSellingPrice),
+                                _label(
+                                  l10n.productsSellingPrice,
+                                  required: true,
+                                ),
                                 TextField(
                                   controller: _selling,
                                   keyboardType:
@@ -457,7 +565,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                     ThousandDecimalFormatter(),
                                   ],
                                   decoration: _decoration(
-                                    hint: '0.00',
+                                    hint: 'Enter selling price',
                                     icon: Icons.sell_outlined,
                                   ),
                                 ),
@@ -477,12 +585,13 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                                   isEdit
                                       ? l10n.inventoryCurrentStock
                                       : 'Stock Quantity',
+                                  required: isEdit,
                                 ),
                                 TextField(
                                   controller: _opening,
                                   keyboardType: TextInputType.number,
                                   decoration: _decoration(
-                                    hint: '0',
+                                    hint: isEdit ? '0' : 'Enter quantity',
                                     icon: Icons.inventory_2_outlined,
                                   ),
                                 ),
@@ -493,7 +602,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                           Expanded(
                             child: Column(
                               children: [
-                                _label(l10n.productsUnit),
+                                _label(l10n.productsUnit, required: true),
                                 DropdownButtonFormField<String>(
                                   initialValue: _unit,
                                   isExpanded: true,
@@ -519,26 +628,44 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                         ],
                       ),
                       const SizedBox(height: 14),
-                      _label('Minimum Stock Alert Level (Optional)'),
-                      TextField(
-                        controller: _min,
-                        keyboardType: TextInputType.number,
-                        decoration: _decoration(
-                          hint: '10',
-                          icon: Icons.warning_amber_rounded,
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      _label(l10n.productsTaxGst),
-                      TextField(
-                        controller: _tax,
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        decoration: _decoration(
-                          hint: '0',
-                          icon: Icons.percent_rounded,
-                        ),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              children: [
+                                _label('Min. stock alert'),
+                                TextField(
+                                  controller: _min,
+                                  keyboardType: TextInputType.number,
+                                  decoration: _decoration(
+                                    hint: '10',
+                                    icon: Icons.warning_amber_rounded,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              children: [
+                                _label('GST (%)'),
+                                TextField(
+                                  controller: _tax,
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+                                  decoration: _decoration(
+                                    hint: '0',
+                                    icon: Icons.percent_rounded,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                       if (_existing != null) ...[
                         const SizedBox(height: 16),
@@ -639,6 +766,17 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       messenger?.showSnackBar(SnackBar(content: Text(l10n.errorsValidation)));
       return;
     }
+    if (_selling.text.trim().isEmpty || parseRupeesToPaise(_selling.text) <= 0) {
+      messenger?.showSnackBar(SnackBar(content: Text(l10n.errorsValidation)));
+      return;
+    }
+    final openingText = _opening.text.trim();
+    final openingStock =
+        openingText.isEmpty ? 0 : int.tryParse(openingText);
+    if (openingStock == null || openingStock < 0) {
+      messenger?.showSnackBar(SnackBar(content: Text(l10n.errorsValidation)));
+      return;
+    }
 
     final barcodes = _barcode.text
         .split(',')
@@ -661,7 +799,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                 sellingPricePaise: parseRupeesToPaise(_selling.text),
                 taxRateBp: taxBp,
                 minimumStock: int.tryParse(_min.text) ?? 0,
-                openingStock: int.tryParse(_opening.text) ?? 0,
+                openingStock: openingStock,
                 imagePath: _imagePath,
                 barcodes: barcodes,
               ),
@@ -704,6 +842,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
               );
         }
       }
+      await ref.read(backupDirtyTrackerProvider).markDirty();
       ref.invalidate(productsProvider);
       if (!mounted) return;
       navigator.pop();

@@ -502,6 +502,7 @@ LIMIT ? OFFSET ?
 
   Future<DashboardStats> dashboardStats(int storeId) async {
     final today = SalesDateRange.today();
+    final yesterdayStart = today.startMs - const Duration(days: 1).inMilliseconds;
     final sales = await _db.db.rawQuery(
       '''
 SELECT IFNULL(SUM(total),0) AS sales, COUNT(*) AS bills
@@ -510,6 +511,40 @@ WHERE store_id = ? AND status = ? AND created_at >= ? AND created_at < ? AND tot
 ''',
       [storeId, InvoiceStatus.completed, today.startMs, today.endMs],
     );
+    final yesterday = await _db.db.rawQuery(
+      '''
+SELECT IFNULL(SUM(total),0) AS sales
+FROM invoices
+WHERE store_id = ? AND status = ? AND created_at >= ? AND created_at < ? AND total > 0
+''',
+      [storeId, InvoiceStatus.completed, yesterdayStart, today.startMs],
+    );
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
+    // Calendar week Sunday → Saturday (weekday: Mon=1 … Sun=7).
+    final daysFromSunday = now.weekday % 7;
+    final weekSunday = todayStart.subtract(Duration(days: daysFromSunday));
+    final weekStartMs = weekSunday.millisecondsSinceEpoch;
+    final weekEndMs =
+        weekSunday.add(const Duration(days: 7)).millisecondsSinceEpoch;
+    final weekRows = await _db.db.rawQuery(
+      '''
+SELECT created_at, total
+FROM invoices
+WHERE store_id = ? AND status = ? AND created_at >= ? AND created_at < ? AND total > 0
+''',
+      [storeId, InvoiceStatus.completed, weekStartMs, weekEndMs],
+    );
+    final dayBuckets = List<int>.filled(7, 0);
+    for (final row in weekRows) {
+      final created = row['created_at'] as int? ?? 0;
+      final total = row['total'] as int? ?? 0;
+      // Bucket by local calendar weekday (Sun=0 … Sat=6), not ms-delta
+      // which can shift days across midnight/timezone edges.
+      final local = DateTime.fromMillisecondsSinceEpoch(created);
+      final dayIndex = local.weekday % 7;
+      dayBuckets[dayIndex] += total;
+    }
     final stock = await _db.db.rawQuery(
       '''
 SELECT IFNULL(SUM(current_stock),0) AS items,
@@ -521,9 +556,11 @@ WHERE store_id = ? AND is_active = 1
     );
     return DashboardStats(
       todaySalesPaise: sales.first['sales'] as int,
+      yesterdaySalesPaise: yesterday.first['sales'] as int,
       billsToday: sales.first['bills'] as int,
       itemsInStock: stock.first['items'] as int,
       lowStockCount: (stock.first['low'] as int?) ?? 0,
+      last7DaysSalesPaise: dayBuckets,
     );
   }
 

@@ -151,7 +151,7 @@ class AppLocalizationsTa extends AppLocalizations {
   String get navBilling => 'பில்லிங்';
 
   @override
-  String get navStock => 'ஸ்டாக்';
+  String get navStock => 'இருப்பு';
 
   @override
   String get navSales => 'விற்பனை';
@@ -630,7 +630,7 @@ class AppLocalizationsTa extends AppLocalizations {
   String get categoriesName => 'வகை பெயர்';
 
   @override
-  String get inventoryTitle => 'ஸ்டாக்';
+  String get inventoryTitle => 'இருப்பு';
 
   @override
   String get inventoryStockIn => 'ஸ்டாக் சேர்';

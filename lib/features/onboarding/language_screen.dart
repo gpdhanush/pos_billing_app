@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/app/providers.dart';
 import 'package:pos_billing/app/theme/app_theme.dart';
+import 'package:pos_billing/features/onboarding/onboarding_widgets.dart';
 import 'package:pos_billing/shared/widgets/ui_kit.dart';
 
 class LanguageScreen extends ConsumerWidget {
@@ -17,74 +19,86 @@ class LanguageScreen extends ConsumerWidget {
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: GlassPageHeader(title: l10n.languageTitle),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
-        children: [
-          Text(
-            l10n.languageSubtitle,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: scheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 16),
-          SoftCard(
-            child: Column(
-              children: [
-                _langTile(
-                  context,
-                  title: l10n.languageEnglish,
-                  selected: current == 'en',
-                  onTap: () =>
-                      ref.read(appSettingsProvider.notifier).setLocale('en'),
+      body: OnboardBackdrop(
+        child: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(24, 12, 24, 28),
+            children: [
+              if (Navigator.of(context).canPop())
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: IconButton(
+                    onPressed: () => context.pop(),
+                    icon: HugeIcon(
+                      icon: HugeIcons.strokeRoundedArrowLeft01,
+                      size: 22,
+                      color: scheme.onSurface,
+                    ),
+                  ),
                 ),
-                const Divider(),
-                _langTile(
-                  context,
-                  title: l10n.languageTamil,
-                  selected: current == 'ta',
-                  onTap: () =>
-                      ref.read(appSettingsProvider.notifier).setLocale('ta'),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: OnboardHeroIcon(
+                  icon: HugeIcons.strokeRoundedLanguageCircle,
+                  size: 88,
+                  iconSize: 38,
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                l10n.languageTitle,
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.3,
+                    ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                l10n.languageSubtitle,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                      height: 1.4,
+                    ),
+              ),
+              const SizedBox(height: 28),
+              OnboardOptionCard(
+                title: l10n.languageEnglish,
+                subtitle: 'English',
+                icon: HugeIcons.strokeRoundedLanguageSquare,
+                selected: current == 'en',
+                onTap: () =>
+                    ref.read(appSettingsProvider.notifier).setLocale('en'),
+              ),
+              const SizedBox(height: 12),
+              OnboardOptionCard(
+                title: l10n.languageTamil,
+                subtitle: 'தமிழ்',
+                icon: HugeIcons.strokeRoundedTranslate,
+                selected: current == 'ta',
+                onTap: () =>
+                    ref.read(appSettingsProvider.notifier).setLocale('ta'),
+              ),
+              const SizedBox(height: 32),
+              OnboardPrimaryButton(
+                label: l10n.commonContinue,
+                icon: HugeIcons.strokeRoundedArrowRight01,
+                onPressed: () {
+                  dismissKeyboard();
+                  final setupDone = ref
+                          .read(storeProfileProvider)
+                          .valueOrNull
+                          ?.isSetupCompleted ??
+                      false;
+                  if (setupDone) {
+                    context.pop();
+                  } else {
+                    context.go('/setup/theme');
+                  }
+                },
+              ),
+            ],
           ),
-          const SizedBox(height: 24),
-          FilledButton(
-            onPressed: () {
-              dismissKeyboard();
-              final setupDone =
-                  ref
-                      .read(storeProfileProvider)
-                      .valueOrNull
-                      ?.isSetupCompleted ??
-                  false;
-              if (setupDone) {
-                context.pop();
-              } else {
-                context.go('/setup/theme');
-              }
-            },
-            child: Text(l10n.commonContinue),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _langTile(
-    BuildContext context, {
-    required String title,
-    required bool selected,
-    required VoidCallback onTap,
-  }) {
-    final scheme = Theme.of(context).colorScheme;
-    return ListTile(
-      onTap: onTap,
-      title: Text(title),
-      trailing: Icon(
-        selected ? Icons.check_circle_rounded : Icons.circle_outlined,
-        color: selected ? scheme.primary : scheme.onSurfaceVariant,
+        ),
       ),
     );
   }
@@ -101,134 +115,179 @@ class ThemePickerScreen extends ConsumerWidget {
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: GlassPageHeader(title: l10n.themeTitle),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
-        children: [
-          Text(
-            l10n.themeSubtitle,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: scheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 16),
-          SoftCard(
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                ChoiceChip(
-                  label: Text(l10n.themeLight),
-                  selected: settings.themeModeName == 'light',
-                  onSelected: (_) => ref
-                      .read(appSettingsProvider.notifier)
-                      .setThemeMode('light'),
+      body: OnboardBackdrop(
+        child: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(24, 12, 24, 28),
+            children: [
+              if (Navigator.of(context).canPop())
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: IconButton(
+                    onPressed: () => context.pop(),
+                    icon: HugeIcon(
+                      icon: HugeIcons.strokeRoundedArrowLeft01,
+                      size: 22,
+                      color: scheme.onSurface,
+                    ),
+                  ),
                 ),
-                ChoiceChip(
-                  label: Text(l10n.themeDark),
-                  selected: settings.themeModeName == 'dark',
-                  onSelected: (_) => ref
-                      .read(appSettingsProvider.notifier)
-                      .setThemeMode('dark'),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: OnboardHeroIcon(
+                  icon: HugeIcons.strokeRoundedPaintBoard,
+                  size: 88,
+                  iconSize: 38,
                 ),
-                ChoiceChip(
-                  label: Text(l10n.themeSystem),
-                  selected: settings.themeModeName == 'system',
-                  onSelected: (_) => ref
-                      .read(appSettingsProvider.notifier)
-                      .setThemeMode('system'),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
-          SectionHeader(title: l10n.themeAccent),
-          const SizedBox(height: 10),
-          SoftCard(
-            child: GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: AccentOption.values.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 4,
-                mainAxisSpacing: 10,
-                crossAxisSpacing: 10,
-                childAspectRatio: 1,
               ),
-              itemBuilder: (context, index) {
-                final accent = AccentOption.values[index];
-                return _AccentSwatch(
-                  option: accent,
-                  label: accent.label,
-                  selected: settings.accent == accent.name,
-                  onTap: () => ref
-                      .read(appSettingsProvider.notifier)
-                      .setAccent(accent.name),
-                );
-              },
-            ),
+              const SizedBox(height: 24),
+              Text(
+                l10n.themeTitle,
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.3,
+                    ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                l10n.themeSubtitle,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                      height: 1.4,
+                    ),
+              ),
+              const SizedBox(height: 28),
+              OnboardOptionCard(
+                title: l10n.themeLight,
+                subtitle: 'Bright & clear',
+                icon: HugeIcons.strokeRoundedSun03,
+                selected: settings.themeModeName == 'light',
+                onTap: () => ref
+                    .read(appSettingsProvider.notifier)
+                    .setThemeMode('light'),
+              ),
+              const SizedBox(height: 12),
+              OnboardOptionCard(
+                title: l10n.themeDark,
+                subtitle: 'Easy on the eyes',
+                icon: HugeIcons.strokeRoundedMoon02,
+                selected: settings.themeModeName == 'dark',
+                onTap: () =>
+                    ref.read(appSettingsProvider.notifier).setThemeMode('dark'),
+              ),
+              const SizedBox(height: 12),
+              OnboardOptionCard(
+                title: l10n.themeSystem,
+                subtitle: 'Match device setting',
+                icon: HugeIcons.strokeRoundedComputerSettings,
+                selected: settings.themeModeName == 'system',
+                onTap: () => ref
+                    .read(appSettingsProvider.notifier)
+                    .setThemeMode('system'),
+              ),
+              const SizedBox(height: 28),
+              Text(
+                l10n.themeAccent,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  for (final accent in AccentOption.values)
+                    _AccentChip(
+                      option: accent,
+                      selected: settings.accent == accent.name,
+                      onTap: () => ref
+                          .read(appSettingsProvider.notifier)
+                          .setAccent(accent.name),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 32),
+              OnboardPrimaryButton(
+                label: l10n.commonContinue,
+                icon: HugeIcons.strokeRoundedArrowRight01,
+                onPressed: () {
+                  dismissKeyboard();
+                  final setupDone = ref
+                          .read(storeProfileProvider)
+                          .valueOrNull
+                          ?.isSetupCompleted ??
+                      false;
+                  if (setupDone) {
+                    context.pop();
+                  } else {
+                    context.go('/setup/store');
+                  }
+                },
+              ),
+            ],
           ),
-          const SizedBox(height: 24),
-          FilledButton(
-            onPressed: () {
-              dismissKeyboard();
-              final setupDone =
-                  ref
-                      .read(storeProfileProvider)
-                      .valueOrNull
-                      ?.isSetupCompleted ??
-                  false;
-              if (setupDone) {
-                context.pop();
-              } else {
-                context.go('/setup/store');
-              }
-            },
-            child: Text(l10n.commonContinue),
-          ),
-        ],
+        ),
       ),
     );
   }
 }
 
-class _AccentSwatch extends StatelessWidget {
-  const _AccentSwatch({
+class _AccentChip extends StatelessWidget {
+  const _AccentChip({
     required this.option,
-    required this.label,
     required this.selected,
     required this.onTap,
   });
 
   final AccentOption option;
-  final String label;
   final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadii.md),
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppRadii.md),
-          border: Border.all(
-            color: selected
-                ? option.seed
-                : Theme.of(context).colorScheme.outline,
-            width: selected ? 2 : 1,
-          ),
-        ),
-        child: Center(
-          child: Container(
-            width: 28,
-            height: 28,
+    return AnimatedScale(
+      scale: selected ? 1.05 : 1,
+      duration: const Duration(milliseconds: 180),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppRadii.pill),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: 52,
+            height: 52,
             decoration: BoxDecoration(
-              color: option.seed,
               shape: BoxShape.circle,
+              color: option.seed,
+              border: Border.all(
+                color: selected
+                    ? Theme.of(context).colorScheme.onSurface
+                    : Colors.white.withValues(alpha: 0.55),
+                width: selected ? 3 : 2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: option.seed.withValues(alpha: selected ? 0.4 : 0.2),
+                  blurRadius: selected ? 14 : 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
+            child: selected
+                ? Center(
+                    child: HugeIcon(
+                      icon: HugeIcons.strokeRoundedTick02,
+                      size: 20,
+                      color: ThemeData.estimateBrightnessForColor(option.seed) ==
+                              Brightness.dark
+                          ? Colors.white
+                          : AppColors.ink,
+                      strokeWidth: 2.2,
+                    ),
+                  )
+                : null,
           ),
         ),
       ),

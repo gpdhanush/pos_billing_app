@@ -383,7 +383,7 @@ abstract class AppLocalizations {
   /// No description provided for @navStock.
   ///
   /// In en, this message translates to:
-  /// **'Stock'**
+  /// **'Inventory'**
   String get navStock;
 
   /// No description provided for @navSales.
@@ -1313,7 +1313,7 @@ abstract class AppLocalizations {
   /// No description provided for @inventoryTitle.
   ///
   /// In en, this message translates to:
-  /// **'Stock'**
+  /// **'Inventory'**
   String get inventoryTitle;
 
   /// No description provided for @inventoryStockIn.

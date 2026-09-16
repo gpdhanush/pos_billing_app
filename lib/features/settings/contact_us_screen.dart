@@ -33,7 +33,8 @@ class ContactUsScreen extends StatelessWidget {
 
   Future<void> _whatsApp(BuildContext context) {
     final uri = Uri.parse(
-      'https://wa.me/917845456609?text=${Uri.encodeComponent(_helpMessage)}',
+      'https://wa.me/${AppLinks.supportWhatsAppE164}'
+      '?text=${Uri.encodeComponent(_helpMessage)}',
     );
     return _open(context, uri);
   }
@@ -122,61 +123,113 @@ class ContactUsScreen extends StatelessWidget {
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(18),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(18),
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            scheme.primary.withValues(alpha: 0.18),
-                            scheme.primary.withValues(alpha: 0.06),
-                            scheme.surface,
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(18),
+                      child: Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              const Color(0xFFD6EBFF),
+                              scheme.primary.withValues(alpha: 0.18),
+                              const Color(0xFFEAF4FF),
+                            ],
+                          ),
+                        ),
+                        child: Stack(
+                          children: [
+                            Positioned(
+                              right: -28,
+                              top: -36,
+                              child: Container(
+                                width: 140,
+                                height: 140,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: scheme.primary.withValues(alpha: 0.12),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              right: 48,
+                              bottom: -50,
+                              child: Container(
+                                width: 120,
+                                height: 120,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: scheme.primary.withValues(alpha: 0.10),
+                                ),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(18, 18, 8, 14),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Expanded(
+                                    flex: 6,
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(bottom: 8),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'SUPPORT',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .labelMedium
+                                                ?.copyWith(
+                                                  color: scheme.primary,
+                                                  fontWeight: FontWeight.w800,
+                                                  letterSpacing: 1.2,
+                                                ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            'Need help?',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .headlineSmall
+                                                ?.copyWith(
+                                                  fontWeight: FontWeight.w800,
+                                                  letterSpacing: -0.4,
+                                                  color: const Color(0xFF0B1F3A),
+                                                ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            'If you have any doubts or need help with POS Billing, contact us anytime. We are happy to assist.',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyMedium
+                                                ?.copyWith(
+                                                  color: const Color(0xFF4B5B70),
+                                                  height: 1.35,
+                                                ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    flex: 5,
+                                    child: Image.asset(
+                                      'assets/img/customer-support.png',
+                                      height: 148,
+                                      fit: BoxFit.contain,
+                                      alignment: Alignment.bottomCenter,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ],
                         ),
-                        border: Border.all(
-                          color: scheme.outline.withValues(alpha: 0.5),
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: scheme.primary.withValues(alpha: 0.16),
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: Icon(
-                              Icons.support_agent_rounded,
-                              color: scheme.primary,
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          Text(
-                            'Need help?',
-                            style: Theme.of(context)
-                                .textTheme
-                                .headlineSmall
-                                ?.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: -0.4,
-                                ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'If you have any doubts or need help with POS Billing, contact us anytime. We are happy to assist.',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.copyWith(
-                                  color: scheme.onSurfaceVariant,
-                                  height: 1.4,
-                                ),
-                          ),
-                        ],
                       ),
                     ),
                     const SizedBox(height: 16),

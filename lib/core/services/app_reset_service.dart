@@ -5,7 +5,9 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:pos_billing/app/providers.dart';
 import 'package:pos_billing/core/database/app_database.dart';
+import 'package:pos_billing/core/services/backup_background.dart';
 import 'package:pos_billing/core/services/backup_service.dart';
+import 'package:workmanager/workmanager.dart';
 
 /// Full local wipe used by Settings → Log out.
 ///
@@ -29,6 +31,10 @@ class AppResetService {
       // Continue wipe even if Drive sign-out fails.
     }
 
+    try {
+      await Workmanager().cancelByUniqueName(kAutoBackupTaskUniqueName);
+    } catch (_) {}
+
     await _deleteDir('product_images');
     await _deleteDir('store_logos');
     await _deleteDir('backups');
@@ -44,6 +50,9 @@ class AppResetService {
     _ref.read(catalogQueryProvider.notifier).state = const CatalogQuery();
     _ref.read(unlockedProvider.notifier).state = true;
 
+    // Invalidate only — do not await providers here. Awaiting appSettings
+    // refreshes GoRouter and redirects away from Settings while a loading
+    // dialog is still open, which crashes Navigator.pop.
     _ref.invalidate(appSettingsProvider);
     _ref.invalidate(storeProfileProvider);
     _ref.invalidate(productsProvider);
@@ -51,9 +60,7 @@ class AppResetService {
     _ref.invalidate(salesListProvider);
     _ref.invalidate(dashboardStatsProvider);
     _ref.invalidate(backupServiceProvider);
-
-    await _ref.read(appSettingsProvider.future);
-    await _ref.read(storeProfileProvider.future);
+    _ref.invalidate(googleSessionProvider);
   }
 
   Future<void> _deleteDir(String name) async {

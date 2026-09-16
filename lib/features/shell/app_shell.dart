@@ -1,30 +1,63 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:line_icons/line_icons.dart';
 import 'package:pos_billing/app/localization/generated/app_localizations.dart';
+import 'package:pos_billing/app/providers.dart';
 import 'package:pos_billing/app/router/app_router.dart';
 import 'package:pos_billing/app/theme/app_theme.dart';
 import 'package:pos_billing/shared/widgets/app_banner_ad.dart';
 import 'package:pos_billing/shared/widgets/ui_kit.dart';
 
-class AppShell extends StatefulWidget {
+class AppShell extends ConsumerStatefulWidget {
   const AppShell({super.key, required this.shell});
 
   final StatefulNavigationShell shell;
 
   @override
-  State<AppShell> createState() => _AppShellState();
+  ConsumerState<AppShell> createState() => _AppShellState();
 }
 
-class _AppShellState extends State<AppShell> {
+class _AppShellState extends ConsumerState<AppShell> {
   bool _exitSheetOpen = false;
+
+  Future<bool> _confirmDiscardCart() async {
+    final cart = ref.read(cartProvider);
+    if (!cart.hasUnsavedValues) return true;
+
+    final ok = await confirmDialog(
+      context,
+      title: 'Leave billing?',
+      body:
+          'All items in the cart will be lost. Do you want to exit without completing this bill?',
+      icon: Icons.shopping_cart_outlined,
+      confirmLabel: 'Exit',
+      cancelLabel: 'Stay',
+      destructive: true,
+    );
+    if (!ok) return false;
+    ref.read(cartProvider.notifier).clear();
+    return true;
+  }
+
+  Future<void> _goBranch(int index) async {
+    if (widget.shell.currentIndex == 2 && index != 2) {
+      final ok = await _confirmDiscardCart();
+      if (!ok || !mounted) return;
+    }
+    widget.shell.goBranch(index, initialLocation: true);
+  }
 
   Future<void> _onRootBack() async {
     if (_exitSheetOpen) return;
 
     // Prefer leaving a secondary tab for Home before asking to exit.
     if (widget.shell.currentIndex != 0) {
+      if (widget.shell.currentIndex == 2) {
+        final ok = await _confirmDiscardCart();
+        if (!ok || !mounted) return;
+      }
       widget.shell.goBranch(0, initialLocation: true);
       return;
     }
@@ -80,39 +113,39 @@ class _AppShellState extends State<AppShell> {
                         label: items[0].label,
                         icon: items[0].icon,
                         selected: shell.currentIndex == 0,
-                        onTap: () => shell.goBranch(0, initialLocation: true),
+                        onTap: () => _goBranch(0),
                       ),
                       _navItem(
                         context: context,
                         label: items[1].label,
                         icon: items[1].icon,
                         selected: shell.currentIndex == 1,
-                        onTap: () => shell.goBranch(1, initialLocation: true),
+                        onTap: () => _goBranch(1),
                       ),
                       _navItem(
                         context: context,
                         label: 'Billing',
                         icon: const Icon(LineIcons.cashRegister),
                         selected: shell.currentIndex == 2,
-                        onTap: () => shell.goBranch(2, initialLocation: true),
+                        onTap: () => _goBranch(2),
                       ),
                       _navItem(
                         context: context,
                         label: items[3].label,
                         icon: items[3].icon,
                         selected: shell.currentIndex == 3,
-                        onTap: () => shell.goBranch(3, initialLocation: true),
+                        onTap: () => _goBranch(3),
                       ),
                       _navItem(
                         context: context,
                         label: items[4].label,
                         icon: items[4].icon,
                         selected: shell.currentIndex == 4,
-                        onTap: () {
+                        onTap: () async {
                           if (shell.currentIndex == 4) {
                             context.go('/more');
                           } else {
-                            shell.goBranch(4, initialLocation: true);
+                            await _goBranch(4);
                           }
                         },
                       ),

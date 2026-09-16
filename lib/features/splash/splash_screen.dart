@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,6 +7,7 @@ import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/app/providers.dart';
 import 'package:pos_billing/core/constants/app_constants.dart';
 import 'package:pos_billing/core/database/sample_data.dart';
+import 'package:pos_billing/core/services/app_log_service.dart';
 import 'package:pos_billing/core/services/app_permission_service.dart';
 import 'package:pos_billing/shared/widgets/app_logo.dart';
 
@@ -38,27 +41,55 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   Future<void> _bootstrap() async {
     await Future<void>.delayed(const Duration(milliseconds: 400));
     if (!mounted) return;
-    final settings = await ref.read(appSettingsProvider.future);
-    final store = await ref.read(storeProfileProvider.future);
-    if (store != null) {
-      await SampleDataSeeder(ref.read(databaseProvider)).seedIfNeeded(store.id);
-    }
-    // PIN lock removed — keep users unlocked unless biometric lock is on.
-    if (settings.pinEnabled && !settings.biometricEnabled) {
-      await ref.read(pinServiceProvider).clearPin();
-      await ref.read(appSettingsProvider.notifier).setPinEnabled(false);
+
+    try {
+      // Non-blocking: silent Google restore + analytics + backup coordinator.
+      unawaited(ref.read(googleAuthServiceProvider).restoreSilently());
+      unawaited(() async {
+        try {
+          final analytics = ref.read(analyticsServiceProvider);
+          await analytics.logAppOpen();
+          await analytics.flushQueuedTelemetry();
+          await ref.read(notificationServiceProvider).refreshFcm();
+        } catch (_) {}
+      }());
+      try {
+        ref.read(backupCoordinatorProvider).start();
+      } catch (_) {}
+
+      final settings = await ref.read(appSettingsProvider.future);
+      final store = await ref.read(storeProfileProvider.future);
+      if (store != null) {
+        await SampleDataSeeder(ref.read(databaseProvider)).seedIfNeeded(store.id);
+      }
+      // PIN lock removed — keep users unlocked unless biometric lock is on.
+      if (settings.pinEnabled && !settings.biometricEnabled) {
+        await ref.read(pinServiceProvider).clearPin();
+        await ref.read(appSettingsProvider.notifier).setPinEnabled(false);
+        ref.read(unlockedProvider.notifier).state = true;
+      } else if (!settings.biometricEnabled) {
+        ref.read(unlockedProvider.notifier).state = true;
+      }
+    } catch (e, st) {
+      // Still leave splash so the user is not stuck on a blank/progress screen.
+      unawaited(AppLogService.error(e, st, 'splash_bootstrap'));
       ref.read(unlockedProvider.notifier).state = true;
-    } else if (!settings.biometricEnabled) {
-      ref.read(unlockedProvider.notifier).state = true;
     }
+
+    if (!mounted) return;
     if (_progress.status != AnimationStatus.completed) {
       await _progress.forward();
     }
     await Future<void>.delayed(const Duration(milliseconds: 180));
     if (!mounted) return;
 
-    final needsPermissions =
-        !await const AppPermissionService().hasAllStartupPermissions();
+    var needsPermissions = false;
+    try {
+      needsPermissions =
+          !await const AppPermissionService().hasAllStartupPermissions();
+    } catch (_) {
+      needsPermissions = false;
+    }
     if (!mounted) return;
     context.go(needsPermissions ? '/permissions' : '/home');
   }
@@ -117,6 +148,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
               AnimatedBuilder(
                 animation: _progress,
                 builder: (context, _) {
+                  final pct = (_progress.value.clamp(0.0, 1.0) * 100).round();
                   return Column(
                     children: [
                       ClipRRect(
@@ -131,7 +163,16 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
                           ),
                         ),
                       ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 10),
+                      Text(
+                        '$pct%',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: scheme.onPrimary,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.4,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
                       Text(
                         'v${DbConstants.appVersion}',
                         style: Theme.of(context).textTheme.labelLarge?.copyWith(

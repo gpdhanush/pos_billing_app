@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:intl/intl.dart';
 import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/app/providers.dart';
@@ -32,20 +33,88 @@ final expensesListProvider = FutureProvider.autoDispose<List<Expense>>((
 class ExpensesScreen extends ConsumerWidget {
   const ExpensesScreen({super.key});
 
+  Future<void> _showExpenseActions(
+    BuildContext context,
+    WidgetRef ref, {
+    required Expense expense,
+    required String symbol,
+  }) async {
+    final scheme = Theme.of(context).colorScheme;
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      backgroundColor: scheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: Icon(Icons.edit_rounded, color: scheme.primary),
+                  title: const Text('Update'),
+                  subtitle: const Text('Edit expense details'),
+                  onTap: () => Navigator.pop(ctx, 'update'),
+                ),
+                ListTile(
+                  leading: Icon(Icons.delete_outline_rounded, color: scheme.error),
+                  title: const Text('Delete'),
+                  subtitle: const Text('Remove this expense'),
+                  onTap: () => Navigator.pop(ctx, 'delete'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+    if (action == null || !context.mounted) return;
+
+    if (action == 'update') {
+      final saved = await context.push<bool>('/expenses/edit?id=${expense.id}');
+      if (saved == true) ref.invalidate(expensesListProvider);
+      return;
+    }
+
+    final ok = await confirmDialog(
+      context,
+      title: 'Delete expense',
+      body:
+          'Remove "${expense.category}" expense of ${Money(expense.amountPaise).format(symbol: symbol)}?',
+      icon: Icons.delete_outline_rounded,
+      confirmLabel: 'Delete',
+      destructive: true,
+    );
+    if (!ok) return;
+    await ref.read(expenseRepositoryProvider).delete(expense.id);
+    ref.invalidate(expensesListProvider);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context);
     final list = ref.watch(expensesListProvider);
     final store = ref.watch(storeProfileProvider).valueOrNull;
+    final symbol = store?.currencySymbol ?? '₹';
     final scheme = Theme.of(context).colorScheme;
+    final canPop = context.canPop();
 
     return Scaffold(
+      backgroundColor: scheme.surfaceContainerLowest,
       appBar: GlassPageHeader(
         title: l10n.expensesTitle,
-        leading: IconButton(
-          onPressed: () => context.pop(),
-          icon: const Icon(Icons.arrow_back_rounded),
-        ),
+        subtitle: 'Shop spending & costs',
+        height: 64,
+        leading: canPop
+            ? IconButton(
+                onPressed: () => context.pop(),
+                icon: const Icon(Icons.arrow_back_rounded),
+              )
+            : null,
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
@@ -64,6 +133,7 @@ class ExpensesScreen extends ConsumerWidget {
               onChanged: (v) => ref.read(_expenseSearch.notifier).state = v,
             ),
           ),
+          const SizedBox(height: 2),
           Expanded(
             child: list.when(
               loading: () => const Center(child: CircularProgressIndicator()),
@@ -81,34 +151,49 @@ class ExpensesScreen extends ConsumerWidget {
                 return ListView.separated(
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
                   itemCount: items.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 6),
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
                   itemBuilder: (context, i) {
                     final e = items[i];
-                    final date = DateFormat.yMMMd().format(
+                    final date = DateFormat('dd MMM yyyy').format(
                       DateTime.fromMillisecondsSinceEpoch(e.spentAt),
                     );
+                    final note = e.note?.trim();
+                    final meta = [
+                      e.paymentMethod.toUpperCase(),
+                      date,
+                      if (note != null && note.isNotEmpty) note,
+                    ].join(' • ');
+
                     return SoftCard(
-                      radius: AppRadii.compact,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
+                      radius: AppRadii.md,
+                      padding: const EdgeInsets.fromLTRB(12, 12, 14, 12),
+                      onTap: () => _showExpenseActions(
+                        context,
+                        ref,
+                        expense: e,
+                        symbol: symbol,
                       ),
-                      onTap: () async {
-                        final saved = await context.push<bool>(
-                          '/expenses/edit?id=${e.id}',
-                        );
-                        if (saved == true) {
-                          ref.invalidate(expensesListProvider);
-                        }
-                      },
                       child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          InitialsAvatar(
-                            label: e.category,
-                            icon: Icons.payments_outlined,
-                            size: 36,
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: SizedBox(
+                              width: 52,
+                              height: 52,
+                              child: ColoredBox(
+                                color: scheme.primary.withValues(alpha: 0.08),
+                                child: Center(
+                                  child: HugeIcon(
+                                    icon: HugeIcons.strokeRoundedMoney01,
+                                    size: 22,
+                                    color: scheme.primary,
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
-                          const SizedBox(width: 10),
+                          const SizedBox(width: 12),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -118,58 +203,35 @@ class ExpensesScreen extends ConsumerWidget {
                                   style: Theme.of(context)
                                       .textTheme
                                       .titleSmall
-                                      ?.copyWith(fontWeight: FontWeight.w700),
+                                      ?.copyWith(fontWeight: FontWeight.w800),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
-                                const SizedBox(height: 1),
+                                const SizedBox(height: 3),
                                 Text(
-                                  '${e.paymentMethod.toUpperCase()} · $date',
-                                  style: Theme.of(context).textTheme.bodySmall,
+                                  meta,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                        color: scheme.onSurfaceVariant,
+                                      ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ],
                             ),
                           ),
+                          const SizedBox(width: 10),
                           Text(
-                            Money(e.amountPaise).format(
-                              symbol: store?.currencySymbol ?? '₹',
-                            ),
+                            Money(e.amountPaise).format(symbol: symbol),
                             style: Theme.of(context)
                                 .textTheme
                                 .titleSmall
                                 ?.copyWith(
-                                  fontWeight: FontWeight.w700,
+                                  fontWeight: FontWeight.w800,
                                   color: scheme.primary,
                                 ),
-                          ),
-                          IconButton(
-                            tooltip: 'Delete',
-                            visualDensity: VisualDensity.compact,
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(
-                              minWidth: 36,
-                              minHeight: 36,
-                            ),
-                            onPressed: () async {
-                              final ok = await confirmDialog(
-                                context,
-                                title: 'Delete expense',
-                                body:
-                                    'Remove "${e.category}" expense of ${Money(e.amountPaise).format(symbol: store?.currencySymbol ?? '₹')}?',
-                                icon: Icons.delete_outline_rounded,
-                                confirmLabel: 'Delete',
-                                destructive: true,
-                              );
-                              if (!ok) return;
-                              await ref
-                                  .read(expenseRepositoryProvider)
-                                  .delete(e.id);
-                              ref.invalidate(expensesListProvider);
-                            },
-                            icon: Icon(
-                              Icons.delete_outline_rounded,
-                              color: scheme.error,
-                            ),
                           ),
                         ],
                       ),

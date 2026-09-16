@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/app/providers.dart';
 import 'package:pos_billing/app/theme/app_theme.dart';
+import 'package:pos_billing/core/constants/app_constants.dart';
+import 'package:pos_billing/features/onboarding/onboarding_widgets.dart';
 import 'package:pos_billing/shared/widgets/app_logo.dart';
 import 'package:pos_billing/shared/widgets/ui_kit.dart';
 
@@ -65,8 +68,19 @@ class _SecuritySetupScreenState extends ConsumerState<SecuritySetupScreen> {
       }
       ref.read(unlockedProvider.notifier).state = true;
       if (!mounted) return;
-      // Finish setup flow completely — never pop back to store form.
-      context.go('/home');
+
+      // Skip Google connect if already signed in or step already completed.
+      final auth = ref.read(googleAuthServiceProvider);
+      final alreadySignedIn = await auth.isSignedIn;
+      final setupDone = await ref
+          .read(settingsRepositoryProvider)
+          .getBool(SettingKeys.googleSetupSkipped);
+      if (!mounted) return;
+      if (alreadySignedIn || setupDone) {
+        context.go('/home');
+      } else {
+        context.go('/setup/google');
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -78,78 +92,91 @@ class _SecuritySetupScreenState extends ConsumerState<SecuritySetupScreen> {
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      appBar: GlassPageHeader(title: l10n.securityTitle),
-      body: _checking
-          ? const Center(child: CircularProgressIndicator())
-          : ListView(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
-              children: [
-                SoftCard(
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 72,
-                        height: 72,
-                        decoration: BoxDecoration(
-                          color: scheme.primary.withValues(alpha: 0.12),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.fingerprint_rounded,
-                          size: 36,
-                          color: scheme.primary,
+      body: OnboardBackdrop(
+        child: SafeArea(
+          child: _checking
+              ? const Center(child: CircularProgressIndicator())
+              : ListView(
+                  padding: const EdgeInsets.fromLTRB(24, 12, 24, 28),
+                  children: [
+                    if (Navigator.of(context).canPop())
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: IconButton(
+                          onPressed: () => context.pop(),
+                          icon: HugeIcon(
+                            icon: HugeIcons.strokeRoundedArrowLeft01,
+                            size: 22,
+                            color: scheme.onSurface,
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Biometric app lock',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: OnboardHeroIcon(
+                        icon: HugeIcons.strokeRoundedFingerprintScan,
+                        size: 96,
+                        iconSize: 42,
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _bioAvailable
-                            ? 'Use fingerprint or face unlock when opening the app. No PIN required.'
-                            : 'Biometrics are not available on this device. You can continue without app lock.',
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: scheme.onSurfaceVariant,
-                              height: 1.4,
-                            ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      l10n.securityTitle,
+                      style:
+                          Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.3,
+                              ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Biometric app lock',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: scheme.primary,
+                          ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      _bioAvailable
+                          ? 'Use fingerprint or face unlock when opening the app. No PIN required.'
+                          : 'Biometrics are not available on this device. You can continue without app lock.',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                            height: 1.45,
+                          ),
+                    ),
+                    if (_bioAvailable) ...[
+                      const SizedBox(height: 28),
+                      OnboardOptionCard(
+                        title: 'Enable biometric lock',
+                        subtitle: 'Recommended for shop security',
+                        icon: HugeIcons.strokeRoundedSecurityLock,
+                        selected: _enable,
+                        onTap: () => setState(() => _enable = !_enable),
                       ),
-                      if (_bioAvailable) ...[
-                        const SizedBox(height: 8),
-                        SwitchListTile(
-                          contentPadding: EdgeInsets.zero,
-                          value: _enable,
-                          title: const Text('Enable biometric lock'),
-                          onChanged: (v) => setState(() => _enable = v),
-                        ),
-                      ],
                     ],
-                  ),
+                    const SizedBox(height: 32),
+                    OnboardPrimaryButton(
+                      label: l10n.commonContinue,
+                      icon: HugeIcons.strokeRoundedArrowRight01,
+                      loading: _saving,
+                      onPressed: () =>
+                          _continue(skip: !_bioAvailable || !_enable),
+                    ),
+                    if (_bioAvailable)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: TextButton(
+                          onPressed:
+                              _saving ? null : () => _continue(skip: true),
+                          child: Text(l10n.securitySkip),
+                        ),
+                      ),
+                  ],
                 ),
-                const SizedBox(height: 24),
-                FilledButton(
-                  onPressed: _saving
-                      ? null
-                      : () => _continue(skip: !_bioAvailable || !_enable),
-                  child: _saving
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(l10n.commonContinue),
-                ),
-                if (_bioAvailable)
-                  TextButton(
-                    onPressed: _saving ? null : () => _continue(skip: true),
-                    child: Text(l10n.securitySkip),
-                  ),
-              ],
-            ),
+        ),
+      ),
     );
   }
 }
@@ -245,39 +272,50 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen> {
                         child: AppLogo(size: 48, radius: 12),
                       ),
                       const Spacer(),
-                      Container(
-                        width: 112,
-                        height: 112,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.16),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.35),
-                            width: 2,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.12),
-                              blurRadius: 28,
-                              offset: const Offset(0, 12),
+                      TweenAnimationBuilder<double>(
+                        tween: Tween(begin: 0.9, end: 1),
+                        duration: const Duration(milliseconds: 500),
+                        curve: Curves.easeOutBack,
+                        builder: (context, value, child) =>
+                            Transform.scale(scale: value, child: child),
+                        child: Container(
+                          width: 112,
+                          height: 112,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.16),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.35),
+                              width: 2,
                             ),
-                          ],
-                        ),
-                        child: _busy
-                            ? const Padding(
-                                padding: EdgeInsets.all(34),
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 3,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : Icon(
-                                _failed
-                                    ? Icons.fingerprint_outlined
-                                    : Icons.fingerprint_rounded,
-                                color: Colors.white,
-                                size: 54,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.12),
+                                blurRadius: 28,
+                                offset: const Offset(0, 12),
                               ),
+                            ],
+                          ),
+                          child: _busy
+                              ? const Padding(
+                                  padding: EdgeInsets.all(34),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 3,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Center(
+                                  child: HugeIcon(
+                                    icon: _failed
+                                        ? HugeIcons.strokeRoundedSecurityLock
+                                        : HugeIcons
+                                            .strokeRoundedFingerprintScan,
+                                    color: Colors.white,
+                                    size: 48,
+                                    strokeWidth: 1.8,
+                                  ),
+                                ),
+                        ),
                       ),
                       const SizedBox(height: 22),
                       Text(
@@ -324,14 +362,24 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen> {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          IconBadge(
-                            icon: _failed
-                                ? Icons.error_outline_rounded
-                                : Icons.shield_outlined,
-                            background: (_failed ? scheme.error : scheme.primary)
-                                .withValues(alpha: 0.12),
-                            foreground: _failed ? scheme.error : scheme.primary,
-                            size: 44,
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: (_failed ? scheme.error : scheme.primary)
+                                  .withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Center(
+                              child: HugeIcon(
+                                icon: _failed
+                                    ? HugeIcons.strokeRoundedAlert02
+                                    : HugeIcons.strokeRoundedShield01,
+                                size: 22,
+                                color: _failed ? scheme.error : scheme.primary,
+                                strokeWidth: 1.7,
+                              ),
+                            ),
                           ),
                           const SizedBox(width: 14),
                           Expanded(
@@ -370,10 +418,10 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen> {
                     const Spacer(),
                     SizedBox(
                       width: double.infinity,
-                      child: FilledButton.icon(
+                      height: 56,
+                      child: FilledButton(
                         onPressed: _busy ? null : _tryBio,
                         style: FilledButton.styleFrom(
-                          minimumSize: const Size.fromHeight(56),
                           backgroundColor: accent,
                           foregroundColor: _failed
                               ? scheme.onError
@@ -382,7 +430,7 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen> {
                             borderRadius: BorderRadius.circular(AppRadii.md),
                           ),
                         ),
-                        icon: _busy
+                        child: _busy
                             ? SizedBox(
                                 width: 20,
                                 height: 20,
@@ -393,16 +441,32 @@ class _PinLockScreenState extends ConsumerState<PinLockScreen> {
                                       : scheme.onPrimary,
                                 ),
                               )
-                            : Icon(
-                                _failed
-                                    ? Icons.refresh_rounded
-                                    : Icons.fingerprint_rounded,
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  HugeIcon(
+                                    icon: _failed
+                                        ? HugeIcons.strokeRoundedRefresh
+                                        : HugeIcons
+                                            .strokeRoundedFingerprintScan,
+                                    size: 22,
+                                    color: _failed
+                                        ? scheme.onError
+                                        : scheme.onPrimary,
+                                    strokeWidth: 1.8,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    _failed
+                                        ? 'Try again'
+                                        : l10n.lockUseBiometric,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ],
                               ),
-                        label: Text(
-                          _failed
-                              ? 'Try again'
-                              : l10n.lockUseBiometric,
-                        ),
                       ),
                     ),
                     const SizedBox(height: 10),

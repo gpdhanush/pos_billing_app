@@ -239,6 +239,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
               allowNegativeStock: settings?.allowNegativeStock ?? false,
             ),
           );
+      await ref.read(backupDirtyTrackerProvider).markDirty();
+      await ref.read(analyticsServiceProvider).logEvent('invoice_created');
       await ref.read(storeProfileProvider.notifier).reload();
       ref.invalidate(dashboardStatsProvider);
       ref.invalidate(salesListProvider);

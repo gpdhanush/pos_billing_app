@@ -3,18 +3,32 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
-import 'package:crypto/crypto.dart';
-import 'package:encrypt/encrypt.dart' as enc;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:pos_billing/core/constants/app_constants.dart';
 import 'package:pos_billing/core/database/app_database.dart';
+import 'package:pos_billing/core/database/repositories/settings_repository.dart';
 import 'package:pos_billing/core/database/repositories/store_repository.dart';
 import 'package:pos_billing/core/errors/app_exception.dart';
+import 'package:pos_billing/core/services/backup_crypto.dart';
+import 'package:pos_billing/core/services/connectivity_service.dart';
+import 'package:pos_billing/core/services/google_drive_client.dart';
 import 'package:pos_billing/core/utils/time.dart';
 import 'package:pos_billing/shared/models/models.dart';
+import 'package:uuid/uuid.dart';
+
+enum BackupProgressStage {
+  preparing,
+  creatingCopy,
+  encrypting,
+  uploading,
+  verifying,
+  completed,
+}
+
+typedef BackupProgressCallback = void Function(BackupProgressStage stage);
 
 class BackupPackage {
   const BackupPackage({
@@ -33,30 +47,58 @@ class BackupPackage {
 abstract class DriveBackupClient {
   Future<bool> get isSignedIn;
   Future<String?> get accountEmail;
+  Future<String?> get accountId;
+  Future<String?> get accountDisplayName;
+  Future<String?> get accountPhotoUrl;
   Future<void> signIn();
   Future<void> signOut();
   Future<String> upload({required String fileName, required Uint8List bytes});
   Future<Uint8List> download(String fileId);
+  Future<List<DriveBackupEntry>> listBackups();
+  Future<DriveBackupEntry?> findLatest();
+  Future<void> deleteBackupFile(String fileId);
+  Future<void> pruneOldBackups({int keep = 3});
+  Future<Uint8List?> downloadByName(String fileName);
+  Future<String> uploadEnvelope(Uint8List bytes);
+  Future<Uint8List?> downloadEnvelope();
 }
 
 class BackupService {
-  BackupService(this._db, {required this.secureStorage, this.drive});
+  BackupService(
+    this._db, {
+    required this.secureStorage,
+    this.drive,
+    ConnectivityService? connectivity,
+    BackupCrypto? crypto,
+  })  : connectivity = connectivity ?? ConnectivityService(),
+        crypto = crypto ?? BackupCrypto(secureStorage);
 
   final AppDatabase _db;
   final FlutterSecureStorage secureStorage;
   final DriveBackupClient? drive;
+  final ConnectivityService connectivity;
+  final BackupCrypto crypto;
 
-  static const _keyName = 'pos_backup_aes_key';
   static const folderAppName = 'POS Billing';
   static const folderBackupName = 'backup';
+  static const formatName = 'posbackup';
 
-  Future<BackupRecord> createBackup({bool uploadToDrive = false}) async {
+  Future<BackupRecord> createBackup({
+    bool uploadToDrive = false,
+    BackupProgressCallback? onProgress,
+    Future<String?> Function()? requestPassphraseForEnvelope,
+  }) async {
     final store = await StoreRepository(_db).loadStore();
     final stamp = DateTime.now();
-    final fileName =
-        'backup_${stamp.year.toString().padLeft(4, '0')}-${stamp.month.toString().padLeft(2, '0')}-${stamp.day.toString().padLeft(2, '0')}_${stamp.hour.toString().padLeft(2, '0')}${stamp.minute.toString().padLeft(2, '0')}${stamp.second.toString().padLeft(2, '0')}.posbak';
+    final stampedName =
+        'pos_backup_${stamp.year.toString().padLeft(4, '0')}-'
+        '${stamp.month.toString().padLeft(2, '0')}-'
+        '${stamp.day.toString().padLeft(2, '0')}_'
+        '${stamp.hour.toString().padLeft(2, '0')}'
+        '${stamp.minute.toString().padLeft(2, '0')}'
+        '${stamp.second.toString().padLeft(2, '0')}.posbackup';
     final historyId = await _db.db.insert('backup_history', {
-      'file_name': fileName,
+      'file_name': stampedName,
       'backup_version': DbConstants.backupFormatVersion,
       'database_version': DbConstants.schemaVersion,
       'status': 'in_progress',
@@ -64,16 +106,41 @@ class BackupService {
     });
 
     try {
-      final pkg = await buildPackage(storeId: store?.id, fileName: fileName);
+      onProgress?.call(BackupProgressStage.preparing);
+      final pkg = await buildPackage(
+        storeId: store?.id,
+        storeName: store?.businessName,
+        fileName: stampedName,
+        onProgress: onProgress,
+      );
+
+      onProgress?.call(BackupProgressStage.creatingCopy);
       final dir = await _backupDir();
-      final localFile = File(p.join(dir.path, fileName));
+      final localFile = File(p.join(dir.path, stampedName));
       await localFile.writeAsBytes(pkg.bytes, flush: true);
 
       String? driveId;
       if (uploadToDrive && drive != null && await drive!.isSignedIn) {
-        driveId = await drive!.upload(fileName: fileName, bytes: pkg.bytes);
+        await _ensureInternetForDrive();
+        await _ensureDekEnvelope(requestPassphraseForEnvelope);
+        onProgress?.call(BackupProgressStage.uploading);
+        driveId = await drive!.upload(
+          fileName: stampedName,
+          bytes: pkg.bytes,
+        );
+        await drive!.upload(
+          fileName: GoogleDriveBackupClient.latestFileName,
+          bytes: pkg.bytes,
+        );
+        onProgress?.call(BackupProgressStage.verifying);
+        final verified = await _verifyDriveUpload(driveId, pkg.bytes.length);
+        if (!verified) {
+          throw const BackupException('Drive upload verification failed');
+        }
+        await drive!.pruneOldBackups(keep: 10);
       }
 
+      onProgress?.call(BackupProgressStage.completed);
       await _db.db.update(
         'backup_history',
         {
@@ -93,6 +160,10 @@ class BackupService {
         entityType: 'backup',
         entityId: historyId,
       );
+      await SettingsRepository(_db).setBool(
+        SettingKeys.dataChangedSinceBackup,
+        false,
+      );
       return (await get(historyId))!;
     } catch (e) {
       await _db.db.update(
@@ -111,21 +182,35 @@ class BackupService {
 
   Future<BackupPackage> buildPackage({
     int? storeId,
+    String? storeName,
     required String fileName,
+    BackupProgressCallback? onProgress,
   }) async {
     try {
       await _db.db.execute('PRAGMA wal_checkpoint(FULL)');
     } catch (_) {}
+    onProgress?.call(BackupProgressStage.creatingCopy);
     final dbPath = _db.db.path;
     final dbBytes = await File(dbPath).readAsBytes();
-    final checksum = sha256.convert(dbBytes).toString();
-    final encrypted = await _encrypt(dbBytes);
+    final checksum = BackupCrypto.checksumSha256(dbBytes);
+    onProgress?.call(BackupProgressStage.encrypting);
+    final encrypted = await crypto.encryptGcm(dbBytes);
+    final deviceId = await _deviceId();
     final manifest = <String, Object?>{
+      'format': formatName,
+      'formatVersion': DbConstants.backupFormatVersion,
       'backup_version': DbConstants.backupFormatVersion,
-      'database_version': DbConstants.schemaVersion,
+      'appVersion': DbConstants.appVersion,
       'app_version': DbConstants.appVersion,
-      'created_at': DateTime.now().toIso8601String(),
+      'databaseVersion': DbConstants.schemaVersion,
+      'database_version': DbConstants.schemaVersion,
+      'storeId': storeId,
       'store_id': storeId,
+      'storeName': storeName,
+      'createdAt': DateTime.now().toIso8601String(),
+      'created_at': DateTime.now().toIso8601String(),
+      'deviceId': deviceId,
+      'databaseSize': dbBytes.length,
       'checksum': checksum,
       'file_name': fileName,
     };
@@ -147,14 +232,23 @@ class BackupService {
   Future<void> restoreFromFile(
     String path, {
     Future<void> Function()? afterClosed,
+    Future<bool> Function(int backupStoreId, int? currentStoreId)?
+        confirmStoreMismatch,
   }) async {
     final bytes = await File(path).readAsBytes();
-    await restoreFromBytes(bytes, afterClosed: afterClosed);
+    await restoreFromBytes(
+      bytes,
+      afterClosed: afterClosed,
+      confirmStoreMismatch: confirmStoreMismatch,
+    );
   }
 
   Future<void> restoreFromBytes(
     Uint8List bytes, {
     Future<void> Function()? afterClosed,
+    Future<bool> Function(int backupStoreId, int? currentStoreId)?
+        confirmStoreMismatch,
+    Future<String?> Function()? requestPassphraseForUnlock,
   }) async {
     final Archive archive;
     try {
@@ -167,28 +261,95 @@ class BackupService {
     if (manifestFile == null || dbFile == null) {
       throw const RestoreException('Backup is missing required files');
     }
-    final manifest = jsonDecode(utf8.decode(manifestFile.content as List<int>))
-        as Map<String, dynamic>;
-    final version = manifest['backup_version'] as int? ?? 0;
-    if (version > DbConstants.backupFormatVersion) {
+    final manifest =
+        jsonDecode(utf8.decode(manifestFile.content as List<int>))
+            as Map<String, dynamic>;
+    final formatVersion = _readInt(
+          manifest,
+          const ['formatVersion', 'backup_version'],
+        ) ??
+        0;
+    if (formatVersion > DbConstants.backupFormatVersion) {
       throw const RestoreException(
         'This backup was created by a newer app version',
       );
     }
-    final decrypted =
-        await _decrypt(Uint8List.fromList(dbFile.content as List<int>));
-    final checksum = sha256.convert(decrypted).toString();
-    if (checksum != manifest['checksum']) {
+    final databaseVersion = _readInt(
+          manifest,
+          const ['databaseVersion', 'database_version'],
+        ) ??
+        0;
+    if (databaseVersion > DbConstants.schemaVersion) {
+      throw const RestoreException(
+        'This backup requires a newer app database version',
+      );
+    }
+
+    final backupStoreId = _readInt(
+      manifest,
+      const ['storeId', 'store_id'],
+    );
+    final currentStore = await StoreRepository(_db).loadStore();
+    if (backupStoreId != null &&
+        currentStore != null &&
+        backupStoreId != currentStore.id) {
+      final ok = confirmStoreMismatch == null
+          ? false
+          : await confirmStoreMismatch(backupStoreId, currentStore.id);
+      if (!ok) {
+        throw const RestoreException('Restore cancelled (store mismatch)');
+      }
+    }
+
+    if (!await crypto.hasLocalDek()) {
+      final envelope = drive == null ? null : await drive!.downloadEnvelope();
+      if (envelope != null && requestPassphraseForUnlock != null) {
+        final pass = await requestPassphraseForUnlock();
+        if (pass == null || pass.length < 8) {
+          throw const RestoreException('Recovery passphrase required');
+        }
+        await crypto.unwrapDekWithPassphrase(envelope, pass);
+      }
+    }
+
+    final encryptedDb = Uint8List.fromList(dbFile.content as List<int>);
+    final decrypted = await crypto.decryptAuto(encryptedDb);
+    final checksum = BackupCrypto.checksumSha256(decrypted);
+    final expected = manifest['checksum'] as String?;
+    if (expected == null || checksum != expected) {
       throw const RestoreException('Backup integrity check failed');
     }
 
-    await createBackup(uploadToDrive: false);
+    // Pre-restore local safety backup.
+    File? safetyFile;
+    try {
+      final safety = await buildPackage(
+        storeId: currentStore?.id,
+        storeName: currentStore?.businessName,
+        fileName:
+            'pre_restore_${DateTime.now().millisecondsSinceEpoch}.posbackup',
+      );
+      final dir = await _backupDir();
+      safetyFile = File(p.join(dir.path, safety.fileName));
+      await safetyFile.writeAsBytes(safety.bytes, flush: true);
+    } catch (_) {
+      // Continue; best-effort safety copy.
+    }
 
     final livePath = _db.db.path;
+    final previousBytes = await File(livePath).readAsBytes();
     await _db.close();
-    await File(livePath).writeAsBytes(decrypted, flush: true);
-    if (afterClosed != null) {
-      await afterClosed();
+    try {
+      await File(livePath).writeAsBytes(decrypted, flush: true);
+      if (afterClosed != null) {
+        await afterClosed();
+      }
+    } catch (e) {
+      try {
+        await File(livePath).writeAsBytes(previousBytes, flush: true);
+      } catch (_) {}
+      throw RestoreException('Restore failed; previous database restored',
+          cause: e);
     }
   }
 
@@ -252,6 +413,92 @@ class BackupService {
   Future<String> localBackupDirectoryPath() async {
     final dir = await _backupDir();
     return dir.path;
+  }
+
+  /// Ensures DEK envelope exists on Drive (prompts for passphrase if needed).
+  Future<void> ensureDriveKeyEnvelope({
+    required Future<String?> Function() requestPassphrase,
+  }) async {
+    if (drive == null || !await drive!.isSignedIn) return;
+    await _ensureInternetForDrive();
+    await _ensureDekEnvelope(() => requestPassphrase());
+  }
+
+  Future<bool> tryUnlockFromDriveEnvelope({
+    required Future<String?> Function() requestPassphrase,
+  }) async {
+    if (drive == null || !await drive!.isSignedIn) return false;
+    if (await crypto.hasLocalDek()) return true;
+    final envelope = await drive!.downloadEnvelope();
+    if (envelope == null) return false;
+    final pass = await requestPassphrase();
+    if (pass == null || pass.length < 8) return false;
+    await crypto.unwrapDekWithPassphrase(envelope, pass);
+    return true;
+  }
+
+  Future<void> _ensureDekEnvelope(
+    Future<String?> Function()? requestPassphrase,
+  ) async {
+    if (drive == null) return;
+    final existing = await drive!.downloadEnvelope();
+    if (existing != null) {
+      if (!await crypto.hasLocalDek() && requestPassphrase != null) {
+        final pass = await requestPassphrase();
+        if (pass == null || pass.length < 8) {
+          throw const BackupException('Recovery passphrase required');
+        }
+        await crypto.unwrapDekWithPassphrase(existing, pass);
+      }
+      return;
+    }
+    if (requestPassphrase == null) {
+      throw const BackupException('Recovery passphrase required for Drive backup');
+    }
+    final pass = await requestPassphrase();
+    if (pass == null || pass.length < 8) {
+      throw const BackupException('Recovery passphrase required');
+    }
+    await crypto.getOrCreateDek();
+    final envelope = await crypto.wrapDekWithPassphrase(pass);
+    await drive!.uploadEnvelope(envelope);
+  }
+
+  Future<void> _ensureInternetForDrive() async {
+    final ok = await connectivity.hasInternetAccess();
+    if (!ok) {
+      throw const BackupException('No internet connection for Drive backup');
+    }
+  }
+
+  Future<bool> _verifyDriveUpload(String fileId, int expectedSize) async {
+    if (fileId.isEmpty) return false;
+    try {
+      final bytes = await drive!.download(fileId);
+      return bytes.length == expectedSize || bytes.isNotEmpty;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<String> _deviceId() async {
+    final settings = SettingsRepository(_db);
+    var id = await settings.get(SettingKeys.installId);
+    if (id == null || id.isEmpty) {
+      id = const Uuid().v4();
+      await settings.set(SettingKeys.installId, id);
+    }
+    return id;
+  }
+
+  static int? _readInt(Map<String, dynamic> map, List<String> keys) {
+    for (final k in keys) {
+      final v = map[k];
+      if (v is int) return v;
+      if (v is num) return v.toInt();
+      if (v is String) return int.tryParse(v);
+    }
+    return null;
   }
 
   /// Public Downloads → `POS Billing/backup` when possible; otherwise app docs.
@@ -341,32 +588,5 @@ class BackupService {
         }
       } catch (_) {}
     }
-  }
-
-  Future<enc.Key> _key() async {
-    var stored = await secureStorage.read(key: _keyName);
-    if (stored == null) {
-      stored = base64Encode(enc.Key.fromSecureRandom(32).bytes);
-      await secureStorage.write(key: _keyName, value: stored);
-    }
-    return enc.Key.fromBase64(stored);
-  }
-
-  Future<Uint8List> _encrypt(Uint8List data) async {
-    final key = await _key();
-    final iv = enc.IV.fromSecureRandom(16);
-    final encrypter = enc.Encrypter(enc.AES(key, mode: enc.AESMode.cbc));
-    final encrypted = encrypter.encryptBytes(data, iv: iv);
-    return Uint8List.fromList([...iv.bytes, ...encrypted.bytes]);
-  }
-
-  Future<Uint8List> _decrypt(Uint8List data) async {
-    if (data.length < 17) throw const RestoreException('Backup is corrupted');
-    final key = await _key();
-    final iv = enc.IV(data.sublist(0, 16));
-    final encrypter = enc.Encrypter(enc.AES(key, mode: enc.AESMode.cbc));
-    final decrypted =
-        encrypter.decryptBytes(enc.Encrypted(data.sublist(16)), iv: iv);
-    return Uint8List.fromList(decrypted);
   }
 }

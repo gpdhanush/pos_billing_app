@@ -215,7 +215,7 @@ class _StoreSetupScreenState extends ConsumerState<StoreSetupScreen> {
       if (widget.editing) {
         // Prefer go() so a router refresh after save cannot remount this
         // screen at step 0 (Store tab) again.
-        context.go('/settings');
+        context.go('/more');
       } else {
         // First-time setup → biometric screen, never bounce back here.
         context.go('/setup/security');

@@ -127,7 +127,7 @@ class _AppErrorPageState extends State<AppErrorPage> {
         SnackBar(
           content: Text(
             ok
-                ? 'Share or email the log to support'
+                ? 'Share pos_billing_crash.log — choose WhatsApp'
                 : 'Unable to open log share',
           ),
         ),

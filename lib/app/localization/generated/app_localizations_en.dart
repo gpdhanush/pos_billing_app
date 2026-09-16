@@ -151,7 +151,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navBilling => 'Billing';
 
   @override
-  String get navStock => 'Stock';
+  String get navStock => 'Inventory';
 
   @override
   String get navSales => 'Sales';
@@ -628,7 +628,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get categoriesName => 'Category name';
 
   @override
-  String get inventoryTitle => 'Stock';
+  String get inventoryTitle => 'Inventory';
 
   @override
   String get inventoryStockIn => 'Stock in';

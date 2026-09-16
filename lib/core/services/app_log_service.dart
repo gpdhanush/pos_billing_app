@@ -86,55 +86,87 @@ class AppLogService {
     await _append('CRASH', buf.toString().trimRight());
   }
 
-  /// Opens the share sheet with the log file (pick Gmail/email to send to
-  /// [AppLinks.supportEmail]). Also opens a mailto draft with device details.
+  /// Shares [pos_billing_crash.log] via the system share sheet so it can be
+  /// sent on WhatsApp (wa.me cannot attach files).
   static Future<bool> sendLogsToSupport({String? userNote}) async {
     await init();
-    final file = _file;
-    if (file == null || !await file.exists()) return false;
+    final source = _file;
+    if (source == null) return false;
 
-    final device = await deviceSummary();
-    final note = userNote?.trim() ?? '';
-    final body = StringBuffer()
-      ..writeln('POS Billing crash / diagnostic report')
-      ..writeln()
-      ..writeln('Please review the attached (or shared) log file.')
-      ..writeln()
-      ..writeln(device.trim())
-      ..writeln();
-    if (note.isNotEmpty) {
-      body
-        ..writeln('User note:')
-        ..writeln(note)
-        ..writeln();
+    // Flush so the shared copy includes the latest lines.
+    try {
+      await _sink?.flush();
+    } catch (_) {}
+
+    if (!await source.exists()) {
+      await _writeLine('[${_now()}] [INFO] Log file created for diagnostics');
+      try {
+        await _sink?.flush();
+      } catch (_) {}
     }
-    body
-      ..writeln('---')
-      ..writeln('Sent from POS Billing ${DbConstants.appVersion}');
+    if (!await source.exists()) return false;
 
-    final subject = 'POS Billing crash log — ${DbConstants.appVersion}';
+    // Copy to cache — WhatsApp/share intents are more reliable with a fresh
+    // temp file and a clear .log name than an open append handle.
+    File shareFile;
+    try {
+      final cache = await getTemporaryDirectory();
+      shareFile = File(p.join(cache.path, fileName));
+      await source.copy(shareFile.path);
+      // Touch mtime / ensure readable.
+      if (!await shareFile.exists() || await shareFile.length() == 0) {
+        final fallback = StringBuffer()
+          ..writeln('POS Billing diagnostic log')
+          ..writeln(await deviceSummary())
+          ..writeln('---')
+          ..writeln('Generated: ${_now()}');
+        await shareFile.writeAsString(fallback.toString(), flush: true);
+      }
+    } catch (_) {
+      shareFile = source;
+    }
+
+    final note = userNote?.trim() ?? '';
+    final text = StringBuffer()
+      ..writeln('POS Billing crash / diagnostic log ($fileName)')
+      ..writeln('Please send this file to ${AppLinks.supportPhone}')
+      ..writeln('App ${DbConstants.appVersion}');
+    if (note.isNotEmpty) {
+      text
+        ..writeln()
+        ..writeln('Note: $note');
+    }
 
     try {
-      await SharePlus.instance.share(
+      final result = await SharePlus.instance.share(
         ShareParams(
           files: [
-            XFile(file.path, mimeType: 'text/plain', name: fileName),
+            XFile(
+              shareFile.path,
+              mimeType: 'text/plain',
+              name: fileName,
+            ),
           ],
-          subject: subject,
-          text:
-              '${body.toString()}\nPlease send to ${AppLinks.supportEmail}',
+          subject: 'POS Billing log — ${DbConstants.appVersion}',
+          text: text.toString(),
         ),
       );
-      return true;
-    } catch (_) {
+      // success / dismissed both mean the sheet opened with the file.
+      return result.status != ShareResultStatus.unavailable;
+    } catch (e, st) {
+      if (kDebugMode) {
+        debugPrint('sendLogsToSupport share failed: $e\n$st');
+      }
+      // Last resort: open WhatsApp chat (text only — no file).
       try {
-        final mailto = Uri.parse(
-          'mailto:${AppLinks.supportEmail}'
-          '?subject=${Uri.encodeComponent(subject)}'
-          '&body=${Uri.encodeComponent(body.toString())}',
+        final wa = Uri.parse(
+          'https://wa.me/${AppLinks.supportWhatsAppE164}'
+          '?text=${Uri.encodeComponent(
+            'Hi, I need help with POS Billing ${DbConstants.appVersion}. '
+            'I could not attach $fileName — please reply so I can resend.',
+          )}',
         );
-        await launchUrl(mailto, mode: LaunchMode.externalApplication);
-        return true;
+        return await launchUrl(wa, mode: LaunchMode.externalApplication);
       } catch (_) {
         return false;
       }

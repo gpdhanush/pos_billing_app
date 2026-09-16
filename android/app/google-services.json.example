@@ -1,0 +1,30 @@
+{
+  "_comment": "PLACEHOLDER — do not commit a real google-services.json with secrets if your policy forbids it. Download the real file from Firebase Console for package com.gk.pos_billing and save it as android/app/google-services.json. Until then, Firebase Analytics/Crashlytics/FCM will no-op and the app still runs.",
+  "project_info": {
+    "project_number": "000000000000",
+    "project_id": "YOUR_FIREBASE_PROJECT_ID",
+    "storage_bucket": "YOUR_FIREBASE_PROJECT_ID.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:000000000000:android:0000000000000000000000",
+        "android_client_info": {
+          "package_name": "com.gk.pos_billing"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "REPLACE_WITH_FIREBASE_API_KEY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

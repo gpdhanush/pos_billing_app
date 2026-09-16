@@ -427,13 +427,29 @@ class SavedPrinter {
 class DashboardStats {
   const DashboardStats({
     required this.todaySalesPaise,
+    required this.yesterdaySalesPaise,
     required this.billsToday,
     required this.itemsInStock,
     required this.lowStockCount,
+    required this.last7DaysSalesPaise,
   });
 
   final int todaySalesPaise;
+  final int yesterdaySalesPaise;
   final int billsToday;
   final int itemsInStock;
   final int lowStockCount;
+
+  /// Oldest → newest (7 entries), Sunday → Saturday of the current week.
+  final List<int> last7DaysSalesPaise;
+
+  /// Percent change vs yesterday. Null when yesterday had no sales.
+  double? get salesChangePercent {
+    if (yesterdaySalesPaise <= 0) {
+      return todaySalesPaise > 0 ? 100 : null;
+    }
+    return ((todaySalesPaise - yesterdaySalesPaise) /
+            yesterdaySalesPaise) *
+        100;
+  }
 }
