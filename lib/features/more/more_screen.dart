@@ -499,25 +499,21 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
       _MoreSection(
         icon: HugeIcons.strokeRoundedStore01,
         title: l10n.moreSectionShop,
-        hint: l10n.moreProductsSubtitle,
         items: shop,
       ),
       _MoreSection(
         icon: HugeIcons.strokeRoundedChartAverage,
         title: l10n.moreSectionBusiness,
-        hint: l10n.moreReportsSubtitle,
         items: business,
       ),
       _MoreSection(
         icon: HugeIcons.strokeRoundedTools,
         title: l10n.moreSectionData,
-        hint: l10n.moreBackupSubtitle,
         items: tools,
       ),
       _MoreSection(
         icon: HugeIcons.strokeRoundedCustomerSupport,
         title: l10n.moreSectionSupport,
-        hint: l10n.moreHelpSubtitle,
         items: support,
       ),
     ];
@@ -537,7 +533,6 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
                 child: _SectionHeader(
                   icon: section.icon,
                   title: section.title,
-                  hint: section.hint,
                 ),
               ),
               ContainedSliver(
@@ -561,7 +556,6 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
               child: _SectionHeader(
                 icon: HugeIcons.strokeRoundedSettings01,
                 title: l10n.morePreferences,
-                hint: l10n.moreStoreSettingsSubtitle,
               ),
             ),
             ContainedSliver(
@@ -602,7 +596,6 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
               child: _SectionHeader(
                 icon: HugeIcons.strokeRoundedPaintBoard,
                 title: l10n.moreAppearance,
-                hint: l10n.moreThemeValueHint,
               ),
             ),
             ContainedSliver(
@@ -664,7 +657,6 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
               child: _SectionHeader(
                 icon: HugeIcons.strokeRoundedInformationCircle,
                 title: l10n.moreAbout,
-                hint: l10n.morePrivacySubtitle,
               ),
             ),
             ContainedSliver(
@@ -711,7 +703,6 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
               child: _SectionHeader(
                 icon: HugeIcons.strokeRoundedAlert02,
                 title: l10n.moreDangerZone,
-                hint: l10n.moreDeleteEverything,
                 color: scheme.error,
               ),
             ),
@@ -781,13 +772,11 @@ class _MoreSection {
   const _MoreSection({
     required this.icon,
     required this.title,
-    required this.hint,
     required this.items,
   });
 
   final List<List<dynamic>> icon;
   final String title;
-  final String hint;
   final List<_MoreItem> items;
 }
 
@@ -819,13 +808,11 @@ class _SectionHeader extends StatelessWidget {
   const _SectionHeader({
     required this.icon,
     required this.title,
-    required this.hint,
     this.color,
   });
 
   final List<List<dynamic>> icon;
   final String title;
-  final String hint;
   final Color? color;
 
   @override
@@ -844,12 +831,6 @@ class _SectionHeader extends StatelessWidget {
                   fontWeight: FontWeight.w800,
                 ),
           ),
-        ),
-        Text(
-          hint,
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
         ),
       ],
     );

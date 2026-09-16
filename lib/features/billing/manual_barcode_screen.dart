@@ -129,25 +129,6 @@ class _ManualBarcodeScreenState extends State<ManualBarcodeScreen> {
                         ),
                   ),
                   const SizedBox(height: 28),
-                  SizedBox(
-                    height: 54,
-                    child: FilledButton(
-                      onPressed: _submit,
-                      style: FilledButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadii.md),
-                        ),
-                      ),
-                      child: Text(
-                        l10n.commonContinue,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
                   Text(
                     l10n.productsBarcode,
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -217,6 +198,25 @@ class _ManualBarcodeScreenState extends State<ManualBarcodeScreen> {
                         borderRadius: BorderRadius.circular(AppRadii.md),
                         borderSide:
                             BorderSide(color: scheme.error, width: 1.5),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    height: 54,
+                    child: FilledButton(
+                      onPressed: _submit,
+                      style: FilledButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadii.md),
+                        ),
+                      ),
+                      child: Text(
+                        l10n.commonContinue,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                        ),
                       ),
                     ),
                   ),

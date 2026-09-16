@@ -26,7 +26,6 @@ class _AddStockMovementScreenState
   late String _defaultNoteOut;
   bool _defaultNotesReady = false;
 
-  final _search = TextEditingController();
   final _qty = TextEditingController();
   final _cost = TextEditingController();
   final _notes = TextEditingController();
@@ -34,10 +33,8 @@ class _AddStockMovementScreenState
   Product? _product;
   bool _isIn = true;
   bool _saving = false;
-  String _query = '';
   List<Product> _allProducts = const [];
-  List<Product> _matches = const [];
-  bool _loadingCatalog = true;
+  bool _catalogLoaded = false;
 
   @override
   void initState() {
@@ -46,7 +43,6 @@ class _AddStockMovementScreenState
     if (_product != null) {
       _cost.text = Money(_product!.purchasePricePaise).formatForField();
     }
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadCatalog());
   }
 
   @override
@@ -64,7 +60,6 @@ class _AddStockMovementScreenState
 
   @override
   void dispose() {
-    _search.dispose();
     _qty.dispose();
     _cost.dispose();
     _notes.dispose();
@@ -95,65 +90,48 @@ class _AddStockMovementScreenState
     });
   }
 
-  Future<void> _loadCatalog() async {
-    setState(() => _loadingCatalog = true);
-    try {
-      final store = await ref.read(storeProfileProvider.future);
-      if (store == null || !mounted) return;
-      final results = await ref.read(productRepositoryProvider).getProducts(
-            store.id,
-            const ProductQuery(activeOnly: true, limit: 1000),
-          );
-      if (!mounted) return;
-      setState(() {
-        _allProducts = results;
-        _loadingCatalog = false;
-      });
-      _applyFilter(_search.text);
-    } catch (_) {
-      if (mounted) setState(() => _loadingCatalog = false);
-    }
-  }
-
-  void _applyFilter(String raw) {
-    final q = raw.trim().toLowerCase();
-    final filtered = q.isEmpty
-        ? _allProducts.take(40).toList()
-        : _allProducts
-            .where((p) {
-              final name = p.name.toLowerCase();
-              final sku = (p.sku ?? '').toLowerCase();
-              final category = (p.categoryName ?? '').toLowerCase();
-              final barcodes =
-                  p.barcodes.map((b) => b.toLowerCase()).toList();
-              return name.contains(q) ||
-                  sku.contains(q) ||
-                  category.contains(q) ||
-                  barcodes.any((b) => b.contains(q));
-            })
-            .take(50)
-            .toList();
-    setState(() {
-      _query = raw;
-      _matches = filtered;
-    });
+  Future<List<Product>> _ensureCatalog() async {
+    if (_catalogLoaded) return _allProducts;
+    final store = await ref.read(storeProfileProvider.future);
+    if (store == null) return const [];
+    final results = await ref.read(productRepositoryProvider).getProducts(
+          store.id,
+          const ProductQuery(activeOnly: true, limit: 1000),
+        );
+    _allProducts = results;
+    _catalogLoaded = true;
+    return _allProducts;
   }
 
   void _selectProduct(Product product) {
     setState(() {
       _product = product;
-      _search.clear();
-      _query = '';
-      _matches = const [];
       _cost.text = Money(product.purchasePricePaise).formatForField();
     });
-    dismissKeyboard();
   }
 
-  Future<void> _scan() async {
-    final product = await context.push<Product>('/scan?purpose=stockIn');
-    if (product == null || !mounted) return;
-    _selectProduct(product);
+  Future<void> _openProductPicker() async {
+    final products = await _ensureCatalog();
+    if (!mounted) return;
+
+    final selected = await showModalBottomSheet<Product>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _ProductPickerSheet(
+        products: products,
+        selectedId: _product?.id,
+        onScan: () async {
+          Navigator.pop(ctx);
+          final scanned = await context.push<Product>('/scan?purpose=stockIn');
+          if (scanned != null && mounted) _selectProduct(scanned);
+        },
+      ),
+    );
+
+    if (selected != null && mounted) {
+      _selectProduct(selected);
+    }
   }
 
   Future<void> _save() async {
@@ -230,87 +208,18 @@ class _AddStockMovementScreenState
                           letterSpacing: 0.6,
                         ),
                   ),
-                  const SizedBox(height: 8),
-                  if (_product == null) ...[
-                    Row(
-                      children: [
-                        Expanded(
-                          child: SoftSearchField(
-                            controller: _search,
-                            hintText: l10n.inventorySearchProductHint,
-                            onChanged: _applyFilter,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Material(
-                          color: scheme.primary,
-                          borderRadius: BorderRadius.circular(12),
-                          child: InkWell(
-                            onTap: _scan,
-                            borderRadius: BorderRadius.circular(12),
-                            child: SizedBox(
-                              width: 48,
-                              height: 44,
-                              child: Icon(
-                                Icons.qr_code_scanner_rounded,
-                                color: scheme.onPrimary,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    if (_loadingCatalog)
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 16),
-                        child: Center(
-                          child: SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        ),
-                      )
-                    else if (_matches.isEmpty)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        child: Text(
-                          _query.trim().isEmpty
-                              ? l10n.productsEmptyTitle
-                              : l10n.productsEmptySearchTitle,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: scheme.onSurfaceVariant),
-                        ),
-                      )
-                    else
-                      SoftCard(
-                        radius: 10,
-                        padding: EdgeInsets.zero,
-                        child: Column(
-                          children: [
-                            for (var i = 0; i < _matches.length; i++) ...[
-                              if (i > 0) const Divider(height: 1),
-                              ListTile(
-                                dense: true,
-                                title: Text(
-                                  _matches[i].name.displayTitle,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                subtitle: Text(_productMeta(l10n, _matches[i])),
-                                trailing: Icon(
-                                  Icons.chevron_right_rounded,
-                                  color: scheme.onSurfaceVariant,
-                                ),
-                                onTap: () => _selectProduct(_matches[i]),
-                              ),
-                            ],
-                          ],
-                        ),
+                  const SizedBox(height: 10),
+                  if (_product == null)
+                    SizedBox(
+                      width: double.infinity,
+                      height: 48,
+                      child: OutlinedButton.icon(
+                        onPressed: _openProductPicker,
+                        icon: const Icon(Icons.add_rounded),
+                        label: Text(l10n.billingAddProduct),
                       ),
-                  ] else ...[
+                    )
+                  else
                     SoftCard(
                       radius: 10,
                       padding: const EdgeInsets.symmetric(
@@ -344,20 +253,12 @@ class _AddStockMovementScreenState
                             ),
                           ),
                           TextButton(
-                            onPressed: () {
-                              setState(() {
-                                _product = null;
-                                _search.clear();
-                                _query = '';
-                              });
-                              _applyFilter('');
-                            },
+                            onPressed: _openProductPicker,
                             child: Text(l10n.commonChange),
                           ),
                         ],
                       ),
                     ),
-                  ],
                   const SizedBox(height: 22),
                   Text(
                     l10n.inventoryAddMovementTitle.toUpperCase(),
@@ -441,6 +342,173 @@ class _AddStockMovementScreenState
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProductPickerSheet extends StatefulWidget {
+  const _ProductPickerSheet({
+    required this.products,
+    required this.onScan,
+    this.selectedId,
+  });
+
+  final List<Product> products;
+  final int? selectedId;
+  final VoidCallback onScan;
+
+  @override
+  State<_ProductPickerSheet> createState() => _ProductPickerSheetState();
+}
+
+class _ProductPickerSheetState extends State<_ProductPickerSheet> {
+  final _search = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
+  List<Product> get _filtered {
+    final q = _query.trim().toLowerCase();
+    if (q.isEmpty) return widget.products;
+    return widget.products.where((p) {
+      final name = p.name.toLowerCase();
+      final sku = (p.sku ?? '').toLowerCase();
+      final category = (p.categoryName ?? '').toLowerCase();
+      final barcodes = p.barcodes.map((b) => b.toLowerCase());
+      return name.contains(q) ||
+          sku.contains(q) ||
+          category.contains(q) ||
+          barcodes.any((b) => b.contains(q));
+    }).toList();
+  }
+
+  String _meta(AppLocalizations l10n, Product p) {
+    return [
+      if ((p.sku ?? '').isNotEmpty) '${l10n.productsSku} ${p.sku}',
+      if ((p.categoryName ?? '').isNotEmpty) p.categoryName!,
+      '${l10n.productsStock} ${p.currentStock} ${p.unit}',
+    ].join(' · ');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final filtered = _filtered;
+    final maxH = MediaQuery.sizeOf(context).height * 0.78;
+    final bottom = MediaQuery.viewInsetsOf(context).bottom;
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(12, 0, 12, 12 + bottom),
+      child: Material(
+        color: scheme.surface,
+        borderRadius: BorderRadius.circular(24),
+        clipBehavior: Clip.antiAlias,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: maxH),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 10),
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: scheme.outline.withValues(alpha: 0.7),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 14, 8, 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          l10n.billingAddProduct,
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: l10n.billingScanBarcode,
+                        onPressed: widget.onScan,
+                        icon: const Icon(Icons.qr_code_scanner_rounded),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close_rounded),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                  child: SoftSearchField(
+                    controller: _search,
+                    hintText: l10n.inventorySearchProductHint,
+                    onChanged: (v) => setState(() => _query = v),
+                  ),
+                ),
+                Flexible(
+                  child: filtered.isEmpty
+                      ? Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 28, 20, 36),
+                          child: Text(
+                            _query.trim().isEmpty
+                                ? l10n.productsEmptyTitle
+                                : l10n.productsEmptySearchTitle,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(color: scheme.onSurfaceVariant),
+                          ),
+                        )
+                      : ListView.separated(
+                          shrinkWrap: true,
+                          padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
+                          itemCount: filtered.length,
+                          separatorBuilder: (_, _) => const Divider(height: 1),
+                          itemBuilder: (context, i) {
+                            final p = filtered[i];
+                            final selected = p.id == widget.selectedId;
+                            return ListTile(
+                              title: Text(
+                                p.name.displayTitle,
+                                style: TextStyle(
+                                  fontWeight: selected
+                                      ? FontWeight.w800
+                                      : FontWeight.w700,
+                                ),
+                              ),
+                              subtitle: Text(_meta(l10n, p)),
+                              trailing: selected
+                                  ? Icon(
+                                      Icons.check_circle_rounded,
+                                      color: scheme.primary,
+                                    )
+                                  : Icon(
+                                      Icons.chevron_right_rounded,
+                                      color: scheme.onSurfaceVariant,
+                                    ),
+                              onTap: () => Navigator.pop(context, p),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

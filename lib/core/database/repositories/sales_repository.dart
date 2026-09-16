@@ -190,21 +190,9 @@ class SalesRepository {
             }
           }
 
-          final storeRows = await txn.query(
-            'stores',
-            columns: ['invoice_prefix', 'next_invoice_number'],
-            where: 'id = ?',
-            whereArgs: [command.storeId],
-          );
-          final prefix =
-              (storeRows.first['invoice_prefix'] as String?) ?? 'INV';
-          final number = (storeRows.first['next_invoice_number'] as int?) ?? 1;
-          await txn.update(
-            'stores',
-            {'next_invoice_number': number + 1, 'updated_at': nowMillis()},
-            where: 'id = ?',
-            whereArgs: [command.storeId],
-          );
+          final storeRepo = StoreRepository(_db);
+          final (prefix, number) =
+              await storeRepo.consumeInvoiceNumber(txn, command.storeId);
           final invoiceNumber = InvoiceNumbering.format(
             prefix: prefix,
             number: number,
@@ -426,19 +414,14 @@ LIMIT ?
           final now = nowMillis();
           final storeRows = await txn.query(
             'stores',
-            columns: ['id', 'invoice_prefix', 'next_invoice_number'],
+            columns: ['id'],
             where: 'id = (SELECT store_id FROM invoices WHERE id = ?)',
             whereArgs: [invoiceId],
           );
           final storeId = storeRows.first['id'] as int;
-          final prefix = storeRows.first['invoice_prefix'] as String? ?? 'INV';
-          final number = storeRows.first['next_invoice_number'] as int? ?? 1;
-          await txn.update(
-            'stores',
-            {'next_invoice_number': number + 1, 'updated_at': now},
-            where: 'id = ?',
-            whereArgs: [storeId],
-          );
+          final storeRepo = StoreRepository(_db);
+          final (prefix, number) =
+              await storeRepo.consumeInvoiceNumber(txn, storeId);
           final reversalNumber = InvoiceNumbering.format(
             prefix: prefix,
             number: number,

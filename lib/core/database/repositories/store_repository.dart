@@ -1,5 +1,6 @@
 import 'package:pos_billing/core/constants/app_constants.dart';
 import 'package:pos_billing/core/database/app_database.dart';
+import 'package:pos_billing/core/utils/invoice_numbering.dart';
 import 'package:pos_billing/core/utils/time.dart';
 import 'package:pos_billing/shared/models/store_profile.dart';
 import 'package:sqflite/sqflite.dart';
@@ -57,14 +58,36 @@ class StoreRepository {
   Future<int> peekNextInvoiceNumber(int storeId) async {
     final rows = await _db.db.query(
       'stores',
-      columns: ['next_invoice_number'],
+      columns: ['invoice_prefix', 'next_invoice_number'],
       where: 'id = ?',
       whereArgs: [storeId],
     );
-    return (rows.first['next_invoice_number'] as int?) ?? 1;
+    if (rows.isEmpty) return 1;
+    final prefix = (rows.first['invoice_prefix'] as String?) ?? 'INV';
+    var number = (rows.first['next_invoice_number'] as int?) ?? 1;
+    final yearKey = InvoiceNumbering.yearPrefix(prefix: prefix);
+    final existing = await _db.db.query(
+      'invoices',
+      columns: ['invoice_number'],
+      where: 'store_id = ? AND invoice_number LIKE ?',
+      whereArgs: [storeId, '$yearKey%'],
+    );
+    var maxSeq = 0;
+    for (final row in existing) {
+      final seq = InvoiceNumbering.parseSequence(
+        row['invoice_number'] as String? ?? '',
+      );
+      if (seq != null && seq > maxSeq) maxSeq = seq;
+    }
+    if (number <= maxSeq) number = maxSeq + 1;
+    return number;
   }
 
-  Future<(String prefix, int number)> consumeInvoiceNumber(Transaction txn, int storeId) async {
+  Future<(String prefix, int number)> consumeInvoiceNumber(
+    Transaction txn,
+    int storeId, {
+    DateTime? now,
+  }) async {
     final rows = await txn.query(
       'stores',
       columns: ['invoice_prefix', 'next_invoice_number'],
@@ -72,7 +95,47 @@ class StoreRepository {
       whereArgs: [storeId],
     );
     final prefix = (rows.first['invoice_prefix'] as String?) ?? 'INV';
-    final number = (rows.first['next_invoice_number'] as int?) ?? 1;
+    var number = (rows.first['next_invoice_number'] as int?) ?? 1;
+    final when = now ?? DateTime.now();
+    final yearKey = InvoiceNumbering.yearPrefix(prefix: prefix, now: when);
+
+    // Keep counter ahead of any existing invoice for this year (e.g. after
+    // restore or manual start-number edits that left the counter behind).
+    final existing = await txn.query(
+      'invoices',
+      columns: ['invoice_number'],
+      where: 'store_id = ? AND invoice_number LIKE ?',
+      whereArgs: [storeId, '$yearKey%'],
+    );
+    var maxSeq = 0;
+    for (final row in existing) {
+      final seq = InvoiceNumbering.parseSequence(
+        row['invoice_number'] as String? ?? '',
+      );
+      if (seq != null && seq > maxSeq) maxSeq = seq;
+    }
+    if (number <= maxSeq) {
+      number = maxSeq + 1;
+    }
+
+    // Final guard against rare races / odd formats.
+    while (true) {
+      final candidate = InvoiceNumbering.format(
+        prefix: prefix,
+        number: number,
+        now: when,
+      );
+      final clash = await txn.query(
+        'invoices',
+        columns: ['id'],
+        where: 'store_id = ? AND invoice_number = ?',
+        whereArgs: [storeId, candidate],
+        limit: 1,
+      );
+      if (clash.isEmpty) break;
+      number++;
+    }
+
     await txn.update(
       'stores',
       {
