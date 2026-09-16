@@ -48,12 +48,15 @@ class ReceiptBuilder {
     }
     bytes.addAll(gen.hr());
     bytes.addAll(_kv(gen, 'Subtotal', Money(invoice.subtotalPaise).format(symbol: symbol)));
-    if (invoice.discountPaise != 0) {
-      bytes.addAll(_kv(gen, 'Discount', Money(invoice.discountPaise).format(symbol: symbol)));
-    }
-    if (invoice.taxPaise != 0) {
-      bytes.addAll(_kv(gen, 'Tax', Money(invoice.taxPaise).format(symbol: symbol)));
-    }
+    bytes.addAll(_kv(gen, 'Discount', Money(invoice.billDiscountPaise).format(symbol: symbol)));
+    bytes.addAll(_kv(gen, 'Tax', Money(invoice.taxPaise).format(symbol: symbol)));
+    bytes.addAll(
+      _kv(
+        gen,
+        'Round off',
+        '${invoice.roundOffPaise > 0 ? '+' : ''}${Money(invoice.roundOffPaise).format(symbol: symbol)}',
+      ),
+    );
     bytes.addAll(_kv(gen, 'TOTAL', Money(invoice.summary.totalPaise).format(symbol: symbol), bold: true));
     for (final pay in invoice.payments) {
       bytes.addAll(_kv(gen, pay.method.toUpperCase(), Money(pay.amountPaise).format(symbol: symbol)));

@@ -19,6 +19,7 @@ class SalesScreen extends ConsumerWidget {
 
   ({Color color, List<List<dynamic>> icon, String label}) _statusStyle(
     String status,
+    ColorScheme scheme,
   ) {
     switch (status) {
       case InvoiceStatus.cancelled:
@@ -36,7 +37,7 @@ class SalesScreen extends ConsumerWidget {
       case InvoiceStatus.completed:
       default:
         return (
-          color: AppColors.success,
+          color: scheme.primary,
           icon: HugeIcons.strokeRoundedInvoice01,
           label: 'Completed',
         );
@@ -146,7 +147,7 @@ class SalesScreen extends ConsumerWidget {
                   separatorBuilder: (_, _) => const SizedBox(height: 10),
                   itemBuilder: (context, i) {
                     final bill = visible[i];
-                    final style = _statusStyle(bill.status);
+                    final style = _statusStyle(bill.status, scheme);
                     final when = dateFmt.format(
                       DateTime.fromMillisecondsSinceEpoch(bill.createdAt),
                     );

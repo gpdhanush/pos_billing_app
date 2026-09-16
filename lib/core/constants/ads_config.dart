@@ -5,13 +5,14 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 /// Replace with your own IDs in `.env` (see `.env.example`).
 ///
 /// The Android **App ID** must match [android/local.properties] `admobAppId`
-/// (manifest meta-data). The banner ID here must belong to that same AdMob app.
+/// (manifest meta-data). The app-open unit ID here must belong to that same
+/// AdMob app.
 class AdsConfig {
   /// https://developers.google.com/admob/android/test-ads
   static const googleSampleAndroidAppId =
       'ca-app-pub-3940256099942544~3347511713';
-  static const googleSampleBannerAdUnit =
-      'ca-app-pub-3940256099942544/6300978111';
+  static const googleSampleAppOpenAdUnit =
+      'ca-app-pub-3940256099942544/9257395921';
 
   static String get androidAppId {
     if (kDebugMode) return googleSampleAndroidAppId;
@@ -20,11 +21,11 @@ class AdsConfig {
     return v;
   }
 
-  static String get bannerAdUnitId {
+  static String get appOpenAdUnitId {
     // Debug: always Google's demo units so unapproved AdMob accounts still work.
-    if (kDebugMode) return googleSampleBannerAdUnit;
-    final v = dotenv.maybeGet('ADMOB_BANNER_AD_UNIT_ID')?.trim();
-    if (v == null || v.isEmpty) return googleSampleBannerAdUnit;
+    if (kDebugMode) return googleSampleAppOpenAdUnit;
+    final v = dotenv.maybeGet('ADMOB_APP_OPEN_AD_UNIT_ID')?.trim();
+    if (v == null || v.isEmpty) return googleSampleAppOpenAdUnit;
     return v;
   }
 }

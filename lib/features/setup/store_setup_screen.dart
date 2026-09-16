@@ -8,11 +8,13 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/app/providers.dart';
+import 'package:pos_billing/core/utils/formatters.dart';
 import 'package:pos_billing/core/utils/invoice_numbering.dart';
 import 'package:pos_billing/core/utils/time.dart';
 import 'package:pos_billing/core/utils/validators.dart';
 import 'package:pos_billing/shared/models/store_profile.dart';
 import 'package:pos_billing/shared/widgets/app_image.dart';
+import 'package:pos_billing/shared/widgets/image_source_sheet.dart';
 import 'package:pos_billing/shared/widgets/ui_kit.dart';
 
 class StoreSetupScreen extends ConsumerStatefulWidget {
@@ -86,8 +88,8 @@ class _StoreSetupScreenState extends ConsumerState<StoreSetupScreen> {
   void _hydrate(StoreProfile? store) {
     if (_loaded || store == null) return;
     _loaded = true;
-    _name.text = store.businessName;
-    _display.text = store.displayName ?? '';
+    _name.text = store.businessName.toUpperCase();
+    _display.text = (store.displayName ?? '').displayTitle;
     _phone.text = store.phone ?? '';
     _altPhone.text = store.alternatePhone ?? '';
     _email.text = store.email ?? '';
@@ -115,8 +117,8 @@ class _StoreSetupScreenState extends ConsumerState<StoreSetupScreen> {
     final now = nowMillis();
     return StoreProfile(
       id: existing?.id ?? 0,
-      businessName: _name.text.trim(),
-      displayName: _display.text.trim(),
+      businessName: _name.text.trim().toUpperCase(),
+      displayName: _display.text.trim().displayTitle,
       logoPath: _logoPath,
       addressLine1: _addr1.text.trim(),
       addressLine2: _addr2.text.trim(),
@@ -144,10 +146,15 @@ class _StoreSetupScreenState extends ConsumerState<StoreSetupScreen> {
   }
 
   Future<void> _pickLogo() async {
-    final file = await ImagePicker().pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 80,
-      maxWidth: 1280,
+    final file = await showImagePickerFlow(
+      context,
+      title: 'Store logo',
+      subtitle: 'Take a photo or choose from gallery',
+      showRemove: _logoPath != null && _logoPath!.isNotEmpty,
+      removeLabel: 'Remove logo',
+      onRemove: () async {
+        setState(() => _logoPath = null);
+      },
     );
     if (file == null || !mounted) return;
     try {
@@ -523,7 +530,8 @@ class _StoreSetupScreenState extends ConsumerState<StoreSetupScreen> {
         _label('${l10n.storeBusinessName} *'),
         TextField(
           controller: _name,
-          textCapitalization: TextCapitalization.words,
+          textCapitalization: TextCapitalization.characters,
+          inputFormatters: [UpperCaseTextFormatter()],
           decoration: _decoration(
             hint: 'Enter business name',
             icon: Icons.storefront_outlined,
@@ -534,6 +542,7 @@ class _StoreSetupScreenState extends ConsumerState<StoreSetupScreen> {
         TextField(
           controller: _display,
           textCapitalization: TextCapitalization.words,
+          inputFormatters: [TitleCaseTextFormatter()],
           decoration: _decoration(
             hint: 'Display name (optional)',
             icon: Icons.badge_outlined,

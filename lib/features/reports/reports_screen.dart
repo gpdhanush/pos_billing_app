@@ -308,29 +308,6 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 10),
-              GridView.count(
-                crossAxisCount: 2,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                childAspectRatio: 2.35,
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 8,
-                children: [
-                  _ReportMetricCard(
-                    label: l10n.reportsStockValue,
-                    value: Money(value).format(symbol: symbol),
-                    accent: const Color(0xFF7C3AED),
-                    icon: HugeIcons.strokeRoundedPackage,
-                  ),
-                  _ReportMetricCard(
-                    label: l10n.reportsExpenses,
-                    value: Money(expensesTotal).format(symbol: symbol),
-                    accent: const Color(0xFFEA580C),
-                    icon: HugeIcons.strokeRoundedMoney01,
-                  ),
-                ],
-              ),
               const SizedBox(height: 14),
               _ReportSectionHeader(
                 title: 'Collections',
@@ -384,11 +361,12 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
               ),
               const SizedBox(height: 10),
               if (top.isEmpty)
-                SoftCard(
-                  child: Text(
-                    l10n.salesEmpty,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
+                _ReportEmptyCard(
+                  icon: HugeIcons.strokeRoundedChartBarLine,
+                  accent: AppColors.success,
+                  title: 'No top products yet',
+                  subtitle:
+                      'Sales in this period will appear here once you record bills.',
                 )
               else
                 SoftCard(
@@ -441,11 +419,12 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
               ),
               const SizedBox(height: 10),
               if (expenses.isEmpty)
-                SoftCard(
-                  child: Text(
-                    'No expenses in this period',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
+                _ReportEmptyCard(
+                  icon: HugeIcons.strokeRoundedWallet02,
+                  accent: AppColors.danger,
+                  title: 'No expenses yet',
+                  subtitle:
+                      'Expenses logged in this date range will show up here.',
                 )
               else
                 SoftCard(
@@ -566,6 +545,69 @@ class _DateField extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ReportEmptyCard extends StatelessWidget {
+  const _ReportEmptyCard({
+    required this.icon,
+    required this.accent,
+    required this.title,
+    required this.subtitle,
+  });
+
+  final List<List<dynamic>> icon;
+  final Color accent;
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return SoftCard(
+      padding: const EdgeInsets.fromLTRB(20, 28, 20, 28),
+      child: Column(
+        children: [
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  accent.withValues(alpha: 0.18),
+                  accent.withValues(alpha: 0.05),
+                ],
+              ),
+              border: Border.all(color: accent.withValues(alpha: 0.2)),
+            ),
+            child: Center(
+              child: HugeIcon(icon: icon, size: 28, color: accent),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.2,
+                ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                  height: 1.4,
+                ),
+          ),
+        ],
       ),
     );
   }

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pos_billing/app/app.dart';
+import 'package:pos_billing/core/ads/app_open_ad_manager.dart';
 import 'package:pos_billing/core/ads/mobile_ads_init.dart';
 import 'package:pos_billing/app/providers.dart';
 import 'package:pos_billing/core/analytics/analytics_service.dart';
@@ -22,8 +23,10 @@ Future<void> main() async {
     await loadAppEnv();
     try {
       await ensureMobileAdsInitialized();
+      // Preload so splash can show an app open ad when ready.
+      unawaited(AppOpenAdManager.instance.loadAd());
     } catch (_) {
-      // Banner is optional; app still runs if AdMob fails.
+      // Ads are optional; app still runs if AdMob fails.
     }
     await AppLogService.info('App starting');
 

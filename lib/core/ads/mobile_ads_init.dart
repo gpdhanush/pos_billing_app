@@ -18,7 +18,7 @@ Future<void> ensureMobileAdsInitialized() async {
     final status = await MobileAds.instance.initialize();
     if (kDebugMode) {
       debugPrint(
-        'MobileAds initialized (banner=${AdsConfig.bannerAdUnitId}, '
+        'MobileAds initialized (appOpen=${AdsConfig.appOpenAdUnitId}, '
         'adapters=${status.adapterStatuses.keys.join(', ')})',
       );
     }

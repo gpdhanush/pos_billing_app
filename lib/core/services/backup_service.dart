@@ -82,6 +82,9 @@ class BackupService {
   static const folderAppName = 'POS Billing';
   static const folderBackupName = 'backup';
   static const formatName = 'posbackup';
+  static const mediaFolderProduct = 'product_images';
+  static const mediaFolderStore = 'store_logos';
+  static const mediaArchiveEntry = 'media.enc';
 
   Future<BackupRecord> createBackup({
     bool uploadToDrive = false,
@@ -107,6 +110,17 @@ class BackupService {
 
     try {
       onProgress?.call(BackupProgressStage.preparing);
+
+      // Unlock / create the Drive DEK *before* encrypting. Otherwise a fresh
+      // install invents a new local key, skips envelope unlock, and uploads
+      // backups that cannot be restored with the account passphrase.
+      final signedInForDrive =
+          uploadToDrive && drive != null && await drive!.isSignedIn;
+      if (signedInForDrive) {
+        await _ensureInternetForDrive();
+        await _ensureDekEnvelope(requestPassphraseForEnvelope);
+      }
+
       final pkg = await buildPackage(
         storeId: store?.id,
         storeName: store?.businessName,
@@ -120,9 +134,7 @@ class BackupService {
       await localFile.writeAsBytes(pkg.bytes, flush: true);
 
       String? driveId;
-      if (uploadToDrive && drive != null && await drive!.isSignedIn) {
-        await _ensureInternetForDrive();
-        await _ensureDekEnvelope(requestPassphraseForEnvelope);
+      if (signedInForDrive) {
         onProgress?.call(BackupProgressStage.uploading);
         driveId = await drive!.upload(
           fileName: stampedName,
@@ -193,8 +205,20 @@ class BackupService {
     final dbPath = _db.db.path;
     final dbBytes = await File(dbPath).readAsBytes();
     final checksum = BackupCrypto.checksumSha256(dbBytes);
+
+    final mediaPack = await _buildMediaArchiveBytes();
+    final mediaCount = mediaPack?.count ?? 0;
+    final mediaPlain = mediaPack?.bytes;
+
     onProgress?.call(BackupProgressStage.encrypting);
     final encrypted = await crypto.encryptGcm(dbBytes);
+    Uint8List? mediaEncrypted;
+    String? mediaChecksum;
+    if (mediaPlain != null) {
+      mediaChecksum = BackupCrypto.checksumSha256(mediaPlain);
+      mediaEncrypted = await crypto.encryptGcm(mediaPlain);
+    }
+
     final deviceId = await _deviceId();
     final manifest = <String, Object?>{
       'format': formatName,
@@ -213,6 +237,9 @@ class BackupService {
       'databaseSize': dbBytes.length,
       'checksum': checksum,
       'file_name': fileName,
+      'hasMedia': mediaEncrypted != null,
+      'mediaCount': mediaCount,
+      'mediaChecksum': ?mediaChecksum,
     };
     final manifestBytes = utf8.encode(jsonEncode(manifest));
     final archive = Archive()
@@ -220,6 +247,15 @@ class BackupService {
         ArchiveFile('manifest.json', manifestBytes.length, manifestBytes),
       )
       ..addFile(ArchiveFile('database.enc', encrypted.length, encrypted));
+    if (mediaEncrypted != null) {
+      archive.addFile(
+        ArchiveFile(
+          mediaArchiveEntry,
+          mediaEncrypted.length,
+          mediaEncrypted,
+        ),
+      );
+    }
     final zipped = ZipEncoder().encode(archive);
     return BackupPackage(
       bytes: Uint8List.fromList(zipped),
@@ -301,19 +337,11 @@ class BackupService {
       }
     }
 
-    if (!await crypto.hasLocalDek()) {
-      final envelope = drive == null ? null : await drive!.downloadEnvelope();
-      if (envelope != null && requestPassphraseForUnlock != null) {
-        final pass = await requestPassphraseForUnlock();
-        if (pass == null || pass.length < 8) {
-          throw const RestoreException('Recovery passphrase required');
-        }
-        await crypto.unwrapDekWithPassphrase(envelope, pass);
-      }
-    }
-
     final encryptedDb = Uint8List.fromList(dbFile.content as List<int>);
-    final decrypted = await crypto.decryptAuto(encryptedDb);
+    final decrypted = await _decryptBackupDatabase(
+      encryptedDb,
+      requestPassphraseForUnlock: requestPassphraseForUnlock,
+    );
     final checksum = BackupCrypto.checksumSha256(decrypted);
     final expected = manifest['checksum'] as String?;
     if (expected == null || checksum != expected) {
@@ -341,6 +369,36 @@ class BackupService {
     await _db.close();
     try {
       await File(livePath).writeAsBytes(decrypted, flush: true);
+
+      // Restore product photos + store logo (optional in older backups).
+      final mediaFile = archive.findFile(mediaArchiveEntry);
+      if (mediaFile != null) {
+        try {
+          final mediaEnc =
+              Uint8List.fromList(mediaFile.content as List<int>);
+          final mediaPlain = await crypto.decryptAuto(
+            mediaEnc,
+            createIfMissing: false,
+          );
+          final expectedMedia = manifest['mediaChecksum'] as String?;
+          if (expectedMedia != null &&
+              BackupCrypto.checksumSha256(mediaPlain) != expectedMedia) {
+            throw const RestoreException('Media integrity check failed');
+          }
+          await _extractMediaArchive(mediaPlain);
+          await _rewriteMediaPaths(livePath);
+        } catch (_) {
+          // Keep DB restore; images may be missing for this device.
+          try {
+            await _rewriteMediaPaths(livePath);
+          } catch (_) {}
+        }
+      } else {
+        try {
+          await _rewriteMediaPaths(livePath);
+        } catch (_) {}
+      }
+
       if (afterClosed != null) {
         await afterClosed();
       }
@@ -433,6 +491,89 @@ class BackupService {
     if (envelope == null) return false;
     final pass = await requestPassphrase();
     if (pass == null || pass.length < 8) return false;
+    await crypto.unwrapDekWithPassphrase(envelope, pass);
+    return true;
+  }
+
+  /// Decrypts [encryptedDb], unlocking the Drive DEK envelope when needed.
+  ///
+  /// Handles reinstall: a wrong/new local DEK is cleared and replaced from the
+  /// passphrase envelope, then decrypt is retried once.
+  Future<Uint8List> _decryptBackupDatabase(
+    Uint8List encryptedDb, {
+    Future<String?> Function()? requestPassphraseForUnlock,
+  }) async {
+    if (!await crypto.hasLocalDek()) {
+      await _unlockFromDriveEnvelope(
+        requestPassphraseForUnlock,
+        required: true,
+      );
+    }
+
+    try {
+      return await crypto.decryptAuto(encryptedDb, createIfMissing: false);
+    } on RestoreException {
+      // Likely a DEK created on this install that does not match Drive backups.
+      final retried = await _relockFromDriveEnvelope(requestPassphraseForUnlock);
+      if (!retried) rethrow;
+      return crypto.decryptAuto(encryptedDb, createIfMissing: false);
+    }
+  }
+
+  Future<void> _unlockFromDriveEnvelope(
+    Future<String?> Function()? requestPassphrase, {
+    required bool required,
+  }) async {
+    if (drive == null || !await drive!.isSignedIn) {
+      if (required) {
+        throw const RestoreException(
+          'Missing encryption key. Connect Google Drive and enter your recovery passphrase.',
+        );
+      }
+      return;
+    }
+
+    final envelope = await drive!.downloadEnvelope();
+    if (envelope == null) {
+      if (required) {
+        throw const RestoreException(
+          'Recovery key not found on Google Drive. This backup cannot be unlocked.',
+        );
+      }
+      return;
+    }
+
+    if (requestPassphrase == null) {
+      if (required) {
+        throw const RestoreException('Recovery passphrase required');
+      }
+      return;
+    }
+
+    final pass = await requestPassphrase();
+    if (pass == null || pass.length < 8) {
+      throw const RestoreException('Recovery passphrase required');
+    }
+    await crypto.unwrapDekWithPassphrase(envelope, pass);
+  }
+
+  /// Clears a wrong local DEK and unlocks again from Drive. Returns false if
+  /// Drive/envelope/passphrase are unavailable.
+  Future<bool> _relockFromDriveEnvelope(
+    Future<String?> Function()? requestPassphrase,
+  ) async {
+    if (drive == null ||
+        requestPassphrase == null ||
+        !await drive!.isSignedIn) {
+      return false;
+    }
+    final envelope = await drive!.downloadEnvelope();
+    if (envelope == null) return false;
+
+    final pass = await requestPassphrase();
+    if (pass == null || pass.length < 8) return false;
+
+    await crypto.clearLocalDek();
     await crypto.unwrapDekWithPassphrase(envelope, pass);
     return true;
   }
@@ -559,6 +700,119 @@ class BackupService {
     if (status.isDenied || status.isRestricted) {
       await Permission.storage.request();
     }
+  }
+
+  /// Packs `product_images/` + `store_logos/` into a zip (or null if empty).
+  Future<({Uint8List bytes, int count})?> _buildMediaArchiveBytes() async {
+    final docs = await getApplicationDocumentsDirectory();
+    final archive = Archive();
+    var count = 0;
+    for (final folder in [mediaFolderProduct, mediaFolderStore]) {
+      final dir = Directory(p.join(docs.path, folder));
+      if (!await dir.exists()) continue;
+      await for (final entity in dir.list(followLinks: false)) {
+        if (entity is! File) continue;
+        final name = p.basename(entity.path);
+        if (name.isEmpty || name.startsWith('.')) continue;
+        try {
+          final bytes = await entity.readAsBytes();
+          if (bytes.isEmpty) continue;
+          final entryName = '$folder/$name';
+          archive.addFile(ArchiveFile(entryName, bytes.length, bytes));
+          count++;
+        } catch (_) {
+          // Skip unreadable files.
+        }
+      }
+    }
+    if (count == 0) return null;
+    return (
+      bytes: Uint8List.fromList(ZipEncoder().encode(archive)),
+      count: count,
+    );
+  }
+
+  Future<void> _extractMediaArchive(Uint8List mediaZipBytes) async {
+    final docs = await getApplicationDocumentsDirectory();
+    final decoded = ZipDecoder().decodeBytes(mediaZipBytes);
+    for (final file in decoded.files) {
+      if (!file.isFile) continue;
+      final name = file.name.replaceAll('\\', '/');
+      if (name.contains('..')) continue;
+      final parts = name.split('/');
+      if (parts.length != 2) continue;
+      final folder = parts[0];
+      final basename = parts[1];
+      if (folder != mediaFolderProduct && folder != mediaFolderStore) {
+        continue;
+      }
+      if (basename.isEmpty || basename.startsWith('.')) continue;
+      final dir = Directory(p.join(docs.path, folder));
+      if (!await dir.exists()) {
+        await dir.create(recursive: true);
+      }
+      final dest = File(p.join(dir.path, basename));
+      final bytes = Uint8List.fromList(file.content as List<int>);
+      if (bytes.isEmpty) continue;
+      await dest.writeAsBytes(bytes, flush: true);
+    }
+  }
+
+  /// Points DB image/logo paths at this device's documents folder by basename.
+  Future<void> _rewriteMediaPaths(String dbPath) async {
+    final docs = await getApplicationDocumentsDirectory();
+    final productDir = p.join(docs.path, mediaFolderProduct);
+    final storeDir = p.join(docs.path, mediaFolderStore);
+    final db = await AppDatabase.open(path: dbPath);
+    try {
+      final products = await db.db.query(
+        'products',
+        columns: ['id', 'image_path'],
+      );
+      for (final row in products) {
+        final id = row['id'] as int?;
+        final oldPath = row['image_path'] as String?;
+        if (id == null) continue;
+        final next = _resolvedMediaPath(oldPath, productDir);
+        if (next == oldPath) continue;
+        await db.db.update(
+          'products',
+          {'image_path': next},
+          where: 'id = ?',
+          whereArgs: [id],
+        );
+      }
+
+      final stores = await db.db.query(
+        'stores',
+        columns: ['id', 'logo_path'],
+      );
+      for (final row in stores) {
+        final id = row['id'] as int?;
+        final oldPath = row['logo_path'] as String?;
+        if (id == null) continue;
+        final next = _resolvedMediaPath(oldPath, storeDir);
+        if (next == oldPath) continue;
+        await db.db.update(
+          'stores',
+          {'logo_path': next},
+          where: 'id = ?',
+          whereArgs: [id],
+        );
+      }
+    } finally {
+      await db.close();
+    }
+  }
+
+  String? _resolvedMediaPath(String? oldPath, String folderPath) {
+    if (oldPath == null || oldPath.trim().isEmpty) return null;
+    final name = p.basename(oldPath.trim());
+    if (name.isEmpty || name == '.' || name == '..') return null;
+    final candidate = p.join(folderPath, name);
+    if (File(candidate).existsSync()) return candidate;
+    // File missing after restore — clear broken absolute path from old device.
+    return null;
   }
 
   /// Best-effort wipe of local backup files (private + public folders).

@@ -77,16 +77,49 @@ void main() {
       expect(round, plain);
     });
 
-    test('wrong passphrase fails unwrap', () async {
-      final crypto = BackupCrypto(const FlutterSecureStorage());
-      await crypto.getOrCreateDek();
-      final envelope = await crypto.wrapDekWithPassphrase('correct-one');
+    test('wrong local DEK fails without inventing a new key', () async {
+      final original = BackupCrypto(const FlutterSecureStorage());
+      await original.getOrCreateDek();
+      final plain = Uint8List.fromList(utf8.encode('drive-backup-bytes'));
+      final encrypted = await original.encryptGcm(plain);
+
+      // Simulate reinstall: empty secure storage, then a *new* DEK.
       FlutterSecureStorage.setMockInitialValues({});
-      final other = BackupCrypto(const FlutterSecureStorage());
-      expect(
-        () => other.unwrapDekWithPassphrase(envelope, 'wrong-pass'),
+      final fresh = BackupCrypto(const FlutterSecureStorage());
+      await fresh.getOrCreateDek();
+
+      await expectLater(
+        () => fresh.decryptAuto(encrypted, createIfMissing: false),
+        throwsA(
+          isA<Object>().having(
+            (e) => e.toString(),
+            'message',
+            contains('Could not decrypt backup'),
+          ),
+        ),
+      );
+    });
+
+    test('passphrase unlock restores DEK after reinstall', () async {
+      final original = BackupCrypto(const FlutterSecureStorage());
+      await original.getOrCreateDek();
+      final plain = Uint8List.fromList(utf8.encode('reinstall-restore'));
+      final encrypted = await original.encryptGcm(plain);
+      final envelope = await original.wrapDekWithPassphrase('recover-me');
+
+      FlutterSecureStorage.setMockInitialValues({});
+      final fresh = BackupCrypto(const FlutterSecureStorage());
+      // Wrong key created before restore (old bug path).
+      await fresh.getOrCreateDek();
+      await expectLater(
+        () => fresh.decryptAuto(encrypted, createIfMissing: false),
         throwsA(anything),
       );
+
+      await fresh.clearLocalDek();
+      await fresh.unwrapDekWithPassphrase(envelope, 'recover-me');
+      final round = await fresh.decryptAuto(encrypted, createIfMissing: false);
+      expect(round, plain);
     });
 
     test('PBKDF2 KEK is deterministic', () {

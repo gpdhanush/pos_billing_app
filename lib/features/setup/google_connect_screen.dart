@@ -82,14 +82,27 @@ class _GoogleConnectScreenState extends ConsumerState<GoogleConnectScreen> {
       if (!mounted) return;
       setState(() => _session = session);
 
-      final pass = await promptCreateBackupPassphrase(context);
-      if (pass != null && pass.length >= 8) {
-        try {
+      final drive = ref.read(driveClientProvider);
+      final crypto = ref.read(backupCryptoProvider);
+      final envelope = await drive.downloadEnvelope();
+      if (!mounted) return;
+
+      if (envelope != null) {
+        // Reinstall / new device: unlock the existing Drive key.
+        if (!await crypto.hasLocalDek()) {
+          if (!mounted) return;
+          final pass = await promptUnlockBackupPassphrase(context);
+          if (pass != null && pass.length >= 8) {
+            await crypto.unwrapDekWithPassphrase(envelope, pass);
+          }
+        }
+      } else {
+        if (!mounted) return;
+        final pass = await promptCreateBackupPassphrase(context);
+        if (pass != null && pass.length >= 8) {
           await ref.read(backupServiceProvider).ensureDriveKeyEnvelope(
                 requestPassphrase: () async => pass,
               );
-        } catch (_) {
-          // Envelope can be created on first backup.
         }
       }
       if (!mounted) return;
@@ -100,6 +113,12 @@ class _GoogleConnectScreenState extends ConsumerState<GoogleConnectScreen> {
       await analytics.recordError('google_sign_in_failed', reason: 'auth');
       if (!mounted) return;
       showSnack(context, 'Google sign-in failed');
+    } on RestoreException catch (e) {
+      if (!mounted) return;
+      showSnack(context, e.message);
+    } on BackupException catch (e) {
+      if (!mounted) return;
+      showSnack(context, e.message);
     } catch (_) {
       await analytics.logEvent('google_sign_in_failed');
       if (!mounted) return;

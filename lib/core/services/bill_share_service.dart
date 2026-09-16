@@ -246,7 +246,7 @@ class BillShareService {
                   for (final item in invoice.items)
                     pw.TableRow(
                       children: [
-                        _cell(item.name),
+                        _cell(item.name, maxLines: 2),
                         _cell('${item.quantity}', align: pw.TextAlign.right),
                         _cell(
                           pdfMoney(item.unitPricePaise),
@@ -264,7 +264,7 @@ class BillShareService {
               pw.Align(
                 alignment: pw.Alignment.centerRight,
                 child: pw.Container(
-                  width: 240,
+                  width: 260,
                   padding: const pw.EdgeInsets.all(14),
                   decoration: pw.BoxDecoration(
                     color: PdfColors.grey100,
@@ -272,12 +272,26 @@ class BillShareService {
                     border: pw.Border.all(color: PdfColors.grey300, width: 0.8),
                   ),
                   child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
+                      pw.Text(
+                        'Billing details',
+                        style: pw.TextStyle(
+                          fontSize: 11,
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColors.grey800,
+                        ),
+                      ),
+                      pw.SizedBox(height: 8),
                       _kv('Subtotal', pdfMoney(invoice.subtotalPaise)),
-                      if (invoice.discountPaise != 0)
-                        _kv('Discount', pdfMoney(invoice.discountPaise)),
-                      if (invoice.taxPaise != 0)
-                        _kv('Tax', pdfMoney(invoice.taxPaise)),
+                      _kv('Discount', pdfMoney(invoice.billDiscountPaise)),
+                      _kv('Tax', pdfMoney(invoice.taxPaise)),
+                      _kv(
+                        'Round off',
+                        invoice.roundOffPaise > 0
+                            ? '+${pdfMoney(invoice.roundOffPaise)}'
+                            : pdfMoney(invoice.roundOffPaise),
+                      ),
                       pw.SizedBox(height: 6),
                       pw.Divider(color: PdfColors.grey400, height: 1),
                       pw.SizedBox(height: 8),
@@ -367,10 +381,9 @@ class BillShareService {
       ],
       '------------------------------',
       'Subtotal  ${Money(invoice.subtotalPaise).format(symbol: symbol)}',
-      if (invoice.discountPaise != 0)
-        'Discount  ${Money(invoice.discountPaise).format(symbol: symbol)}',
-      if (invoice.taxPaise != 0)
-        'Tax  ${Money(invoice.taxPaise).format(symbol: symbol)}',
+      'Discount  ${Money(invoice.billDiscountPaise).format(symbol: symbol)}',
+      'Tax  ${Money(invoice.taxPaise).format(symbol: symbol)}',
+      'Round off  ${invoice.roundOffPaise > 0 ? '+' : ''}${Money(invoice.roundOffPaise).format(symbol: symbol)}',
       'TOTAL  ${Money(invoice.summary.totalPaise).format(symbol: symbol)}',
       '',
       store.receiptFooter?.trim().isNotEmpty == true
@@ -436,12 +449,16 @@ class BillShareService {
     String text, {
     bool bold = false,
     pw.TextAlign align = pw.TextAlign.left,
+    int? maxLines,
   }) {
     return pw.Padding(
       padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 9),
       child: pw.Text(
         text,
         textAlign: align,
+        maxLines: maxLines,
+        overflow:
+            maxLines == null ? pw.TextOverflow.visible : pw.TextOverflow.clip,
         style: pw.TextStyle(
           fontWeight: bold ? pw.FontWeight.bold : pw.FontWeight.normal,
           fontSize: 10,

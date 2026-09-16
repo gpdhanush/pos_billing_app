@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/app/providers.dart';
+import 'package:pos_billing/core/ads/app_open_ad_manager.dart';
 import 'package:pos_billing/core/constants/app_constants.dart';
 import 'package:pos_billing/core/database/sample_data.dart';
 import 'package:pos_billing/core/services/app_log_service.dart';
@@ -82,6 +83,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     }
     await Future<void>.delayed(const Duration(milliseconds: 180));
     if (!mounted) return;
+
+    // Cold-start app open ad overlays the splash while assets finish loading.
+    await AppOpenAdManager.instance.showAdIfAvailable(
+      waitForLoad: const Duration(seconds: 2),
+    );
+    if (!mounted) return;
+
+    // After first open, show again when returning from background.
+    AppOpenAdManager.instance.startListeningForResume();
 
     var needsPermissions = false;
     try {

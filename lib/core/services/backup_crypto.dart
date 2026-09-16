@@ -56,6 +56,25 @@ class BackupCrypto {
     return legacy != null && legacy.isNotEmpty;
   }
 
+  /// Reads the stored DEK without creating one.
+  Future<enc.Key?> readDek() async {
+    var stored = await secureStorage.read(key: dekStorageKey);
+    if (stored == null || stored.isEmpty) {
+      stored = await secureStorage.read(key: legacyKeyName);
+    }
+    if (stored == null || stored.isEmpty) return null;
+    try {
+      return enc.Key.fromBase64(stored);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> clearLocalDek() async {
+    await secureStorage.delete(key: dekStorageKey);
+    await secureStorage.delete(key: legacyKeyName);
+  }
+
   /// Encrypts database bytes: `nonce || ciphertext+tag` (AES-256-GCM).
   Future<Uint8List> encryptGcm(Uint8List plaintext, {enc.Key? key}) async {
     final dek = key ?? await getOrCreateDek();
@@ -67,18 +86,40 @@ class BackupCrypto {
   }
 
   /// Decrypts GCM payload; falls back to legacy CBC (`iv16 || ciphertext`).
-  Future<Uint8List> decryptAuto(Uint8List data, {enc.Key? key}) async {
+  ///
+  /// When [createIfMissing] is false (restore path), never invents a new DEK —
+  /// a missing or wrong key must surface as a decrypt/key error, not "success"
+  /// with garbage from a freshly generated key.
+  Future<Uint8List> decryptAuto(
+    Uint8List data, {
+    enc.Key? key,
+    bool createIfMissing = true,
+  }) async {
     if (data.length < 17) {
       throw const RestoreException('Backup is corrupted');
     }
-    final dek = key ?? await getOrCreateDek();
+    final enc.Key dek;
+    if (key != null) {
+      dek = key;
+    } else if (createIfMissing) {
+      dek = await getOrCreateDek();
+    } else {
+      final existing = await readDek();
+      if (existing == null) {
+        throw const RestoreException('Missing encryption key');
+      }
+      dek = existing;
+    }
     try {
       return _decryptGcm(data, dek);
     } catch (_) {
       try {
         return _decryptCbcLegacy(data, dek);
       } catch (e) {
-        throw RestoreException('Backup is corrupted', cause: e);
+        throw RestoreException(
+          'Could not decrypt backup. Check your recovery passphrase.',
+          cause: e,
+        );
       }
     }
   }

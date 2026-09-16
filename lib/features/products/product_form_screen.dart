@@ -16,6 +16,7 @@ import 'package:pos_billing/core/money/money.dart';
 import 'package:pos_billing/features/products/category_create_sheet.dart';
 import 'package:pos_billing/shared/models/models.dart';
 import 'package:pos_billing/shared/widgets/app_image.dart';
+import 'package:pos_billing/shared/widgets/image_source_sheet.dart';
 import 'package:pos_billing/shared/widgets/ui_kit.dart';
 
 const _fieldRadius = 5.0;
@@ -142,45 +143,13 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   }
 
   Future<void> _pickImage() async {
-    final action = await showModalBottomSheet<String>(
-      context: context,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_camera_outlined),
-              title: const Text('Camera'),
-              onTap: () => Navigator.pop(context, 'camera'),
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('Gallery'),
-              onTap: () => Navigator.pop(context, 'gallery'),
-            ),
-            if (_hasImage)
-              ListTile(
-                leading: const Icon(Icons.delete_outline),
-                title: const Text('Remove image'),
-                onTap: () => Navigator.pop(context, 'remove'),
-              ),
-          ],
-        ),
-      ),
-    );
-
-    if (!mounted || action == null) return;
-    if (action == 'remove') {
-      await _removePhoto();
-      return;
-    }
-
-    final source =
-        action == 'camera' ? ImageSource.camera : ImageSource.gallery;
-    final file = await ImagePicker().pickImage(
-      source: source,
-      imageQuality: 80,
-      maxWidth: 1280,
+    final file = await showImagePickerFlow(
+      context,
+      title: 'Product photo',
+      subtitle: 'Take a new photo or choose from gallery',
+      showRemove: _hasImage,
+      removeLabel: 'Remove photo',
+      onRemove: _removePhoto,
     );
     if (file == null || !mounted) return;
 

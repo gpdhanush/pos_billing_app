@@ -282,7 +282,7 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Local backups are saved on this device. Connect Google Drive to also sync encrypted copies to your private Drive app data folder. Your recovery passphrase is required to restore encrypted Drive backups.',
+                'Local backups are saved on this device. Connect Google Drive to also sync encrypted copies to your private Drive app data folder. Backups include your database plus product photos and store logo. Your recovery passphrase is required to restore encrypted Drive backups.',
                 style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
                       color: scheme.onSurfaceVariant,
                       height: 1.45,

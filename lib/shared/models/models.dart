@@ -160,13 +160,13 @@ class InvoiceSummary {
   final List<String> paymentMethods;
 
   factory InvoiceSummary.fromMap(Map<String, Object?> map) => InvoiceSummary(
-        id: map['id'] as int,
+        id: (map['id'] as num).toInt(),
         invoiceNumber: map['invoice_number'] as String,
-        customerId: map['customer_id'] as int?,
+        customerId: (map['customer_id'] as num?)?.toInt(),
         customerName: map['customer_name'] as String?,
-        totalPaise: map['total'] as int,
+        totalPaise: (map['total'] as num).toInt(),
         status: map['status'] as String,
-        createdAt: map['created_at'] as int,
+        createdAt: (map['created_at'] as num).toInt(),
         paymentMethods: (map['payment_methods'] as String?)
                 ?.split(',')
                 .where((e) => e.isNotEmpty)
@@ -195,6 +195,16 @@ class InvoiceDetail {
   final int? originalInvoiceId;
   final List<InvoiceLine> items;
   final List<PaymentRecord> payments;
+
+  /// Line totals already include tax and bill-discount share (before rupee round).
+  int get itemsTotalPaise =>
+      items.fold<int>(0, (sum, item) => sum + item.totalPaise);
+
+  /// Rupee round-off baked into [summary.totalPaise].
+  int get roundOffPaise => summary.totalPaise - itemsTotalPaise;
+
+  /// Bill discount only (item discounts are already reflected in [subtotalPaise]).
+  int get billDiscountPaise => subtotalPaise + taxPaise - itemsTotalPaise;
 }
 
 class InvoiceLine {
@@ -221,15 +231,15 @@ class InvoiceLine {
   final int totalPaise;
 
   factory InvoiceLine.fromMap(Map<String, Object?> map) => InvoiceLine(
-        id: map['id'] as int,
-        productId: map['product_id'] as int?,
+        id: (map['id'] as num).toInt(),
+        productId: (map['product_id'] as num?)?.toInt(),
         name: map['product_name_snapshot'] as String,
         barcode: map['barcode_snapshot'] as String?,
-        quantity: map['quantity'] as int,
-        unitPricePaise: map['unit_price'] as int,
-        discountPaise: map['discount'] as int,
-        taxPaise: map['tax'] as int,
-        totalPaise: map['total'] as int,
+        quantity: (map['quantity'] as num).toInt(),
+        unitPricePaise: (map['unit_price'] as num).toInt(),
+        discountPaise: (map['discount'] as num?)?.toInt() ?? 0,
+        taxPaise: (map['tax'] as num?)?.toInt() ?? 0,
+        totalPaise: (map['total'] as num).toInt(),
       );
 }
 

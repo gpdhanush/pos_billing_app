@@ -259,7 +259,8 @@ class _CreateCategorySheetState extends ConsumerState<_CreateCategorySheet> {
   }
 }
 
-/// Pick an existing category or create a new one. Returns selected id.
+/// Pick an existing category or clear selection. Returns selected id,
+/// `-1` for “No category”, or `null` if dismissed.
 Future<int?> showCategoryPickerSheet(
   BuildContext context, {
   required List<({int id, String name})> categories,
@@ -276,7 +277,7 @@ Future<int?> showCategoryPickerSheet(
   );
 }
 
-class _CategoryPickerSheet extends StatelessWidget {
+class _CategoryPickerSheet extends StatefulWidget {
   const _CategoryPickerSheet({
     required this.categories,
     this.selectedId,
@@ -286,20 +287,42 @@ class _CategoryPickerSheet extends StatelessWidget {
   final int? selectedId;
 
   @override
+  State<_CategoryPickerSheet> createState() => _CategoryPickerSheetState();
+}
+
+class _CategoryPickerSheetState extends State<_CategoryPickerSheet> {
+  final _search = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _search.dispose();
+    super.dispose();
+  }
+
+  List<({int id, String name})> get _filtered {
+    final q = _query.trim().toLowerCase();
+    if (q.isEmpty) return widget.categories;
+    return widget.categories
+        .where((c) => c.name.toLowerCase().contains(q))
+        .toList();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
+    final filtered = _filtered;
+    final maxH = MediaQuery.sizeOf(context).height * 0.78;
+    final bottom = MediaQuery.viewInsetsOf(context).bottom;
 
-    // Material (not colored Container) so ListTile ink paints correctly.
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      padding: EdgeInsets.fromLTRB(12, 0, 12, 12 + bottom),
       child: Material(
         color: scheme.surface,
         borderRadius: BorderRadius.circular(24),
         clipBehavior: Clip.antiAlias,
         child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.sizeOf(context).height * 0.7,
-          ),
+          constraints: BoxConstraints(maxHeight: maxH),
           child: SafeArea(
             top: false,
             child: Column(
@@ -315,16 +338,16 @@ class _CategoryPickerSheet extends StatelessWidget {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
+                  padding: const EdgeInsets.fromLTRB(20, 14, 8, 8),
                   child: Row(
                     children: [
                       Expanded(
                         child: Text(
                           'Select category',
-                          style:
-                              Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.w800,
-                                  ),
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w800),
                         ),
                       ),
                       IconButton(
@@ -334,40 +357,150 @@ class _CategoryPickerSheet extends StatelessWidget {
                     ],
                   ),
                 ),
-                Flexible(
-                  child: ListView(
-                    shrinkWrap: true,
-                    padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
-                    children: [
-                      ListTile(
-                        leading: Icon(
-                          Icons.remove_circle_outline_rounded,
-                          color: scheme.onSurfaceVariant,
-                        ),
-                        title: const Text('No category'),
-                        trailing: selectedId == null
-                            ? Icon(Icons.check_rounded, color: scheme.primary)
-                            : null,
-                        onTap: () => Navigator.pop(context, -1),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                  child: TextField(
+                    controller: _search,
+                    textInputAction: TextInputAction.search,
+                    onChanged: (v) => setState(() => _query = v),
+                    decoration: InputDecoration(
+                      hintText: 'Search categories',
+                      prefixIcon: const Icon(Icons.search_rounded, size: 22),
+                      suffixIcon: _query.isEmpty
+                          ? null
+                          : IconButton(
+                              onPressed: () {
+                                _search.clear();
+                                setState(() => _query = '');
+                              },
+                              icon: const Icon(Icons.close_rounded, size: 18),
+                            ),
+                      isDense: true,
+                      filled: true,
+                      fillColor: scheme.surfaceContainerHighest
+                          .withValues(alpha: 0.5),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
                       ),
-                      for (final c in categories)
-                        ListTile(
-                          leading: Icon(
-                            Icons.sell_outlined,
-                            color: scheme.primary,
-                          ),
-                          title: Text(c.name.displayTitle),
-                          trailing: selectedId == c.id
-                              ? Icon(Icons.check_rounded, color: scheme.primary)
-                              : null,
-                          onTap: () => Navigator.pop(context, c.id),
-                        ),
-                    ],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide:
+                            BorderSide(color: scheme.primary, width: 1.2),
+                      ),
+                    ),
                   ),
+                ),
+                Flexible(
+                  child: filtered.isEmpty && _query.trim().isNotEmpty
+                      ? Padding(
+                          padding: const EdgeInsets.fromLTRB(24, 28, 24, 36),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.search_off_rounded,
+                                size: 36,
+                                color: scheme.onSurfaceVariant,
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                'No categories match “${_query.trim()}”',
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      color: scheme.onSurfaceVariant,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.separated(
+                          shrinkWrap: true,
+                          padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
+                          itemCount: filtered.length + 1,
+                          separatorBuilder: (_, _) => Divider(
+                            height: 1,
+                            indent: 16,
+                            endIndent: 16,
+                            color: scheme.outline.withValues(alpha: 0.35),
+                          ),
+                          itemBuilder: (context, index) {
+                            if (index == 0) {
+                              final selected = widget.selectedId == null;
+                              return _MinimalCategoryTile(
+                                title: 'No category',
+                                selected: selected,
+                                muted: true,
+                                onTap: () => Navigator.pop(context, -1),
+                              );
+                            }
+                            final c = filtered[index - 1];
+                            return _MinimalCategoryTile(
+                              title: c.name.displayTitle,
+                              selected: widget.selectedId == c.id,
+                              onTap: () => Navigator.pop(context, c.id),
+                            );
+                          },
+                        ),
                 ),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MinimalCategoryTile extends StatelessWidget {
+  const _MinimalCategoryTile({
+    required this.title,
+    required this.selected,
+    required this.onTap,
+    this.muted = false,
+  });
+
+  final String title;
+  final bool selected;
+  final VoidCallback onTap;
+  final bool muted;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                      color: muted && !selected
+                          ? scheme.onSurfaceVariant
+                          : scheme.onSurface,
+                    ),
+              ),
+            ),
+            if (selected)
+              Icon(Icons.check_rounded, size: 20, color: scheme.primary),
+          ],
         ),
       ),
     );

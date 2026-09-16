@@ -7,7 +7,6 @@ import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/app/providers.dart';
 import 'package:pos_billing/app/router/app_router.dart';
 import 'package:pos_billing/app/theme/app_theme.dart';
-import 'package:pos_billing/shared/widgets/app_banner_ad.dart';
 import 'package:pos_billing/shared/widgets/ui_kit.dart';
 
 class AppShell extends ConsumerStatefulWidget {
@@ -88,74 +87,68 @@ class _AppShellState extends ConsumerState<AppShell> {
         bottomNavigationBar: SafeArea(
           top: false,
           minimum: EdgeInsets.zero,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const AppBannerAd(),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-                child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: scheme.surface,
-                  borderRadius: BorderRadius.circular(AppRadii.xl),
-                  border: Border.all(color: scheme.outline.withValues(alpha: 0.7)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: scheme.onSurface.withValues(alpha: 0.06),
-                      blurRadius: 24,
-                      offset: const Offset(0, 10),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: scheme.surface,
+                borderRadius: BorderRadius.circular(AppRadii.xl),
+                border: Border.all(color: scheme.outline.withValues(alpha: 0.7)),
+                boxShadow: [
+                  BoxShadow(
+                    color: scheme.onSurface.withValues(alpha: 0.06),
+                    blurRadius: 24,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: SizedBox(
+                height: 72,
+                child: Row(
+                  children: [
+                    _navItem(
+                      context: context,
+                      label: items[0].label,
+                      icon: items[0].icon,
+                      selected: shell.currentIndex == 0,
+                      onTap: () => _goBranch(0),
+                    ),
+                    _navItem(
+                      context: context,
+                      label: items[1].label,
+                      icon: items[1].icon,
+                      selected: shell.currentIndex == 1,
+                      onTap: () => _goBranch(1),
+                    ),
+                    _navItem(
+                      context: context,
+                      label: 'Billing',
+                      icon: const Icon(LineIcons.cashRegister),
+                      selected: shell.currentIndex == 2,
+                      onTap: () => _goBranch(2),
+                    ),
+                    _navItem(
+                      context: context,
+                      label: items[3].label,
+                      icon: items[3].icon,
+                      selected: shell.currentIndex == 3,
+                      onTap: () => _goBranch(3),
+                    ),
+                    _navItem(
+                      context: context,
+                      label: items[4].label,
+                      icon: items[4].icon,
+                      selected: shell.currentIndex == 4,
+                      onTap: () async {
+                        if (shell.currentIndex != 4) {
+                          await _goBranch(4);
+                        }
+                      },
                     ),
                   ],
                 ),
-                child: SizedBox(
-                  height: 72,
-                  child: Row(
-                    children: [
-                      _navItem(
-                        context: context,
-                        label: items[0].label,
-                        icon: items[0].icon,
-                        selected: shell.currentIndex == 0,
-                        onTap: () => _goBranch(0),
-                      ),
-                      _navItem(
-                        context: context,
-                        label: items[1].label,
-                        icon: items[1].icon,
-                        selected: shell.currentIndex == 1,
-                        onTap: () => _goBranch(1),
-                      ),
-                      _navItem(
-                        context: context,
-                        label: 'Billing',
-                        icon: const Icon(LineIcons.cashRegister),
-                        selected: shell.currentIndex == 2,
-                        onTap: () => _goBranch(2),
-                      ),
-                      _navItem(
-                        context: context,
-                        label: items[3].label,
-                        icon: items[3].icon,
-                        selected: shell.currentIndex == 3,
-                        onTap: () => _goBranch(3),
-                      ),
-                      _navItem(
-                        context: context,
-                        label: items[4].label,
-                        icon: items[4].icon,
-                        selected: shell.currentIndex == 4,
-                        onTap: () async {
-                          if (shell.currentIndex != 4) {
-                            await _goBranch(4);
-                          }
-                        },
-                      ),
-                    ],
-                  ),
-                ),
               ),
             ),
-          ],
           ),
         ),
       ),

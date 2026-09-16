@@ -321,11 +321,11 @@ WHERE i.id = ?
     final summary = InvoiceSummary.fromMap(rows.first);
     return InvoiceDetail(
       summary: summary,
-      subtotalPaise: rows.first['subtotal'] as int,
-      discountPaise: rows.first['discount'] as int,
-      taxPaise: rows.first['tax'] as int,
+      subtotalPaise: (rows.first['subtotal'] as num).toInt(),
+      discountPaise: (rows.first['discount'] as num?)?.toInt() ?? 0,
+      taxPaise: (rows.first['tax'] as num?)?.toInt() ?? 0,
       note: rows.first['note'] as String?,
-      originalInvoiceId: rows.first['original_invoice_id'] as int?,
+      originalInvoiceId: (rows.first['original_invoice_id'] as num?)?.toInt(),
       items: items.map(InvoiceLine.fromMap).toList(),
       payments: payments.map(PaymentRecord.fromMap).toList(),
     );

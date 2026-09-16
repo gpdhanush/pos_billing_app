@@ -29,7 +29,7 @@ class DashboardScreen extends ConsumerWidget {
             ? '${l10n.dashboardGreetingAfternoon} 🌤'
             : '${l10n.dashboardGreetingEvening} 🌙';
     final scheme = Theme.of(context).colorScheme;
-    final storeName = store?.name ?? 'Your Business';
+    final storeName = (store?.name ?? 'Your Business').toUpperCase();
     final symbol = store?.currencySymbol ?? '₹';
 
     return Scaffold(

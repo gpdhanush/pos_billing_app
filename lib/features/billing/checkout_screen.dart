@@ -11,6 +11,7 @@ import 'package:pos_billing/core/money/money.dart';
 import 'package:pos_billing/core/services/bill_share_service.dart';
 import 'package:pos_billing/core/services/printer_service.dart';
 import 'package:pos_billing/shared/models/models.dart';
+import 'package:pos_billing/shared/widgets/payment_method_icon.dart';
 import 'package:pos_billing/shared/widgets/ui_kit.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
@@ -172,9 +173,14 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   }
 
   Widget _methodChip(String label, String value) {
+    final selected = _method == value;
+    final asset = PaymentMethodIcon.assetFor(value);
     return ChoiceChip(
+      avatar: asset == null
+          ? null
+          : PaymentMethodIcon(method: value, size: 22, radius: 6),
       label: Text(label),
-      selected: _method == value,
+      selected: selected,
       onSelected: (_) => setState(() => _method = value),
     );
   }
