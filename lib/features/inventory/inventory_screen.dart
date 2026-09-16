@@ -107,21 +107,6 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
 
     return Scaffold(
       backgroundColor: scheme.surfaceContainerLowest,
-      appBar: GlassPageHeader(
-        title: l10n.inventoryTitle,
-        subtitle: 'Products, availability & stock',
-        height: 64,
-        actions: [
-          // IconButton(
-          //   tooltip: 'Filter',
-          //   onPressed: () => setState(() => _lowStockOnly = !_lowStockOnly),
-          //   icon: Icon(
-          //     Icons.filter_list_rounded,
-          //     color: _lowStockOnly ? scheme.primary : null,
-          //   ),
-          // ),
-        ],
-      ),
       bottomNavigationBar: SafeArea(
         top: false,
         child: Padding(
@@ -161,74 +146,100 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           ),
         ),
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-            child: SoftSearchField(
-              hintText: 'Search products by name, SKU, or barcode',
-              onChanged: (v) => setState(() => _search = v),
-              trailing: IconButton(
-                tooltip: 'Scan',
-                visualDensity: VisualDensity.compact,
-                onPressed: _scanLookup,
-                icon: const Icon(Icons.qr_code_scanner_rounded),
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.inventoryTitle,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.4,
+                        ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Products, availability & stock',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                  ),
+                ],
               ),
             ),
-          ),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                SoftPeriodBadge(
-                  label: categoryName,
-                  selected: _categoryId != null,
-                  onTap: () => _pickCategory(categories),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+              child: SoftSearchField(
+                hintText: 'Search products by name, SKU, or barcode',
+                onChanged: (v) => setState(() => _search = v),
+                trailing: IconButton(
+                  tooltip: 'Scan',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: _scanLookup,
+                  icon: const Icon(Icons.qr_code_scanner_rounded),
                 ),
-                SoftPeriodBadge(
-                  label: l10n.productsLowStockFilter,
-                  selected: _lowStockOnly,
-                  onTap: () => setState(() => _lowStockOnly = !_lowStockOnly),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
-          Expanded(
-            child: products.when(
-              loading: () =>
-                  const Center(child: CircularProgressIndicator()),
-              error: (_, _) => ErrorState(
-                onRetry: () => ref.invalidate(inventoryProductsProvider),
               ),
-              data: (items) {
-                final visible = _filter(items);
-                if (visible.isEmpty) {
-                  return const EmptyState(
-                    title: 'No inventory items',
-                    subtitle:
-                        'Add products to track available stock and status here.',
-                    showIcon: false,
-                  );
-                }
-                return ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-                  itemCount: visible.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 10),
-                  itemBuilder: (context, i) {
-                    final p = visible[i];
-                    return _InventoryProductCard(
-                      product: p,
-                      symbol: symbol,
-                      onTap: () => _onProductTap(p),
+            ),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  SoftPeriodBadge(
+                    label: categoryName,
+                    selected: _categoryId != null,
+                    onTap: () => _pickCategory(categories),
+                  ),
+                  SoftPeriodBadge(
+                    label: l10n.productsLowStockFilter,
+                    selected: _lowStockOnly,
+                    onTap: () => setState(() => _lowStockOnly = !_lowStockOnly),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+            Expanded(
+              child: products.when(
+                loading: () =>
+                    const Center(child: CircularProgressIndicator()),
+                error: (_, _) => ErrorState(
+                  onRetry: () => ref.invalidate(inventoryProductsProvider),
+                ),
+                data: (items) {
+                  final visible = _filter(items);
+                  if (visible.isEmpty) {
+                    return const EmptyState(
+                      title: 'No inventory items',
+                      subtitle:
+                          'Add products to track available stock and status here.',
+                      showIcon: false,
                     );
-                  },
-                );
-              },
+                  }
+                  return ListView.separated(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                    itemCount: visible.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 10),
+                    itemBuilder: (context, i) {
+                      final p = visible[i];
+                      return _InventoryProductCard(
+                        product: p,
+                        symbol: symbol,
+                        onTap: () => _onProductTap(p),
+                      );
+                    },
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

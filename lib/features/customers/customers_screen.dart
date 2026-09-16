@@ -47,6 +47,12 @@ class CustomersScreen extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 ListTile(
+                  leading: Icon(Icons.visibility_rounded, color: scheme.primary),
+                  title: const Text('View details'),
+                  subtitle: const Text('Orders, contact & history'),
+                  onTap: () => Navigator.pop(ctx, 'view'),
+                ),
+                ListTile(
                   leading: Icon(Icons.edit_rounded, color: scheme.primary),
                   title: const Text('Update'),
                   subtitle: const Text('Edit customer details'),
@@ -66,6 +72,12 @@ class CustomersScreen extends ConsumerWidget {
       },
     );
     if (action == null || !context.mounted) return;
+
+    if (action == 'view') {
+      await context.push('/customers/view?id=${customer.id}');
+      ref.invalidate(customersListProvider);
+      return;
+    }
 
     if (action == 'update') {
       final saved =
@@ -158,7 +170,9 @@ class CustomersScreen extends ConsumerWidget {
                     return SoftCard(
                       radius: AppRadii.md,
                       padding: const EdgeInsets.fromLTRB(12, 12, 14, 12),
-                      onTap: () => _showCustomerActions(
+                      onTap: () =>
+                          context.push('/customers/view?id=${c.id}'),
+                      onLongPress: () => _showCustomerActions(
                         context,
                         ref,
                         customer: c,

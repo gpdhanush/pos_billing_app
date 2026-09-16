@@ -12,7 +12,7 @@ import 'package:pos_billing/core/money/money.dart';
 import 'package:pos_billing/shared/models/models.dart';
 import 'package:pos_billing/shared/widgets/ui_kit.dart';
 
-final _salesSearch = StateProvider<String>((ref) => '');
+final salesSearchProvider = StateProvider<String>((ref) => '');
 
 class SalesScreen extends ConsumerWidget {
   const SalesScreen({super.key});
@@ -61,7 +61,7 @@ class SalesScreen extends ConsumerWidget {
     final l10n = AppLocalizations.of(context);
     final sales = ref.watch(salesListProvider);
     final range = ref.watch(salesRangeProvider);
-    final search = ref.watch(_salesSearch);
+    final search = ref.watch(salesSearchProvider);
     final store = ref.watch(storeProfileProvider).valueOrNull;
     final symbol = store?.currencySymbol ?? '₹';
     final scheme = Theme.of(context).colorScheme;
@@ -90,7 +90,7 @@ class SalesScreen extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: SoftSearchField(
               hintText: 'Search invoice or customer',
-              onChanged: (v) => ref.read(_salesSearch.notifier).state = v,
+              onChanged: (v) => ref.read(salesSearchProvider.notifier).state = v,
             ),
           ),
           SingleChildScrollView(
@@ -164,7 +164,7 @@ class SalesScreen extends ConsumerWidget {
                     return SoftCard(
                       radius: AppRadii.md,
                       padding: const EdgeInsets.fromLTRB(12, 12, 14, 12),
-                      onTap: () => context.push('/sales/${bill.id}'),
+                      onTap: () => context.push('/invoice/${bill.id}'),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [

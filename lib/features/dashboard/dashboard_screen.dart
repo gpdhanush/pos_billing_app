@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:intl/intl.dart';
 import 'package:pos_billing/app/localization/generated/app_localizations.dart';
+import 'package:pos_billing/app/router/app_router.dart';
 import 'package:pos_billing/app/providers.dart';
 import 'package:pos_billing/app/theme/app_theme.dart';
 import 'package:pos_billing/core/constants/app_constants.dart';
@@ -101,7 +102,7 @@ class DashboardScreen extends ConsumerWidget {
                       const SizedBox(width: 8),
                       _RoundHeaderButton(
                         icon: HugeIcons.strokeRoundedSettings01,
-                        onTap: () => context.go('/more'),
+                        onTap: () => goToShellBranch(context, 4),
                       ),
                     ],
                   ),
@@ -267,7 +268,7 @@ class DashboardScreen extends ConsumerWidget {
                             symbol: symbol,
                             walkInLabel: l10n.billingWalkIn,
                             onTap: () =>
-                                context.push('/sales/${recent[i].id}'),
+                                context.push('/invoice/${recent[i].id}'),
                           ),
                         ],
                       ],

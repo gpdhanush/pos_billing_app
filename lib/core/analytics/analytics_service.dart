@@ -38,35 +38,43 @@ class AnalyticsService {
 
   bool get isReady => _ready;
 
+  static bool get _crashlyticsEnabled => kReleaseMode;
+
   Future<void> init() async {
     try {
       if (Firebase.apps.isEmpty) {
         await Firebase.initializeApp();
       }
       _analytics = FirebaseAnalytics.instance;
-      FlutterError.onError = (details) {
-        FlutterError.presentError(details);
-        unawaited(
-          recordError(
-            details.exceptionAsString(),
-            reason: 'flutter_error',
-            fatal: true,
-            stack: details.stack,
-          ),
-        );
-      };
-      PlatformDispatcher.instance.onError = (error, stack) {
-        unawaited(
-          recordError(
-            error.toString(),
-            reason: 'platform_error',
-            fatal: true,
-            stack: stack,
-          ),
-        );
-        return true;
-      };
-      await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
+      if (_crashlyticsEnabled) {
+        FlutterError.onError = (details) {
+          FlutterError.presentError(details);
+          unawaited(
+            recordError(
+              details.exceptionAsString(),
+              reason: 'flutter_error',
+              fatal: true,
+              stack: details.stack,
+            ),
+          );
+        };
+        PlatformDispatcher.instance.onError = (error, stack) {
+          unawaited(
+            recordError(
+              error.toString(),
+              reason: 'platform_error',
+              fatal: true,
+              stack: stack,
+            ),
+          );
+          return true;
+        };
+        await FirebaseCrashlytics.instance
+            .setCrashlyticsCollectionEnabled(true);
+      } else {
+        await FirebaseCrashlytics.instance
+            .setCrashlyticsCollectionEnabled(false);
+      }
       _ready = true;
       await _listenConnectivity();
       // Startup flush if already online.
@@ -115,6 +123,8 @@ class AnalyticsService {
     bool fatal = false,
     StackTrace? stack,
   }) async {
+    if (!_crashlyticsEnabled) return;
+
     final online = await _connectivity.hasInternetAccess();
     if (online && _ready) {
       try {
@@ -160,6 +170,7 @@ class AnalyticsService {
             final params = (map['params'] as Map?)?.cast<String, Object>();
             await _analytics?.logEvent(name: name, parameters: params);
           } else if (type == 'error') {
+            if (!_crashlyticsEnabled) continue;
             final message = map['message'] as String? ?? 'queued_error';
             await FirebaseCrashlytics.instance.recordError(
               Exception(message),

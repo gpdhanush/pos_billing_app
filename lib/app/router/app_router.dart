@@ -9,6 +9,7 @@ import 'package:pos_billing/features/billing/billing_screen.dart';
 import 'package:pos_billing/features/billing/checkout_screen.dart';
 import 'package:pos_billing/features/billing/order_checkout_screen.dart';
 import 'package:pos_billing/features/billing/scanner_screen.dart';
+import 'package:pos_billing/features/customers/customer_detail_screen.dart';
 import 'package:pos_billing/features/customers/customer_form_screen.dart';
 import 'package:pos_billing/features/customers/customers_screen.dart';
 import 'package:pos_billing/features/dashboard/dashboard_screen.dart';
@@ -42,13 +43,21 @@ import 'package:pos_billing/shared/widgets/in_app_browser_screen.dart';
 import 'package:pos_billing/core/constants/app_constants.dart';
 
 final _refresh = ValueNotifier(0);
+final rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
+final _shellHomeKey = GlobalKey<NavigatorState>(debugLabel: 'shellHome');
+final _shellSalesKey = GlobalKey<NavigatorState>(debugLabel: 'shellSales');
+final _shellBillingKey = GlobalKey<NavigatorState>(debugLabel: 'shellBilling');
+final _shellStockKey = GlobalKey<NavigatorState>(debugLabel: 'shellStock');
+final _shellMoreKey = GlobalKey<NavigatorState>(debugLabel: 'shellMore');
 
 final routerProvider = Provider<GoRouter>((ref) {
+  ref.keepAlive();
   ref.listen(appSettingsProvider, (_, _) => _refresh.value++);
   ref.listen(storeProfileProvider, (_, _) => _refresh.value++);
   ref.listen(unlockedProvider, (_, _) => _refresh.value++);
 
   return GoRouter(
+    navigatorKey: rootNavigatorKey,
     initialLocation: '/splash',
     refreshListenable: _refresh,
     redirect: (context, state) {
@@ -159,15 +168,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(path: '/customers', builder: (c, s) => const CustomersScreen()),
       GoRoute(
+        path: '/customers/view',
+        builder: (c, s) => CustomerDetailScreen(
+          customerId: int.parse(s.uri.queryParameters['id'] ?? '0'),
+        ),
+      ),
+      GoRoute(
         path: '/customers/edit',
         builder: (c, s) => CustomerFormScreen(
           customerId: int.tryParse(s.uri.queryParameters['id'] ?? ''),
         ),
-      ),
-      GoRoute(
-        path: '/sales/:id',
-        builder: (c, s) =>
-            InvoiceDetailScreen(invoiceId: int.parse(s.pathParameters['id']!)),
       ),
       GoRoute(path: '/reports', builder: (c, s) => const ReportsScreen()),
       GoRoute(path: '/expenses', builder: (c, s) => const ExpensesScreen()),
@@ -179,18 +189,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(path: '/printer', builder: (c, s) => const PrinterScreen()),
       GoRoute(path: '/backup', builder: (c, s) => const BackupScreen()),
-      GoRoute(
-        path: '/stock/overview',
-        builder: (c, s) => const InventoryScreen(),
-      ),
-      GoRoute(
-        path: '/stock/history',
-        builder: (c, s) => const StockHistoryScreen(),
-      ),
-      GoRoute(
-        path: '/stock/movement',
-        builder: (c, s) => const AddStockMovementScreen(),
-      ),
       GoRoute(
         path: '/settings',
         redirect: (c, s) => '/more',
@@ -219,10 +217,25 @@ final routerProvider = Provider<GoRouter>((ref) {
           return InAppBrowserScreen(url: url, title: title);
         },
       ),
+      GoRoute(
+        path: '/invoice/:id',
+        builder: (c, s) => InvoiceDetailScreen(
+          invoiceId: int.parse(s.pathParameters['id']!),
+        ),
+      ),
+      GoRoute(
+        path: '/stock/history',
+        builder: (c, s) => const StockHistoryScreen(),
+      ),
+      GoRoute(
+        path: '/stock/movement',
+        builder: (c, s) => const AddStockMovementScreen(),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => AppShell(shell: shell),
         branches: [
           StatefulShellBranch(
+            navigatorKey: _shellHomeKey,
             routes: [
               GoRoute(
                 path: '/home',
@@ -231,11 +244,16 @@ final routerProvider = Provider<GoRouter>((ref) {
             ],
           ),
           StatefulShellBranch(
+            navigatorKey: _shellSalesKey,
             routes: [
-              GoRoute(path: '/sales', builder: (c, s) => const SalesScreen()),
+              GoRoute(
+                path: '/sales',
+                builder: (c, s) => const SalesScreen(),
+              ),
             ],
           ),
           StatefulShellBranch(
+            navigatorKey: _shellBillingKey,
             routes: [
               GoRoute(
                 path: '/billing',
@@ -244,6 +262,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             ],
           ),
           StatefulShellBranch(
+            navigatorKey: _shellStockKey,
             routes: [
               GoRoute(
                 path: '/stock',
@@ -252,6 +271,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             ],
           ),
           StatefulShellBranch(
+            navigatorKey: _shellMoreKey,
             routes: [
               GoRoute(
                 path: '/more',
@@ -266,11 +286,25 @@ final routerProvider = Provider<GoRouter>((ref) {
 });
 
 int navIndexFor(String location) {
-  if (location.startsWith('/sales')) return 1;
+  if (location.startsWith('/sales') || location.startsWith('/invoice')) {
+    return 1;
+  }
   if (location.startsWith('/billing')) return 2;
   if (location.startsWith('/stock')) return 3;
   if (location.startsWith('/more')) return 4;
   return 0;
+}
+
+/// Switches shell tabs without rebuilding a second [StatefulShellRoute] page.
+void goToShellBranch(BuildContext context, int index) {
+  final shell = StatefulNavigationShell.maybeOf(context);
+  if (shell != null) {
+    if (shell.currentIndex == index) return;
+    shell.goBranch(index, initialLocation: true);
+    return;
+  }
+  const paths = ['/home', '/sales', '/billing', '/stock', '/more'];
+  context.go(paths[index]);
 }
 
 List<NavigationDestination> navDestinations(AppLocalizations l10n) => [

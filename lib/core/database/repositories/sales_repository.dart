@@ -371,6 +371,42 @@ LIMIT ? OFFSET ?
     return rows.map(InvoiceSummary.fromMap).toList();
   }
 
+  /// All invoices for a customer (newest first), plus completed totals.
+  Future<({int orderCount, int spentPaise, List<InvoiceSummary> recent})>
+      customerOrderSummary({
+    required int storeId,
+    required int customerId,
+    int recentLimit = 8,
+  }) async {
+    final stats = await _db.db.rawQuery(
+      '''
+SELECT
+  COUNT(*) AS orders,
+  IFNULL(SUM(CASE WHEN status = ? THEN total ELSE 0 END), 0) AS spent
+FROM invoices
+WHERE store_id = ? AND customer_id = ?
+''',
+      [InvoiceStatus.completed, storeId, customerId],
+    );
+    final rows = await _db.db.rawQuery(
+      '''
+SELECT i.*, c.name AS customer_name,
+  (SELECT GROUP_CONCAT(DISTINCT p.payment_method) FROM payments p WHERE p.invoice_id = i.id) AS payment_methods
+FROM invoices i
+LEFT JOIN customers c ON c.id = i.customer_id
+WHERE i.store_id = ? AND i.customer_id = ?
+ORDER BY i.created_at DESC
+LIMIT ?
+''',
+      [storeId, customerId, recentLimit],
+    );
+    return (
+      orderCount: (stats.first['orders'] as int?) ?? 0,
+      spentPaise: (stats.first['spent'] as int?) ?? 0,
+      recent: rows.map(InvoiceSummary.fromMap).toList(),
+    );
+  }
+
   Future<InvoiceDetail> reverseSale({
     required int invoiceId,
     required bool asRefund,

@@ -82,45 +82,6 @@ class _ProductDetailBody extends ConsumerWidget {
   final Product product;
   final String symbol;
 
-  Future<void> _edit(BuildContext context, WidgetRef ref) async {
-    await context.push('/products/edit?id=${product.id}');
-    ref.invalidate(productDetailProvider(product.id));
-    ref.invalidate(productRecentStockProvider(product.id));
-    ref.invalidate(productsProvider);
-    ref.invalidate(inventoryProductsProvider);
-  }
-
-  Future<void> _delete(BuildContext context, WidgetRef ref) async {
-    final ok = await confirmDialog(
-      context,
-      title: product.isActive ? 'Deactivate product' : 'Activate product',
-      body: product.isActive
-          ? 'Hide "${product.name}" from billing and catalogs? You can activate it later.'
-          : 'Show "${product.name}" in billing and catalogs again?',
-      icon: product.isActive
-          ? Icons.visibility_off_outlined
-          : Icons.restart_alt_rounded,
-      confirmLabel: product.isActive ? 'Deactivate' : 'Activate',
-      destructive: product.isActive,
-    );
-    if (!ok) return;
-    if (product.isActive) {
-      await ref.read(productRepositoryProvider).deactivateProduct(product.id);
-    } else {
-      await ref.read(productRepositoryProvider).activateProduct(product.id);
-    }
-    ref.invalidate(productDetailProvider(product.id));
-    ref.invalidate(productsProvider);
-    ref.invalidate(productFilterCountsProvider);
-    ref.invalidate(inventoryProductsProvider);
-    if (context.mounted) {
-      showSnack(
-        context,
-        product.isActive ? 'Product deactivated' : 'Product activated',
-      );
-    }
-  }
-
   double _stockHealth(Product p) {
     if (p.currentStock <= 0) return 0;
     if (p.minimumStock <= 0) return 100;
@@ -812,23 +773,16 @@ class _ProductDetailBody extends ConsumerWidget {
 }
 
 class _HeaderIconButton extends StatelessWidget {
-  const _HeaderIconButton({
-    required this.icon,
-    required this.onTap,
-    this.color,
-    this.bg,
-  });
+  const _HeaderIconButton({required this.icon, required this.onTap});
 
   final IconData icon;
   final VoidCallback onTap;
-  final Color? color;
-  final Color? bg;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Material(
-      color: bg ?? scheme.surface,
+      color: scheme.surface,
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: onTap,
@@ -841,7 +795,7 @@ class _HeaderIconButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: scheme.outline.withValues(alpha: 0.55)),
           ),
-          child: Icon(icon, color: color ?? scheme.onSurface, size: 20),
+          child: Icon(icon, color: scheme.onSurface, size: 20),
         ),
       ),
     );

@@ -142,9 +142,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                         icon: items[4].icon,
                         selected: shell.currentIndex == 4,
                         onTap: () async {
-                          if (shell.currentIndex == 4) {
-                            context.go('/more');
-                          } else {
+                          if (shell.currentIndex != 4) {
                             await _goBranch(4);
                           }
                         },

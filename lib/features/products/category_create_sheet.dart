@@ -289,80 +289,85 @@ class _CategoryPickerSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
 
-    return Container(
-      margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.sizeOf(context).height * 0.7,
-      ),
-      decoration: BoxDecoration(
+    // Material (not colored Container) so ListTile ink paints correctly.
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      child: Material(
         color: scheme.surface,
         borderRadius: BorderRadius.circular(24),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 10),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: scheme.outline.withValues(alpha: 0.7),
-                borderRadius: BorderRadius.circular(999),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Select category',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
-                    ),
+        clipBehavior: Clip.antiAlias,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(context).height * 0.7,
+          ),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 10),
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: scheme.outline.withValues(alpha: 0.7),
+                    borderRadius: BorderRadius.circular(999),
                   ),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close_rounded),
-                  ),
-                ],
-              ),
-            ),
-            Flexible(
-              child: ListView(
-                shrinkWrap: true,
-                padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
-                children: [
-                  ListTile(
-                    leading: Icon(
-                      Icons.remove_circle_outline_rounded,
-                      color: scheme.onSurfaceVariant,
-                    ),
-                    title: const Text('No category'),
-                    trailing: selectedId == null
-                        ? Icon(Icons.check_rounded, color: scheme.primary)
-                        : null,
-                    onTap: () => Navigator.pop(context, -1),
-                  ),
-                  for (final c in categories)
-                    ListTile(
-                      leading: Icon(
-                        Icons.sell_outlined,
-                        color: scheme.primary,
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Select category',
+                          style:
+                              Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                        ),
                       ),
-                      title: Text(c.name.displayTitle),
-                      trailing: selectedId == c.id
-                          ? Icon(Icons.check_rounded, color: scheme.primary)
-                          : null,
-                      onTap: () => Navigator.pop(context, c.id),
-                    ),
-                ],
-              ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close_rounded),
+                      ),
+                    ],
+                  ),
+                ),
+                Flexible(
+                  child: ListView(
+                    shrinkWrap: true,
+                    padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
+                    children: [
+                      ListTile(
+                        leading: Icon(
+                          Icons.remove_circle_outline_rounded,
+                          color: scheme.onSurfaceVariant,
+                        ),
+                        title: const Text('No category'),
+                        trailing: selectedId == null
+                            ? Icon(Icons.check_rounded, color: scheme.primary)
+                            : null,
+                        onTap: () => Navigator.pop(context, -1),
+                      ),
+                      for (final c in categories)
+                        ListTile(
+                          leading: Icon(
+                            Icons.sell_outlined,
+                            color: scheme.primary,
+                          ),
+                          title: Text(c.name.displayTitle),
+                          trailing: selectedId == c.id
+                              ? Icon(Icons.check_rounded, color: scheme.primary)
+                              : null,
+                          onTap: () => Navigator.pop(context, c.id),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
