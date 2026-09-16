@@ -44,8 +44,11 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
+      backgroundColor: scheme.surfaceContainerLowest,
       appBar: GlassPageHeader(
         title: 'Export data',
+        subtitle: 'Share reports & CSV files',
+        height: 64,
         leading: IconButton(
           onPressed: () => context.pop(),
           icon: const Icon(Icons.arrow_back_rounded),

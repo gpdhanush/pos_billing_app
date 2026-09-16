@@ -26,16 +26,15 @@ class OrderCheckoutScreen extends ConsumerWidget {
 
     if (cart.lines.isEmpty) {
       return Scaffold(
-        appBar: AppBar(
+        backgroundColor: scheme.surfaceContainerLowest,
+        appBar: GlassPageHeader(
+          title: 'Checkout',
+          subtitle: 'Review cart & continue to payment',
+          height: 64,
           leading: IconButton(
             onPressed: () => context.pop(),
-            icon: HugeIcon(
-              icon: HugeIcons.strokeRoundedArrowLeft01,
-              size: 22,
-              color: scheme.onSurface,
-            ),
+            icon: const Icon(Icons.arrow_back_rounded),
           ),
-          title: const Text('Checkout'),
         ),
         body: Center(
           child: Padding(
@@ -89,31 +88,18 @@ class OrderCheckoutScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: scheme.surfaceContainerLowest,
-      appBar: AppBar(
-        backgroundColor: scheme.surfaceContainerLowest,
+      appBar: GlassPageHeader(
+        title: orderLabel,
+        subtitle: 'Review cart & continue to payment',
+        height: 64,
         leading: IconButton(
           onPressed: () => context.pop(),
-          icon: HugeIcon(
-            icon: HugeIcons.strokeRoundedArrowLeft01,
-            size: 22,
-            color: scheme.onSurface,
-          ),
-        ),
-        centerTitle: true,
-        title: Text(
-          orderLabel,
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+          icon: const Icon(Icons.arrow_back_rounded),
         ),
         actions: [
           IconButton(
             onPressed: () => _showInfoDialog(context, l10n),
-            icon: HugeIcon(
-              icon: HugeIcons.strokeRoundedInformationCircle,
-              size: 22,
-              color: scheme.onSurface,
-            ),
+            icon: const Icon(Icons.info_outline_rounded),
           ),
         ],
       ),

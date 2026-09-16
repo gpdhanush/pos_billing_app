@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:pos_billing/core/ads/mobile_ads_init.dart';
 import 'package:pos_billing/core/constants/ads_config.dart';
+import 'package:pos_billing/core/services/app_log_service.dart';
 
 /// Adaptive banner. Hidden until an ad loads so layout does not jump empty.
 class AppBannerAd extends StatefulWidget {
@@ -29,13 +33,30 @@ class _AppBannerAdState extends State<AppBannerAd> {
   }
 
   Future<void> _load(int width) async {
+    if (!mounted) return;
+    final orientation = MediaQuery.orientationOf(context);
+
     _ad?.dispose();
     _ad = null;
-    if (mounted && _loaded) {
+    if (_loaded) {
       setState(() => _loaded = false);
     }
 
-    final size = await AdSize.getLargeAnchoredAdaptiveBannerAdSize(width);
+    try {
+      await ensureMobileAdsInitialized();
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Banner skipped: MobileAds not initialized ($e)');
+      }
+      return;
+    }
+    if (!mounted) return;
+
+    // Compact anchored adaptive (~50dp). Avoid getLargeAnchoredAdaptiveBannerAdSize.
+    final size = await AdSize.getAnchoredAdaptiveBannerAdSize(
+      orientation,
+      width,
+    );
     if (!mounted || size == null) return;
 
     final ad = BannerAd(
@@ -55,8 +76,19 @@ class _AppBannerAdState extends State<AppBannerAd> {
         },
         onAdFailedToLoad: (ad, error) {
           ad.dispose();
+          unawaited(
+            AppLogService.warn(
+              'Banner ad failed (${AdsConfig.bannerAdUnitId}): '
+              '${error.code} ${error.message}',
+            ),
+          );
           if (kDebugMode) {
-            debugPrint('Banner ad failed: $error');
+            debugPrint(
+              'Banner ad failed: ${error.code} ${error.message} '
+              '(domain=${error.domain}, unit=${AdsConfig.bannerAdUnitId}). '
+              'Ensure android/local.properties admobAppId matches '
+              'ADMOB_ANDROID_APP_ID in .env.',
+            );
           }
           if (mounted) setState(() => _loaded = false);
         },
@@ -75,10 +107,18 @@ class _AppBannerAdState extends State<AppBannerAd> {
   Widget build(BuildContext context) {
     final ad = _ad;
     if (!_loaded || ad == null) return const SizedBox.shrink();
+    final h = ad.size.height.toDouble();
     return SizedBox(
-      width: ad.size.width.toDouble(),
-      height: ad.size.height.toDouble(),
-      child: AdWidget(ad: ad),
+      width: double.infinity,
+      height: h,
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        child: SizedBox(
+          width: ad.size.width.toDouble(),
+          height: h,
+          child: AdWidget(ad: ad),
+        ),
+      ),
     );
   }
 }

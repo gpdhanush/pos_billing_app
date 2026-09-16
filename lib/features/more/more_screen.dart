@@ -522,32 +522,13 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
 
     return Scaffold(
       backgroundColor: scheme.surfaceContainerLowest,
-      body: SafeArea(
-        bottom: false,
-        child: CustomScrollView(
+      appBar: GlassPageHeader(
+        title: l10n.navMore,
+        subtitle: 'Shop tools & preferences',
+        height: 64,
+      ),
+      body: CustomScrollView(
           slivers: [
-            ContainedSliver(
-              padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n.navMore,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.4,
-                        ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Shop tools & preferences',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
-                  ),
-                ],
-              ),
-            ),
             for (final section in sections) ...[
               ContainedSliver(
                 padding: const EdgeInsets.fromLTRB(20, 22, 20, 10),
@@ -771,7 +752,6 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
             ),
           ],
         ),
-      ),
     );
   }
 }

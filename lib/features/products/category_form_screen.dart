@@ -124,24 +124,17 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: scheme.surface,
-      appBar: AppBar(
-        backgroundColor: scheme.primary,
-        foregroundColor: scheme.onPrimary,
-        centerTitle: true,
-        elevation: 0,
+      backgroundColor: scheme.surfaceContainerLowest,
+      appBar: GlassPageHeader(
+        title: _isEdit ? 'Edit category' : l10n.categoriesAdd,
+        subtitle: _isEdit
+            ? 'Update category name'
+            : 'Organize products in your catalog',
+        height: 64,
         leading: IconButton(
           onPressed: () => context.pop(),
           icon: const Icon(Icons.arrow_back_rounded),
         ),
-        title: Text(
-          _isEdit ? 'Edit category' : l10n.categoriesAdd,
-          style: TextStyle(
-            color: scheme.onPrimary,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        iconTheme: IconThemeData(color: scheme.onPrimary),
       ),
       body: Column(
         children: [

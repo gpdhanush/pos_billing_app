@@ -53,8 +53,11 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
+      backgroundColor: scheme.surfaceContainerLowest,
       appBar: GlassPageHeader(
         title: 'Complete payment',
+        subtitle: 'Choose method & collect amount',
+        height: 64,
         leading: IconButton(
           onPressed: () => context.pop(),
           icon: const Icon(Icons.arrow_back_rounded),

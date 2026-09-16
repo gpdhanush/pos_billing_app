@@ -600,6 +600,24 @@ WHERE store_id = ? AND is_active = 1
     );
   }
 
+  Future<({int salesPaise, int billCount})> completedSalesAggregate(
+    int storeId,
+    SalesDateRange range,
+  ) async {
+    final rows = await _db.db.rawQuery(
+      '''
+SELECT IFNULL(SUM(total), 0) AS sales, COUNT(*) AS bills
+FROM invoices
+WHERE store_id = ? AND created_at >= ? AND created_at < ? AND status = ?
+''',
+      [storeId, range.startMs, range.endMs, InvoiceStatus.completed],
+    );
+    return (
+      salesPaise: (rows.first['sales'] as int?) ?? 0,
+      billCount: (rows.first['bills'] as int?) ?? 0,
+    );
+  }
+
   Future<Map<String, int>> paymentTotals(
     int storeId,
     SalesDateRange range,

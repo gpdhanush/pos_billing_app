@@ -8,6 +8,7 @@ import 'package:pos_billing/features/backup/backup_screen.dart';
 import 'package:pos_billing/features/billing/billing_screen.dart';
 import 'package:pos_billing/features/billing/checkout_screen.dart';
 import 'package:pos_billing/features/billing/order_checkout_screen.dart';
+import 'package:pos_billing/features/billing/manual_barcode_screen.dart';
 import 'package:pos_billing/features/billing/scanner_screen.dart';
 import 'package:pos_billing/features/customers/customer_detail_screen.dart';
 import 'package:pos_billing/features/customers/customer_form_screen.dart';
@@ -138,6 +139,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           );
           return ScannerScreen(purpose: purpose);
         },
+      ),
+      GoRoute(
+        path: '/scan/manual',
+        builder: (c, s) => const ManualBarcodeScreen(),
       ),
       GoRoute(path: '/products', builder: (c, s) => const ProductsScreen()),
       GoRoute(

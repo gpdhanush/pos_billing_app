@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/app/providers.dart';
-import 'package:pos_billing/app/theme/app_theme.dart';
+import 'package:pos_billing/shared/widgets/ui_kit.dart';
 
 class ScannerScreen extends ConsumerStatefulWidget {
   const ScannerScreen({super.key, required this.purpose});
@@ -94,49 +94,19 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
         .getProductByBarcode(code);
     if (!mounted) return;
     final l10n = AppLocalizations.of(context);
-    final scheme = Theme.of(context).colorScheme;
 
     if (product == null) {
-      await showDialog<void>(
-        context: context,
-        builder: (context) => AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadii.lg),
-          ),
-          title: Row(
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: scheme.errorContainer,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  Icons.barcode_reader,
-                  color: scheme.onErrorContainer,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(child: Text(l10n.scannerNotFoundTitle)),
-            ],
-          ),
-          content: Text(l10n.scannerNotFoundBody(code)),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(l10n.commonCancel),
-            ),
-            FilledButton(
-              onPressed: () {
-                Navigator.pop(context);
-                this.context.push('/products/edit?barcode=$code');
-              },
-              child: Text(l10n.scannerAddProduct),
-            ),
-          ],
-        ),
+      final addProduct = await showConfirmBottomSheet(
+        context,
+        title: l10n.scannerNotFoundTitle,
+        body: l10n.scannerNotFoundBody(code),
+        confirmLabel: l10n.scannerAddProduct,
+        cancelLabel: l10n.commonCancel,
+        icon: Icons.inventory_2_outlined,
       );
+      if (addProduct && mounted) {
+        context.push('/products/edit?barcode=$code');
+      }
       _handling = false;
       return;
     }
@@ -156,61 +126,16 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
   }
 
   Future<void> _enterManual() async {
-    final l10n = AppLocalizations.of(context);
-    final scheme = Theme.of(context).colorScheme;
-    final controller = TextEditingController();
-    final code = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadii.lg),
-        ),
-        title: Row(
-          children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: scheme.primary.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(Icons.barcode_reader, color: scheme.primary),
-            ),
-            const SizedBox(width: 12),
-            Expanded(child: Text(l10n.scannerEnterManual)),
-          ],
-        ),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          keyboardType: TextInputType.visiblePassword,
-          decoration: InputDecoration(
-            hintText: l10n.productsBarcode,
-            prefixIcon: const Icon(Icons.view_week_rounded),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(5),
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(l10n.commonCancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, controller.text.trim()),
-            child: Text(l10n.commonContinue),
-          ),
-        ],
-      ),
-    );
-    if (code != null && code.isNotEmpty) await _onCode(code);
+    final code = await context.push<String>('/scan/manual');
+    if (!mounted || code == null || code.isEmpty) return;
+    await _onCode(code);
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
+    final scanWindow = _barcodeWindow(MediaQuery.sizeOf(context));
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -237,48 +162,26 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
             },
           ),
           SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-              child: Row(
-                children: [
-                  _CircleAction(
-                    icon: Icons.arrow_back_rounded,
-                    onTap: () => context.pop(),
-                  ),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.45),
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.18),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.view_week_rounded,
-                          color: scheme.primary,
-                          size: 18,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          l10n.scannerTitle,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Spacer(),
-                  _CircleAction(
+            child: Align(
+              alignment: Alignment.topLeft,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                child: _CircleAction(
+                  icon: Icons.arrow_back_rounded,
+                  onTap: () => context.pop(),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            top: scanWindow.bottom + 20,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Center(
+                  child: _CircleAction(
                     icon: _torchOn
                         ? Icons.flashlight_on_rounded
                         : Icons.flashlight_off_rounded,
@@ -288,35 +191,49 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
                       setState(() => _torchOn = !_torchOn);
                     },
                   ),
-                ],
-              ),
-            ),
-          ),
-          Align(
-            alignment: const Alignment(0, -0.08),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 28),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.view_week_rounded,
-                    color: Colors.white.withValues(alpha: 0.9),
-                    size: 28,
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    l10n.scannerAlign,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.92),
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                      height: 1.35,
+                ),
+                const SizedBox(height: 12),
+                Center(
+                  child: Container(
+                    constraints: const BoxConstraints(maxWidth: 320),
+                    margin: const EdgeInsets.symmetric(horizontal: 24),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.48),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.16),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.view_week_rounded,
+                          size: 16,
+                          color: scheme.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            l10n.scannerAlign,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.92),
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                              height: 1.25,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
           Align(
@@ -324,65 +241,22 @@ class _ScannerScreenState extends ConsumerState<ScannerScreen>
             child: SafeArea(
               top: false,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.14),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              color: scheme.primary.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(
-                              Icons.barcode_reader,
-                              color: scheme.primary,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          const Expanded(
-                            child: Text(
-                              'Align the barcode inside the frame',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: _enterManual,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
+                      minimumSize: const Size.fromHeight(50),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton.icon(
-                        onPressed: _enterManual,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: Colors.black,
-                          minimumSize: const Size.fromHeight(52),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        icon: const Icon(Icons.keyboard_rounded),
-                        label: Text(l10n.scannerEnterManual),
-                      ),
-                    ),
-                  ],
+                    icon: const Icon(Icons.keyboard_rounded),
+                    label: Text(l10n.scannerEnterManual),
+                  ),
                 ),
               ),
             ),

@@ -190,8 +190,11 @@ class _AddStockMovementScreenState
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
+      backgroundColor: scheme.surfaceContainerLowest,
       appBar: GlassPageHeader(
         title: 'Add Stock Movement',
+        subtitle: 'Stock in, stock out & adjustments',
+        height: 64,
         leading: IconButton(
           onPressed: () => context.pop(),
           icon: const Icon(Icons.arrow_back_rounded),

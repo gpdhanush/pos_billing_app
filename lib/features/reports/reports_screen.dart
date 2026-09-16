@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:intl/intl.dart';
 import 'package:pos_billing/app/localization/generated/app_localizations.dart';
 import 'package:pos_billing/app/providers.dart';
@@ -143,13 +144,20 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     }
     final symbol = store.currencySymbol;
     final dateFmt = DateFormat('dd MMM yyyy');
+    final scheme = Theme.of(context).colorScheme;
+    final canPop = context.canPop();
     return Scaffold(
+      backgroundColor: scheme.surfaceContainerLowest,
       appBar: GlassPageHeader(
         title: l10n.reportsTitle,
-        leading: IconButton(
-          onPressed: () => context.pop(),
-          icon: const Icon(Icons.arrow_back_rounded),
-        ),
+        subtitle: 'View your business insights',
+        height: 64,
+        leading: canPop
+            ? IconButton(
+                onPressed: () => context.pop(),
+                icon: const Icon(Icons.arrow_back_rounded),
+              )
+            : null,
       ),
       body: FutureBuilder(
         key: ValueKey('${range.startMs}-${range.endMs}'),
@@ -170,43 +178,79 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
             startMs: range.startMs,
             endMs: range.endMs,
           );
-          return (payments, top, value, stats, expensesTotal, expenses);
+          return (
+            payments,
+            top,
+            value,
+            stats,
+            expensesTotal,
+            expenses,
+          );
         }(),
         builder: (context, snap) {
           if (!snap.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
-          final (payments, top, value, stats, expensesTotal, expenses) =
-              snap.data!;
+          final (
+            payments,
+            top,
+            value,
+            stats,
+            expensesTotal,
+            expenses,
+          ) = snap.data!;
           return ListView(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
             children: [
               SoftCard(
+                radius: AppRadii.lg,
+                padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Date range',
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
+                    Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: scheme.primary.withValues(alpha: 0.10),
+                            borderRadius: BorderRadius.circular(10),
                           ),
+                          child: Center(
+                            child: HugeIcon(
+                              icon: HugeIcons.strokeRoundedCalendar03,
+                              size: 18,
+                              color: scheme.primary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          'Date range',
+                          style:
+                              Theme.of(context).textTheme.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 14),
                     Row(
                       children: [
                         Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: _pickFrom,
-                            icon: const Icon(Icons.calendar_today_outlined),
-                            label: Text('From ${dateFmt.format(_from)}'),
+                          child: _DateField(
+                            label: 'From',
+                            value: dateFmt.format(_from),
+                            onTap: _pickFrom,
                           ),
                         ),
                         const SizedBox(width: 10),
                         Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: _pickTo,
-                            icon: const Icon(Icons.event_outlined),
-                            label: Text('To ${dateFmt.format(_to)}'),
+                          child: _DateField(
+                            label: 'To',
+                            value: dateFmt.format(_to),
+                            onTap: _pickTo,
                           ),
                         ),
                       ],
@@ -264,82 +308,80 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 10),
               GridView.count(
                 crossAxisCount: 2,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                childAspectRatio: 1.28,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
+                childAspectRatio: 2.35,
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 8,
                 children: [
-                  StatTile(
-                    label: l10n.dashboardTodaySales,
-                    value: Money(stats.todaySalesPaise).format(symbol: symbol),
-                    icon: Icons.currency_rupee_rounded,
-                  ),
-                  StatTile(
-                    label: l10n.dashboardBillsToday,
-                    value: '${stats.billsToday}',
-                    icon: Icons.receipt_long_rounded,
-                    accent: AppColors.success,
-                  ),
-                  StatTile(
+                  _ReportMetricCard(
                     label: l10n.reportsStockValue,
                     value: Money(value).format(symbol: symbol),
-                    icon: Icons.inventory_2_rounded,
+                    accent: const Color(0xFF7C3AED),
+                    icon: HugeIcons.strokeRoundedPackage,
                   ),
-                  StatTile(
+                  _ReportMetricCard(
                     label: l10n.reportsExpenses,
                     value: Money(expensesTotal).format(symbol: symbol),
-                    icon: Icons.payments_outlined,
-                    accent: AppColors.warning,
+                    accent: const Color(0xFFEA580C),
+                    icon: HugeIcons.strokeRoundedMoney01,
                   ),
                 ],
               ),
-              const SizedBox(height: 18),
-              SectionHeader(title: 'Collections'),
-              const SizedBox(height: 10),
-              SoftCard(
-                padding: EdgeInsets.zero,
-                child: Column(
-                  children: [
-                    _paymentRow(
-                      context,
-                      'CASH',
-                      Money(payments[PaymentMethods.cash] ?? 0)
-                          .format(symbol: symbol),
-                      Icons.payments_outlined,
-                    ),
-                    const Divider(),
-                    _paymentRow(
-                      context,
-                      'UPI',
-                      Money(payments[PaymentMethods.upi] ?? 0)
-                          .format(symbol: symbol),
-                      Icons.qr_code_2_rounded,
-                    ),
-                    const Divider(),
-                    _paymentRow(
-                      context,
-                      'CARD',
-                      Money(payments[PaymentMethods.card] ?? 0)
-                          .format(symbol: symbol),
-                      Icons.credit_card_rounded,
-                    ),
-                    const Divider(),
-                    _paymentRow(
-                      context,
-                      'CREDIT',
-                      Money(payments[PaymentMethods.credit] ?? 0)
-                          .format(symbol: symbol),
-                      Icons.account_balance_wallet_outlined,
-                    ),
-                  ],
-                ),
+              const SizedBox(height: 14),
+              _ReportSectionHeader(
+                title: 'Collections',
+                icon: HugeIcons.strokeRoundedWallet01,
+                accent: AppColors.success,
               ),
-              const SizedBox(height: 18),
-              SectionHeader(title: l10n.reportsTopProducts),
+              const SizedBox(height: 10),
+              GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                childAspectRatio: 2.35,
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 8,
+                children: [
+                  _ReportMetricCard(
+                    label: 'CASH',
+                    value: Money(payments[PaymentMethods.cash] ?? 0)
+                        .format(symbol: symbol),
+                    accent: AppColors.success,
+                    icon: HugeIcons.strokeRoundedMoney01,
+                  ),
+                  _ReportMetricCard(
+                    label: 'UPI',
+                    value: Money(payments[PaymentMethods.upi] ?? 0)
+                        .format(symbol: symbol),
+                    accent: const Color(0xFF2563EB),
+                    icon: HugeIcons.strokeRoundedQrCode,
+                  ),
+                  _ReportMetricCard(
+                    label: 'CARD',
+                    value: Money(payments[PaymentMethods.card] ?? 0)
+                        .format(symbol: symbol),
+                    accent: const Color(0xFF7C3AED),
+                    icon: HugeIcons.strokeRoundedCreditCard,
+                  ),
+                  _ReportMetricCard(
+                    label: 'CREDIT',
+                    value: Money(payments[PaymentMethods.credit] ?? 0)
+                        .format(symbol: symbol),
+                    accent: const Color(0xFFEA580C),
+                    icon: HugeIcons.strokeRoundedWallet01,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              _ReportSectionHeader(
+                title: l10n.reportsTopProducts,
+                icon: HugeIcons.strokeRoundedChartBarLine,
+                accent: AppColors.success,
+              ),
               const SizedBox(height: 10),
               if (top.isEmpty)
                 SoftCard(
@@ -356,16 +398,22 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                       for (var i = 0; i < top.length; i++) ...[
                         if (i > 0) const Divider(),
                         ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: Theme.of(context)
-                                .colorScheme
-                                .primary
-                                .withValues(alpha: 0.12),
-                            child: Text(
-                              '${i + 1}',
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.primary,
-                                fontWeight: FontWeight.w700,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 2,
+                          ),
+                          leading: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: AppColors.success.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Center(
+                              child: HugeIcon(
+                                icon: HugeIcons.strokeRoundedPackage01,
+                                size: 20,
+                                color: AppColors.success,
                               ),
                             ),
                           ),
@@ -385,8 +433,12 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                     ],
                   ),
                 ),
-              const SizedBox(height: 18),
-              SectionHeader(title: l10n.reportsExpenses),
+              const SizedBox(height: 14),
+              _ReportSectionHeader(
+                title: l10n.reportsExpenses,
+                icon: HugeIcons.strokeRoundedWallet02,
+                accent: AppColors.danger,
+              ),
               const SizedBox(height: 10),
               if (expenses.isEmpty)
                 SoftCard(
@@ -403,6 +455,25 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
                       for (var i = 0; i < expenses.length; i++) ...[
                         if (i > 0) const Divider(),
                         ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 2,
+                          ),
+                          leading: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: AppColors.danger.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Center(
+                              child: HugeIcon(
+                                icon: HugeIcons.strokeRoundedWallet02,
+                                size: 20,
+                                color: AppColors.danger,
+                              ),
+                            ),
+                          ),
                           title: Text(expenses[i].category.displayTitle),
                           subtitle: Text(
                             '${expenses[i].paymentMethod.toUpperCase()} · ${DateFormat.yMMMd().format(DateTime.fromMillisecondsSinceEpoch(expenses[i].spentAt))}',
@@ -438,20 +509,174 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen> {
     );
   }
 
-  Widget _paymentRow(
-    BuildContext context,
-    String label,
-    String value,
-    IconData icon,
-  ) {
-    return ListTile(
-      leading: IconBadge(icon: icon, size: 38),
-      title: Text(label),
-      trailing: Text(
-        value,
-        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w700,
+}
+
+class _DateField extends StatelessWidget {
+  const _DateField({
+    required this.label,
+    required this.value,
+    required this.onTap,
+  });
+
+  final String label;
+  final String value;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Material(
+      color: scheme.surfaceContainerHighest.withValues(alpha: 0.45),
+      borderRadius: BorderRadius.circular(AppRadii.md),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadii.md),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      value,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.keyboard_arrow_down_rounded,
+                size: 20,
+                color: scheme.onSurfaceVariant,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ReportSectionHeader extends StatelessWidget {
+  const _ReportSectionHeader({
+    required this.title,
+    required this.icon,
+    required this.accent,
+  });
+
+  final String title;
+  final List<List<dynamic>> icon;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: accent.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Center(
+            child: HugeIcon(icon: icon, size: 18, color: accent),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Text(
+          title,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ReportMetricCard extends StatelessWidget {
+  const _ReportMetricCard({
+    required this.label,
+    required this.value,
+    required this.accent,
+    required this.icon,
+  });
+
+  final String label;
+  final String value;
+  final Color accent;
+  final List<List<dynamic>> icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: accent.withValues(alpha: 0.07),
+        border: Border.all(color: accent.withValues(alpha: 0.14)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(9),
             ),
+            child: Center(
+              child: HugeIcon(icon: icon, size: 16, color: accent),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
+                        height: 1.1,
+                      ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: scheme.onSurface,
+                        height: 1.1,
+                      ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -85,13 +85,16 @@ class _AppShellState extends ConsumerState<AppShell> {
       },
       child: Scaffold(
         body: SafeArea(top: false, bottom: false, child: shell),
-        bottomNavigationBar: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const AppBannerAd(),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-              child: DecoratedBox(
+        bottomNavigationBar: SafeArea(
+          top: false,
+          minimum: EdgeInsets.zero,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const AppBannerAd(),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                child: DecoratedBox(
                 decoration: BoxDecoration(
                   color: scheme.surface,
                   borderRadius: BorderRadius.circular(AppRadii.xl),
@@ -153,6 +156,7 @@ class _AppShellState extends ConsumerState<AppShell> {
               ),
             ),
           ],
+          ),
         ),
       ),
     );

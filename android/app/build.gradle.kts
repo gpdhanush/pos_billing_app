@@ -18,10 +18,9 @@ val localPropertiesFile = rootProject.file("local.properties")
 if (localPropertiesFile.exists()) {
     localPropertiesFile.inputStream().use { localProperties.load(it) }
 }
+// Must match ADMOB_ANDROID_APP_ID in .env (Google test app ID below).
 val admobAppId = localProperties.getProperty("admobAppId")
-    ?: "ca-app-pub-9764087765210503~7220892692"
-val admobBannerAdUnit = localProperties.getProperty("admobBannerAdUnit")
-    ?: "ca-app-pub-9764087765210503/9852951589"
+    ?: "ca-app-pub-3940256099942544~3347511713"
 
 val keystoreProperties = Properties()
 val keystorePropertiesFile = rootProject.file("key.properties")

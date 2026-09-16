@@ -42,7 +42,11 @@ class ProductDetailScreen extends ConsumerWidget {
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (_, _) => Scaffold(
-          appBar: AppBar(
+          backgroundColor: scheme.surfaceContainerLowest,
+          appBar: GlassPageHeader(
+            title: 'Product Details',
+            subtitle: 'View and manage product information',
+            height: 64,
             leading: IconButton(
               onPressed: () => context.pop(),
               icon: const Icon(Icons.arrow_back_rounded),
@@ -55,12 +59,15 @@ class ProductDetailScreen extends ConsumerWidget {
         data: (product) {
           if (product == null) {
             return Scaffold(
-              appBar: AppBar(
+              backgroundColor: scheme.surfaceContainerLowest,
+              appBar: GlassPageHeader(
+                title: 'Product Details',
+                subtitle: 'View and manage product information',
+                height: 64,
                 leading: IconButton(
                   onPressed: () => context.pop(),
                   icon: const Icon(Icons.arrow_back_rounded),
                 ),
-                title: const Text('Product Details'),
               ),
               body: const EmptyState(
                 title: 'Product not found',
@@ -132,60 +139,18 @@ class _ProductDetailBody extends ConsumerWidget {
     final hasImage = path != null && path.isNotEmpty;
     final category = p.categoryName?.displayTitle;
 
-    return Column(
-      children: [
-        SafeArea(
-          bottom: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-            child: Row(
-              children: [
-                _HeaderIconButton(
-                  icon: Icons.arrow_back_rounded,
-                  onTap: () => context.pop(),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Product Details',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.3,
-                        ),
-                      ),
-                      Text(
-                        'View and manage product information',
-                        style: Theme.of(context).textTheme.bodySmall
-                            ?.copyWith(color: scheme.onSurfaceVariant),
-                      ),
-                    ],
-                  ),
-                ),
-                // _HeaderIconButton(
-                //   icon: Icons.edit_rounded,
-                //   color: scheme.primary,
-                //   bg: scheme.primary.withValues(alpha: 0.12),
-                //   onTap: () => _edit(context, ref),
-                // ),
-                // const SizedBox(width: 8),
-                // _HeaderIconButton(
-                //   icon: p.isActive
-                //       ? Icons.delete_outline_rounded
-                //       : Icons.restart_alt_rounded,
-                //   color: p.isActive ? scheme.error : AppColors.success,
-                //   bg: (p.isActive ? scheme.error : AppColors.success)
-                //       .withValues(alpha: 0.12),
-                //   onTap: () => _delete(context, ref),
-                // ),
-              ],
-            ),
-          ),
+    return Scaffold(
+      backgroundColor: scheme.surfaceContainerLowest,
+      appBar: GlassPageHeader(
+        title: 'Product Details',
+        subtitle: 'View and manage product information',
+        height: 64,
+        leading: IconButton(
+          onPressed: () => context.pop(),
+          icon: const Icon(Icons.arrow_back_rounded),
         ),
-        Expanded(
-          child: ListView(
+      ),
+      body: ListView(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 28),
             children: [
               SoftCard(
@@ -556,9 +521,7 @@ class _ProductDetailBody extends ConsumerWidget {
                 ),
               ),
             ],
-          ),
-        ),
-      ],
+      ),
     );
   }
 
@@ -767,36 +730,6 @@ class _ProductDetailBody extends ConsumerWidget {
                 ?.copyWith(color: scheme.onSurfaceVariant),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _HeaderIconButton extends StatelessWidget {
-  const _HeaderIconButton({required this.icon, required this.onTap});
-
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Material(
-      color: scheme.surface,
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          width: 42,
-          height: 42,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: scheme.outline.withValues(alpha: 0.55)),
-          ),
-          child: Icon(icon, color: scheme.onSurface, size: 20),
-        ),
       ),
     );
   }

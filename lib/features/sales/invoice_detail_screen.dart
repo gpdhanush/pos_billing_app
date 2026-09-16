@@ -49,20 +49,17 @@ class InvoiceDetailScreen extends ConsumerWidget {
     final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              scheme.primary.withValues(alpha: 0.10),
-              scheme.surface,
-              scheme.surface,
-            ],
-            stops: const [0, 0.26, 1],
-          ),
+      backgroundColor: scheme.surfaceContainerLowest,
+      appBar: GlassPageHeader(
+        title: l10n.salesDetails,
+        subtitle: 'Invoice & payment details',
+        height: 64,
+        leading: IconButton(
+          onPressed: () => context.pop(),
+          icon: const Icon(Icons.arrow_back_rounded),
         ),
-        child: FutureBuilder<InvoiceDetail?>(
+      ),
+      body: FutureBuilder<InvoiceDetail?>(
           future: ref.read(salesRepositoryProvider).getInvoice(invoiceId),
           builder: (context, snap) {
             if (!snap.hasData) {
@@ -70,17 +67,7 @@ class InvoiceDetailScreen extends ConsumerWidget {
             }
             final invoice = snap.data;
             if (invoice == null) {
-              return SafeArea(
-                child: Column(
-                  children: [
-                    _TopBar(
-                      title: l10n.salesDetails,
-                      onBack: () => context.pop(),
-                    ),
-                    Expanded(child: EmptyState(title: l10n.salesEmpty)),
-                  ],
-                ),
-              );
+              return EmptyState(title: l10n.salesEmpty);
             }
 
             final store = ref.watch(storeProfileProvider).valueOrNull;
@@ -99,16 +86,7 @@ class InvoiceDetailScreen extends ConsumerWidget {
             final canReverse =
                 invoice.summary.status == InvoiceStatus.completed;
 
-            return SafeArea(
-              bottom: false,
-              child: Column(
-                children: [
-                  _TopBar(
-                    title: l10n.salesDetails,
-                    onBack: () => context.pop(),
-                  ),
-                  Expanded(
-                    child: ListView(
+            return ListView(
                       padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
                       children: [
                         _HeroPanel(
@@ -333,64 +311,9 @@ class InvoiceDetailScreen extends ConsumerWidget {
                           ),
                         ],
                       ],
-                    ),
-                  ),
-                ],
-              ),
-            );
+                    );
           },
         ),
-      ),
-    );
-  }
-}
-
-class _TopBar extends StatelessWidget {
-  const _TopBar({required this.title, required this.onBack});
-
-  final String title;
-  final VoidCallback onBack;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 8, 20, 4),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: onBack,
-            behavior: HitTestBehavior.opaque,
-            child: Container(
-              width: 42,
-              height: 42,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: scheme.surface.withValues(alpha: 0.92),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: scheme.outline.withValues(alpha: 0.55),
-                ),
-              ),
-              child: Icon(
-                Icons.arrow_back_rounded,
-                color: scheme.onSurface,
-                size: 22,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              title,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.3,
-                  ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

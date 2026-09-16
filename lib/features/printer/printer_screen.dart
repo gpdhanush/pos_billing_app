@@ -85,8 +85,20 @@ class _PrinterScreenState extends ConsumerState<PrinterScreen> {
     final scheme = Theme.of(context).colorScheme;
     final paper =
         ref.watch(appSettingsProvider).valueOrNull?.paperSize ?? '58mm';
+    final canPop = context.canPop();
     return Scaffold(
-      appBar: GlassPageHeader(title: l10n.printerTitle),
+      backgroundColor: scheme.surfaceContainerLowest,
+      appBar: GlassPageHeader(
+        title: l10n.printerTitle,
+        subtitle: 'Receipt printer settings',
+        height: 64,
+        leading: canPop
+            ? IconButton(
+                onPressed: () => context.pop(),
+                icon: const Icon(Icons.arrow_back_rounded),
+              )
+            : null,
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 28),
         children: [

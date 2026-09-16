@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:pos_billing/app/app.dart';
+import 'package:pos_billing/core/ads/mobile_ads_init.dart';
 import 'package:pos_billing/app/providers.dart';
 import 'package:pos_billing/core/analytics/analytics_service.dart';
 import 'package:pos_billing/core/database/app_database.dart';
@@ -20,6 +20,11 @@ Future<void> main() async {
     AppErrorHandler.install();
     await AppLogService.init();
     await loadAppEnv();
+    try {
+      await ensureMobileAdsInitialized();
+    } catch (_) {
+      // Banner is optional; app still runs if AdMob fails.
+    }
     await AppLogService.info('App starting');
 
     // Open DB first so splash/settings can load, then show UI immediately.
@@ -57,12 +62,6 @@ Future<void> _initSecondaryServices({
   required AnalyticsService analytics,
   required NotificationService notifications,
 }) async {
-  try {
-    await MobileAds.instance.initialize();
-  } catch (e) {
-    unawaited(AppLogService.warn('MobileAds init failed: $e'));
-  }
-
   try {
     await BackupBackgroundScheduler.initialize();
   } catch (e) {

@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:intl/intl.dart';
 import 'package:pos_billing/app/localization/generated/app_localizations.dart';
-import 'package:pos_billing/app/router/app_router.dart';
 import 'package:pos_billing/app/providers.dart';
 import 'package:pos_billing/app/theme/app_theme.dart';
 import 'package:pos_billing/core/constants/app_constants.dart';
@@ -98,11 +97,6 @@ class DashboardScreen extends ConsumerWidget {
                       _RoundHeaderButton(
                         icon: HugeIcons.strokeRoundedNotification03,
                         onTap: () => context.push('/notifications'),
-                      ),
-                      const SizedBox(width: 8),
-                      _RoundHeaderButton(
-                        icon: HugeIcons.strokeRoundedSettings01,
-                        onTap: () => goToShellBranch(context, 4),
                       ),
                     ],
                   ),

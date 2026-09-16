@@ -46,6 +46,17 @@ class StockHistoryScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: scheme.surfaceContainerLowest,
+      appBar: GlassPageHeader(
+        title: 'Stock History',
+        subtitle: 'Stock in, stock out & adjustments',
+        height: 64,
+        leading: canPop
+            ? IconButton(
+                onPressed: () => context.pop(),
+                icon: const Icon(Icons.arrow_back_rounded),
+              )
+            : null,
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
           final saved = await context.push<bool>('/stock/movement');
@@ -58,63 +69,9 @@ class StockHistoryScreen extends ConsumerWidget {
         icon: const Icon(Icons.add_rounded),
         label: const Text('Add movement'),
       ),
-      body: SafeArea(
-        bottom: false,
-        child: Column(
+      body: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 14, 16, 0),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (canPop) ...[
-                    Material(
-                      color: scheme.primary.withValues(alpha: 0.08),
-                      shape: const CircleBorder(),
-                      child: InkWell(
-                        customBorder: const CircleBorder(),
-                        onTap: () => context.pop(),
-                        child: Padding(
-                          padding: const EdgeInsets.all(11),
-                          child: HugeIcon(
-                            icon: HugeIcons.strokeRoundedArrowLeft01,
-                            size: 20,
-                            color: scheme.primary,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                  ],
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Stock History',
-                          style: Theme.of(context)
-                              .textTheme
-                              .headlineSmall
-                              ?.copyWith(
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: -0.4,
-                              ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Stock in, stock out & adjustments',
-                          style:
-                              Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: scheme.onSurfaceVariant,
-                                  ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
               child: SoftSearchField(
@@ -298,7 +255,6 @@ class StockHistoryScreen extends ConsumerWidget {
             ),
           ],
         ),
-      ),
     );
   }
 }

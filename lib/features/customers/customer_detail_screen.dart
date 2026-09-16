@@ -50,7 +50,10 @@ class CustomerDetailScreen extends ConsumerWidget {
       ),
       error: (_, _) => Scaffold(
         backgroundColor: scheme.surfaceContainerLowest,
-        appBar: AppBar(
+        appBar: GlassPageHeader(
+          title: 'Customer Details',
+          subtitle: 'View customer information',
+          height: 64,
           leading: IconButton(
             onPressed: () => context.pop(),
             icon: const Icon(Icons.arrow_back_rounded),

@@ -426,14 +426,10 @@ class _BackupScreenState extends ConsumerState<BackupScreen> {
       appBar: GlassPageHeader(
         title: 'Backup & Restore',
         subtitle: 'Keep your data safe and accessible',
-        height: 68,
+        height: 64,
         leading: IconButton(
           onPressed: () => context.pop(),
-          icon: HugeIcon(
-            icon: HugeIcons.strokeRoundedArrowLeft01,
-            size: 22,
-            color: scheme.onSurface,
-          ),
+          icon: const Icon(Icons.arrow_back_rounded),
         ),
         actions: [
           IconButton(

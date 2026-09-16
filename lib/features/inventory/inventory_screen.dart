@@ -107,6 +107,11 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
 
     return Scaffold(
       backgroundColor: scheme.surfaceContainerLowest,
+      appBar: GlassPageHeader(
+        title: l10n.inventoryTitle,
+        subtitle: 'Products, availability & stock',
+        height: 64,
+      ),
       bottomNavigationBar: SafeArea(
         top: false,
         child: Padding(
@@ -146,33 +151,9 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           ),
         ),
       ),
-      body: SafeArea(
-        bottom: false,
-        child: Column(
+      body: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n.inventoryTitle,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.4,
-                        ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Products, availability & stock',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
-                  ),
-                ],
-              ),
-            ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
               child: SoftSearchField(
@@ -240,7 +221,6 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
             ),
           ],
         ),
-      ),
     );
   }
 }
