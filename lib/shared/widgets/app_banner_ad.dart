@@ -52,8 +52,8 @@ class _AppBannerAdState extends State<AppBannerAd> {
     }
     if (!mounted) return;
 
-    // Compact anchored adaptive (~50dp). Avoid getLargeAnchoredAdaptiveBannerAdSize.
-    final size = await AdSize.getAnchoredAdaptiveBannerAdSize(
+    final size =
+        await AdSize.getLargeAnchoredAdaptiveBannerAdSizeWithOrientation(
       orientation,
       width,
     );

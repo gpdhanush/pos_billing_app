@@ -20,9 +20,8 @@ import 'package:pos_billing/core/services/connectivity_service.dart';
 class AnalyticsService {
   AnalyticsService({
     ConnectivityService? connectivity,
-    NotificationService? notifications,
-  })  : _connectivity = connectivity ?? ConnectivityService(),
-        _notifications = notifications;
+    this._notifications,
+  })  : _connectivity = connectivity ?? ConnectivityService();
 
   final ConnectivityService _connectivity;
   final NotificationService? _notifications;
@@ -140,7 +139,7 @@ class AnalyticsService {
     await _enqueue({
       't': 'error',
       'message': message,
-      if (reason != null) 'reason': reason,
+      'reason': ?reason,
       'fatal': fatal,
       'at': DateTime.now().toUtc().toIso8601String(),
     });
