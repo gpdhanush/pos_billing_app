@@ -69,7 +69,11 @@ lib/
   core/          # database, services (backup, export, logs, printer), security
   features/      # screens (billing, sales, stock, settings, …)
   shared/        # models, widgets
+packages/
+  soft_ui_kit/   # portable theme + UI kit (pub.dev: soft_ui_kit)
 ```
+
+To reuse this UI in another app, add [`soft_ui_kit`](https://pub.dev/packages/soft_ui_kit) and follow [`packages/soft_ui_kit/README.md`](packages/soft_ui_kit/README.md).
 
 ## Stock cost tip
 

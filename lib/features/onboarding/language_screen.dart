@@ -193,19 +193,11 @@ class ThemePickerScreen extends ConsumerWidget {
                     ),
               ),
               const SizedBox(height: 12),
-              Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                children: [
-                  for (final accent in AccentOption.values)
-                    _AccentChip(
-                      option: accent,
-                      selected: settings.accent == accent.name,
-                      onTap: () => ref
-                          .read(appSettingsProvider.notifier)
-                          .setAccent(accent.name),
-                    ),
-                ],
+              AccentPicker(
+                selected: AccentOptionX.fromStorage(settings.accent),
+                onSelected: (accent) => ref
+                    .read(appSettingsProvider.notifier)
+                    .setAccent(accent.name),
               ),
               const SizedBox(height: 32),
               OnboardPrimaryButton(
@@ -226,68 +218,6 @@ class ThemePickerScreen extends ConsumerWidget {
                 },
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _AccentChip extends StatelessWidget {
-  const _AccentChip({
-    required this.option,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final AccentOption option;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedScale(
-      scale: selected ? 1.05 : 1,
-      duration: const Duration(milliseconds: 180),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(AppRadii.pill),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: option.seed,
-              border: Border.all(
-                color: selected
-                    ? Theme.of(context).colorScheme.onSurface
-                    : Colors.white.withValues(alpha: 0.55),
-                width: selected ? 3 : 2,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: option.seed.withValues(alpha: selected ? 0.4 : 0.2),
-                  blurRadius: selected ? 14 : 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: selected
-                ? Center(
-                    child: HugeIcon(
-                      icon: HugeIcons.strokeRoundedTick02,
-                      size: 20,
-                      color: ThemeData.estimateBrightnessForColor(option.seed) ==
-                              Brightness.dark
-                          ? Colors.white
-                          : AppColors.ink,
-                      strokeWidth: 2.2,
-                    ),
-                  )
-                : null,
           ),
         ),
       ),

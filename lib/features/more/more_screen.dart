@@ -253,35 +253,12 @@ class _MoreScreenState extends ConsumerState<MoreScreen> {
                   ),
                   itemBuilder: (context, i) {
                     final option = AccentOption.values[i];
-                    final selected = option == current;
-                    return InkWell(
-                      onTap: () => Navigator.pop(ctx, option),
-                      borderRadius: BorderRadius.circular(999),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: option.seed,
-                          border: Border.all(
-                            color: selected
-                                ? scheme.onSurface
-                                : Colors.transparent,
-                            width: 2.5,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: option.seed.withValues(alpha: 0.35),
-                              blurRadius: 8,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                        child: selected
-                            ? const Icon(
-                                Icons.check_rounded,
-                                color: Colors.white,
-                                size: 22,
-                              )
-                            : null,
+                    return Center(
+                      child: AccentSwatch(
+                        color: option.seed,
+                        selected: option == current,
+                        size: 44,
+                        onTap: () => Navigator.pop(ctx, option),
                       ),
                     );
                   },

@@ -1,0 +1,16 @@
+name: soft_ui_kit_example
+description: Example app for soft_ui_kit (SoftNavBar).
+publish_to: "none"
+version: 1.0.0
+
+environment:
+  sdk: ^3.8.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  soft_ui_kit:
+    path: ../
+
+flutter:
+  uses-material-design: true

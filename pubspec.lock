@@ -1202,6 +1202,13 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  soft_ui_kit:
+    dependency: "direct main"
+    description:
+      path: "packages/soft_ui_kit"
+      relative: true
+    source: path
+    version: "1.0.0"
   source_span:
     dependency: transitive
     description:

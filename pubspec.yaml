@@ -7,6 +7,8 @@ environment:
   sdk: ^3.13.1
 
 dependencies:
+  soft_ui_kit:
+    path: packages/soft_ui_kit
   flutter:
     sdk: flutter
   flutter_localizations:
